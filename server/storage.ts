@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type DemoRequest, type InsertDemoRequest, type Experiment, type InsertExperiment, type Variant, type InsertVariant, type Assignment, type InsertAssignment, type Event, type InsertEvent, type Session, type InsertSession, type PageView, type InsertPageView, type SectionView, type InsertSectionView, type FormInteraction, type InsertFormInteraction, type ConversionFunnel, type InsertConversionFunnel, type FunnelProgression, type InsertFunnelProgression, type UserJourney, type InsertUserJourney, type ConsentSettings, type InsertConsentSettings, users, demoRequests, experiments, variants, assignments, events, sessions, pageViews, sectionViews, formInteractions, conversionFunnels, funnelProgression, userJourneys, consentSettings } from "@shared/schema";
+import { type User, type InsertUser, type DemoRequest, type InsertDemoRequest, type Experiment, type InsertExperiment, type Variant, type InsertVariant, type Assignment, type InsertAssignment, type Event, type InsertEvent, type Session, type InsertSession, type PageView, type InsertPageView, type SectionView, type InsertSectionView, type FormInteraction, type InsertFormInteraction, type ConversionFunnel, type InsertConversionFunnel, type FunnelProgression, type InsertFunnelProgression, type UserJourney, type InsertUserJourney, type ConsentSettings, type InsertConsentSettings, type Testimonial, type InsertTestimonial, type CaseStudy, type InsertCaseStudy, users, demoRequests, experiments, variants, assignments, events, sessions, pageViews, sectionViews, formInteractions, conversionFunnels, funnelProgression, userJourneys, consentSettings, testimonials, caseStudies } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, and } from "drizzle-orm";
@@ -63,6 +63,23 @@ export interface IStorage {
   createConsentSettings(consent: InsertConsentSettings): Promise<ConsentSettings>;
   getConsentSettings(visitorId: string): Promise<ConsentSettings | undefined>;
   updateConsentSettings(visitorId: string, updates: Partial<InsertConsentSettings>): Promise<ConsentSettings>;
+
+  // Testimonials management
+  createTestimonial(testimonial: InsertTestimonial): Promise<Testimonial>;
+  getTestimonials(approved?: boolean): Promise<Testimonial[]>;
+  getTestimonial(id: string): Promise<Testimonial | undefined>;
+  updateTestimonial(id: string, updates: Partial<InsertTestimonial>): Promise<Testimonial>;
+  deleteTestimonial(id: string): Promise<void>;
+  getFeaturedTestimonials(): Promise<Testimonial[]>;
+
+  // Case studies management
+  createCaseStudy(caseStudy: InsertCaseStudy): Promise<CaseStudy>;
+  getCaseStudies(published?: boolean): Promise<CaseStudy[]>;
+  getCaseStudy(id: string): Promise<CaseStudy | undefined>;
+  getCaseStudyBySlug(slug: string): Promise<CaseStudy | undefined>;
+  updateCaseStudy(id: string, updates: Partial<InsertCaseStudy>): Promise<CaseStudy>;
+  deleteCaseStudy(id: string): Promise<void>;
+  getFeaturedCaseStudies(): Promise<CaseStudy[]>;
 }
 
 // Initialize database connection
@@ -342,6 +359,105 @@ export class DrizzleStorage implements IStorage {
     
     return result[0];
   }
+
+  // Testimonials management
+  async createTestimonial(insertTestimonial: InsertTestimonial): Promise<Testimonial> {
+    const result = await db.insert(testimonials).values({
+      ...insertTestimonial,
+      updatedAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async getTestimonials(approved?: boolean): Promise<Testimonial[]> {
+    if (approved !== undefined) {
+      return await db.select().from(testimonials).where(eq(testimonials.approved, approved));
+    }
+    return await db.select().from(testimonials);
+  }
+
+  async getTestimonial(id: string): Promise<Testimonial | undefined> {
+    const result = await db.select().from(testimonials).where(eq(testimonials.id, id));
+    return result[0];
+  }
+
+  async updateTestimonial(id: string, updates: Partial<InsertTestimonial>): Promise<Testimonial> {
+    const result = await db
+      .update(testimonials)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(testimonials.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Testimonial not found");
+    }
+    
+    return result[0];
+  }
+
+  async deleteTestimonial(id: string): Promise<void> {
+    await db.delete(testimonials).where(eq(testimonials.id, id));
+  }
+
+  async getFeaturedTestimonials(): Promise<Testimonial[]> {
+    return await db.select().from(testimonials)
+      .where(and(eq(testimonials.featured, true), eq(testimonials.approved, true)));
+  }
+
+  // Case studies management
+  async createCaseStudy(insertCaseStudy: InsertCaseStudy): Promise<CaseStudy> {
+    const result = await db.insert(caseStudies).values({
+      ...insertCaseStudy,
+      updatedAt: new Date()
+    }).returning();
+    return result[0];
+  }
+
+  async getCaseStudies(published?: boolean): Promise<CaseStudy[]> {
+    if (published !== undefined) {
+      return await db.select().from(caseStudies).where(eq(caseStudies.published, published));
+    }
+    return await db.select().from(caseStudies);
+  }
+
+  async getCaseStudy(id: string): Promise<CaseStudy | undefined> {
+    const result = await db.select().from(caseStudies).where(eq(caseStudies.id, id));
+    return result[0];
+  }
+
+  async getCaseStudyBySlug(slug: string): Promise<CaseStudy | undefined> {
+    const result = await db.select().from(caseStudies).where(eq(caseStudies.slug, slug));
+    return result[0];
+  }
+
+  async updateCaseStudy(id: string, updates: Partial<InsertCaseStudy>): Promise<CaseStudy> {
+    const result = await db
+      .update(caseStudies)
+      .set({
+        ...updates,
+        updatedAt: new Date()
+      })
+      .where(eq(caseStudies.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Case study not found");
+    }
+    
+    return result[0];
+  }
+
+  async deleteCaseStudy(id: string): Promise<void> {
+    await db.delete(caseStudies).where(eq(caseStudies.id, id));
+  }
+
+  async getFeaturedCaseStudies(): Promise<CaseStudy[]> {
+    return await db.select().from(caseStudies)
+      .where(and(eq(caseStudies.featured, true), eq(caseStudies.published, true)));
+  }
 }
 
 // Keep MemStorage as backup for development/testing
@@ -360,6 +476,8 @@ export class MemStorage implements IStorage {
   private funnelProgressions: Map<string, FunnelProgression>;
   private userJourneys: Map<string, UserJourney>;
   private consentSettings: Map<string, ConsentSettings>;
+  private testimonials: Map<string, Testimonial>;
+  private caseStudies: Map<string, CaseStudy>;
 
   constructor() {
     this.users = new Map();
@@ -376,6 +494,8 @@ export class MemStorage implements IStorage {
     this.funnelProgressions = new Map();
     this.userJourneys = new Map();
     this.consentSettings = new Map();
+    this.testimonials = new Map();
+    this.caseStudies = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {

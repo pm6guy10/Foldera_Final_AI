@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import AuditLogVisualization from "@/components/audit-log-visualization";
 import { CalendlyModalButton } from "../components/calendly-widget";
+import Testimonials from "@/components/testimonials";
+import CaseStudies from "@/components/case-studies";
 import { assignVariant, exposeExperiment, type Assignment } from "@/lib/ab";
 import { trackExposure } from "@/lib/analytics";
 
@@ -448,6 +450,49 @@ export default function Home() {
               </CardContent>
             </Card>
           </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8" data-testid="testimonials-section">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-black mb-6">
+              What Our <span className="text-primary glow-text">Clients Say</span>
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Real stories from professionals who trusted Foldera to protect their deals
+            </p>
+          </div>
+          
+          <Testimonials 
+            featured={true}
+            limit={6}
+            autoRotate={true}
+            rotationInterval={7000}
+            showNavigation={true}
+            showIndicators={true}
+          />
+        </div>
+      </section>
+
+      {/* Case Studies Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card" data-testid="case-studies-section">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-black mb-6">
+              Client <span className="text-primary glow-text">Success Stories</span>
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8">
+              See how Foldera transformed operations for enterprise clients
+            </p>
+          </div>
+          
+          <CaseStudies 
+            featured={true}
+            limit={3}
+            showMetrics={true}
+          />
         </div>
       </section>
 

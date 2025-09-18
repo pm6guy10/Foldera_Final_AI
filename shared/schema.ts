@@ -213,6 +213,82 @@ export const consentSettings = pgTable("consent_settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Testimonials for customer social proof
+export const testimonials = pgTable("testimonials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerName: text("customer_name").notNull(),
+  title: text("title").notNull(),
+  company: text("company").notNull(),
+  quote: text("quote").notNull(),
+  avatarUrl: text("avatar_url"),
+  companyLogo: text("company_logo"),
+  industry: text("industry"), // legal, consulting, finance, etc.
+  companySize: text("company_size"), // startup, mid-market, enterprise
+  featured: boolean("featured").default(false),
+  approved: boolean("approved").default(false),
+  displayOrder: integer("display_order").default(0),
+  verificationBadge: text("verification_badge"), // verified, linkedin, etc.
+  linkedinUrl: text("linkedin_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Case studies showcasing client success stories
+export const caseStudies = pgTable("case_studies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  clientName: text("client_name").notNull(),
+  clientTitle: text("client_title").notNull(),
+  company: text("company").notNull(),
+  industry: text("industry").notNull(),
+  companySize: text("company_size").notNull(),
+  companyLogo: text("company_logo"),
+  heroImage: text("hero_image"),
+  
+  // Problem section
+  problemTitle: text("problem_title").notNull(),
+  problemDescription: text("problem_description").notNull(),
+  painPoints: json("pain_points"), // array of pain points
+  
+  // Solution section  
+  solutionTitle: text("solution_title").notNull(),
+  solutionDescription: text("solution_description").notNull(),
+  implementationSteps: json("implementation_steps"), // array of steps
+  
+  // Results section
+  resultsTitle: text("results_title").notNull(),
+  resultsDescription: text("results_description").notNull(),
+  
+  // Key metrics and KPIs
+  timesSaved: integer("times_saved"), // hours per month saved
+  errorsPrevented: integer("errors_prevented"), // number of conflicts prevented
+  costSavings: integer("cost_savings"), // dollars saved per year
+  roiPercentage: integer("roi_percentage"), // ROI as percentage
+  complianceImprovement: integer("compliance_improvement"), // percentage improvement
+  teamProductivity: integer("team_productivity"), // percentage increase
+  
+  // Additional metrics as JSON for flexibility
+  customMetrics: json("custom_metrics"),
+  
+  // Quote from client
+  clientQuote: text("client_quote"),
+  quoteContext: text("quote_context"), // context for when quote was given
+  
+  // Content management
+  featured: boolean("featured").default(false),
+  published: boolean("published").default(false),
+  publishedAt: timestamp("published_at"),
+  displayOrder: integer("display_order").default(0),
+  
+  // SEO
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -302,6 +378,18 @@ export const insertConsentSettingsSchema = createInsertSchema(consentSettings).o
   updatedAt: true,
 });
 
+export const insertTestimonialSchema = createInsertSchema(testimonials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCaseStudySchema = createInsertSchema(caseStudies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
@@ -336,3 +424,9 @@ export type InsertUserJourney = z.infer<typeof insertUserJourneySchema>;
 export type UserJourney = typeof userJourneys.$inferSelect;
 export type InsertConsentSettings = z.infer<typeof insertConsentSettingsSchema>;
 export type ConsentSettings = typeof consentSettings.$inferSelect;
+export type InsertTestimonial = z.infer<typeof insertTestimonialSchema>;
+export type Testimonial = typeof testimonials.$inferSelect;
+export type SelectTestimonial = typeof testimonials.$inferSelect;
+export type InsertCaseStudy = z.infer<typeof insertCaseStudySchema>;
+export type CaseStudy = typeof caseStudies.$inferSelect;
+export type SelectCaseStudy = typeof caseStudies.$inferSelect;

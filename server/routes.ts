@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertDemoRequestSchema, insertEventSchema, insertSessionSchema, insertPageViewSchema, insertSectionViewSchema, insertFormInteractionSchema, insertConversionFunnelSchema, insertFunnelProgressionSchema, insertConsentSettingsSchema } from "@shared/schema";
+import { insertDemoRequestSchema, insertEventSchema, insertSessionSchema, insertPageViewSchema, insertSectionViewSchema, insertFormInteractionSchema, insertConversionFunnelSchema, insertFunnelProgressionSchema, insertConsentSettingsSchema, insertTestimonialSchema, insertCaseStudySchema } from "@shared/schema";
 import { getPricingTier, isRecurringSubscription, isOneTimePayment } from "@shared/pricing";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -314,6 +314,136 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ clientSecret: paymentIntent.client_secret });
     } catch (error: any) {
       res.status(500).json({ message: "Error creating payment intent: " + error.message });
+    }
+  });
+
+  // Testimonials endpoints
+  app.get("/api/testimonials", async (req, res) => {
+    try {
+      const { approved, featured } = req.query;
+      let testimonials;
+      
+      if (featured === 'true') {
+        testimonials = await storage.getFeaturedTestimonials();
+      } else {
+        testimonials = await storage.getTestimonials(approved === 'true' ? true : approved === 'false' ? false : undefined);
+      }
+      
+      res.json(testimonials);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching testimonials: " + error.message });
+    }
+  });
+
+  app.get("/api/testimonials/:id", async (req, res) => {
+    try {
+      const testimonial = await storage.getTestimonial(req.params.id);
+      if (!testimonial) {
+        return res.status(404).json({ message: "Testimonial not found" });
+      }
+      res.json(testimonial);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching testimonial: " + error.message });
+    }
+  });
+
+  app.post("/api/testimonials", async (req, res) => {
+    try {
+      const validatedData = insertTestimonialSchema.parse(req.body);
+      const testimonial = await storage.createTestimonial(validatedData);
+      res.json(testimonial);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid testimonial data: " + error.message });
+    }
+  });
+
+  app.put("/api/testimonials/:id", async (req, res) => {
+    try {
+      const validatedData = insertTestimonialSchema.partial().parse(req.body);
+      const testimonial = await storage.updateTestimonial(req.params.id, validatedData);
+      res.json(testimonial);
+    } catch (error: any) {
+      res.status(400).json({ message: "Error updating testimonial: " + error.message });
+    }
+  });
+
+  app.delete("/api/testimonials/:id", async (req, res) => {
+    try {
+      await storage.deleteTestimonial(req.params.id);
+      res.json({ message: "Testimonial deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: "Error deleting testimonial: " + error.message });
+    }
+  });
+
+  // Case studies endpoints
+  app.get("/api/case-studies", async (req, res) => {
+    try {
+      const { published, featured } = req.query;
+      let caseStudies;
+      
+      if (featured === 'true') {
+        caseStudies = await storage.getFeaturedCaseStudies();
+      } else {
+        caseStudies = await storage.getCaseStudies(published === 'true' ? true : published === 'false' ? false : undefined);
+      }
+      
+      res.json(caseStudies);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching case studies: " + error.message });
+    }
+  });
+
+  app.get("/api/case-studies/:id", async (req, res) => {
+    try {
+      const caseStudy = await storage.getCaseStudy(req.params.id);
+      if (!caseStudy) {
+        return res.status(404).json({ message: "Case study not found" });
+      }
+      res.json(caseStudy);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching case study: " + error.message });
+    }
+  });
+
+  app.get("/api/case-studies/slug/:slug", async (req, res) => {
+    try {
+      const caseStudy = await storage.getCaseStudyBySlug(req.params.slug);
+      if (!caseStudy) {
+        return res.status(404).json({ message: "Case study not found" });
+      }
+      res.json(caseStudy);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching case study: " + error.message });
+    }
+  });
+
+  app.post("/api/case-studies", async (req, res) => {
+    try {
+      const validatedData = insertCaseStudySchema.parse(req.body);
+      const caseStudy = await storage.createCaseStudy(validatedData);
+      res.json(caseStudy);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid case study data: " + error.message });
+    }
+  });
+
+  app.put("/api/case-studies/:id", async (req, res) => {
+    try {
+      const validatedData = insertCaseStudySchema.partial().parse(req.body);
+      const caseStudy = await storage.updateCaseStudy(req.params.id, validatedData);
+      res.json(caseStudy);
+    } catch (error: any) {
+      res.status(400).json({ message: "Error updating case study: " + error.message });
+    }
+  });
+
+  app.delete("/api/case-studies/:id", async (req, res) => {
+    try {
+      await storage.deleteCaseStudy(req.params.id);
+      res.json({ message: "Case study deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: "Error deleting case study: " + error.message });
     }
   });
 

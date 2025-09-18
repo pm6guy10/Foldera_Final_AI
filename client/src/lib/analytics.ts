@@ -518,6 +518,13 @@ export async function track(
 }
 
 /**
+ * Convenience wrapper for track function - maintains compatibility
+ */
+export async function trackEvent(eventData: EventData): Promise<boolean> {
+  return track(eventData);
+}
+
+/**
  * Page View Tracking with Enhanced Metrics
  */
 
