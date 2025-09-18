@@ -1,10 +1,128 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Shield, Eye, TriangleAlert, Settings, CheckCircle, Calendar, Rocket, Gavel, DollarSign, IdCard, Lock, Key, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import AuditLogVisualization from "@/components/audit-log-visualization";
 import { CalendlyModalButton } from "../components/calendly-widget";
+import { assignVariant, exposeExperiment, type Assignment } from "@/lib/ab";
+import { trackExposure } from "@/lib/analytics";
+
+// Headline experiment configuration
+const HEADLINE_EXPERIMENT = {
+  key: 'hero_headline_test',
+  variants: [
+    { key: 'control', weight: 34 },
+    { key: 'direct', weight: 33 },
+    { key: 'emotional', weight: 33 },
+  ],
+  allocation: 100, // 100% of users in this test
+};
+
+// Headline variants
+const HEADLINE_VARIANTS = {
+  control: {
+    headline: (
+      <>
+        Stop Babysitting the AI{' '}
+        <span className="text-primary glow-text">Productivity Ghost</span>.
+      </>
+    ),
+    subheadline: (
+      <>
+        You don't prompt it. You don't pray it remembers.{' '}
+        <br className="hidden md:block" />
+        Foldera works while you sleep — <span className="text-primary font-semibold">fixing chaos before it explodes.</span>
+      </>
+    ),
+  },
+  direct: {
+    headline: (
+      <>
+        Turn Your <span className="text-primary glow-text">Chaos</span>{' '}
+        Into Battle-Ready Briefings
+      </>
+    ),
+    subheadline: (
+      <>
+        Stop spending hours parsing through scattered docs and emails.{' '}
+        <br className="hidden md:block" />
+        Wake up to <span className="text-primary font-semibold">clear decisions and immediate action items</span>.
+      </>
+    ),
+  },
+  emotional: {
+    headline: (
+      <>
+        Finally, an AI That{' '}
+        <span className="text-primary glow-text">Actually Works</span>{' '}
+        for You
+      </>
+    ),
+    subheadline: (
+      <>
+        No more prompting. No more forgotten context. No more starting over.{' '}
+        <br className="hidden md:block" />
+        Foldera <span className="text-primary font-semibold">remembers everything and acts on what matters</span>.
+      </>
+    ),
+  },
+} as const;
+
+function HeroHeadline() {
+  const [assignment, setAssignment] = useState<Assignment | null>(null);
+  const [hasExposed, setHasExposed] = useState(false);
+
+  useEffect(() => {
+    // Assign variant on component mount
+    const variant = assignVariant(HEADLINE_EXPERIMENT);
+    setAssignment(variant);
+  }, []);
+
+  useEffect(() => {
+    // Fire exposure event when component is mounted and visible
+    if (assignment && !hasExposed) {
+      // Small delay to ensure the component is rendered and visible
+      const timer = setTimeout(() => {
+        exposeExperiment(
+          assignment.experimentKey,
+          assignment.variantKey,
+          (exp: Assignment) => {
+            trackExposure(exp, { 
+              component: 'hero_headline',
+              page: 'home' 
+            });
+          }
+        );
+        setHasExposed(true);
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [assignment, hasExposed]);
+
+  // Return control variant while loading to prevent layout shift
+  const variant = assignment?.variantKey && assignment.variantKey in HEADLINE_VARIANTS 
+    ? HEADLINE_VARIANTS[assignment.variantKey as keyof typeof HEADLINE_VARIANTS]
+    : HEADLINE_VARIANTS.control;
+
+  return (
+    <>
+      <h1 
+        className="text-5xl md:text-7xl font-black mb-6 leading-tight" 
+        data-testid={`hero-headline-${assignment?.variantKey || 'control'}`}
+      >
+        {variant.headline}
+      </h1>
+      <p 
+        className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed" 
+        data-testid={`hero-subheadline-${assignment?.variantKey || 'control'}`}
+      >
+        {variant.subheadline}
+      </p>
+    </>
+  );
+}
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -38,15 +156,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent"></div>
         <div className="max-w-7xl mx-auto relative">
           <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight" data-testid="hero-headline">
-              Stop Babysitting the AI{' '}
-              <span className="text-primary glow-text">Productivity Ghost</span>.
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed" data-testid="hero-subheadline">
-              You don't prompt it. You don't pray it remembers.{' '}
-              <br className="hidden md:block" />
-              Foldera works while you sleep — <span className="text-primary font-semibold">fixing chaos before it explodes.</span>
-            </p>
+            <HeroHeadline />
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="#pricing">
                 <Button className="bg-primary text-primary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-all ghost-hover" data-testid="button-start-trial-hero">

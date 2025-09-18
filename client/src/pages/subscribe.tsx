@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 import { getPricingTier, type PricingTier } from "@shared/pricing";
+import { trackConversion } from "@/lib/analytics";
+import { getCurrentVisitorId } from "@/lib/ab";
+import type { Assignment } from "@/lib/ab";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -19,9 +22,10 @@ const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 interface SubscribeFormProps {
   plan: PricingTier;
   paymentType: 'subscription' | 'payment';
+  experimentAssignment?: Assignment | null;
 }
 
-const SubscribeForm = ({ plan, paymentType }: SubscribeFormProps) => {
+const SubscribeForm = ({ plan, paymentType, experimentAssignment }: SubscribeFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -50,6 +54,19 @@ const SubscribeForm = ({ plan, paymentType }: SubscribeFormProps) => {
         variant: "destructive",
       });
     } else {
+      // Track successful payment as conversion
+      await trackConversion(
+        paymentType === 'subscription' ? 'subscription_payment' : 'one_time_payment',
+        experimentAssignment,
+        {
+          planName: plan.name,
+          planPrice: plan.price,
+          paymentType,
+          planPeriod: plan.period,
+          source: 'stripe_checkout'
+        }
+      );
+      
       const successMessage = paymentType === 'subscription' 
         ? `Welcome to Foldera! Your ${plan.name} subscription is now active.`
         : `Welcome to Foldera! Your ${plan.name} payment has been processed.`;
@@ -114,6 +131,7 @@ export default function Subscribe() {
   const [pricingTier, setPricingTier] = useState<PricingTier | null>(null);
   const [paymentType, setPaymentType] = useState<'subscription' | 'payment'>('subscription');
   const [error, setError] = useState<string | null>(null);
+  const [experimentAssignment, setExperimentAssignment] = useState<Assignment | null>(null);
 
   useEffect(() => {
     // Get plan details from URL params
@@ -188,7 +206,7 @@ export default function Subscribe() {
         </div>
         
         <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <SubscribeForm plan={pricingTier} paymentType={paymentType} />
+          <SubscribeForm plan={pricingTier} paymentType={paymentType} experimentAssignment={experimentAssignment} />
         </Elements>
       </div>
     </div>

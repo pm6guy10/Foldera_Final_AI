@@ -5,6 +5,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Calendar, X, CheckCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { trackConversion, trackClick } from "@/lib/analytics";
+import type { Assignment } from "@/lib/ab";
 
 interface CalendlyWidgetProps {
   url: string;
@@ -12,6 +14,7 @@ interface CalendlyWidgetProps {
   buttonText?: string;
   className?: string;
   children?: React.ReactNode;
+  experimentAssignment?: Assignment | null;
 }
 
 export function CalendlyWidget({ 
@@ -19,7 +22,8 @@ export function CalendlyWidget({
   mode = "modal", 
   buttonText = "Book Enterprise Demo",
   className = "",
-  children 
+  children,
+  experimentAssignment 
 }: CalendlyWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +40,21 @@ export function CalendlyWidget({
     },
     onEventScheduled: (e) => {
       console.log("Event scheduled:", e.data.payload);
+      
+      // Track Calendly booking as conversion
+      const eventData = e.data.payload;
+      trackConversion(
+        'calendly_booking',
+        experimentAssignment,
+        {
+          eventUri: eventData.event?.uri || 'unknown',
+          inviteeUri: eventData.invitee?.uri || 'unknown',
+          eventType: 'enterprise_demo', // Static since we don't have access to full event data
+          source: 'calendly_widget',
+          mode: mode
+        }
+      );
+      
       setIsScheduled(true);
       toast({
         title: "Demo Scheduled Successfully!",
@@ -53,6 +72,17 @@ export function CalendlyWidget({
   });
 
   const handleOpenModal = () => {
+    // Track button click
+    trackClick(
+      'calendly_button_click',
+      experimentAssignment,
+      {
+        buttonText,
+        mode,
+        url
+      }
+    );
+    
     setIsLoading(true);
     setIsOpen(true);
   };

@@ -9,11 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Calendar, CheckCircle } from "lucide-react";
+import { trackConversion } from "@/lib/analytics";
+import { getCurrentVisitorId } from "@/lib/ab";
 import type { z } from "zod";
+import type { Assignment } from "@/lib/ab";
 
 type DemoFormData = z.infer<typeof insertDemoRequestSchema>;
 
-export default function DemoForm() {
+interface DemoFormProps {
+  experimentAssignment?: Assignment | null;
+}
+
+export default function DemoForm({ experimentAssignment }: DemoFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
   
@@ -29,6 +36,19 @@ export default function DemoForm() {
   const onSubmit = async (data: DemoFormData) => {
     try {
       await apiRequest("POST", "/api/demo-request", data);
+      
+      // Track successful demo form submission as conversion
+      await trackConversion(
+        'demo_form_submit', 
+        experimentAssignment, 
+        {
+          company: data.company,
+          teamSize: data.teamSize,
+          formType: 'demo_request',
+          source: 'website'
+        }
+      );
+      
       setSubmitted(true);
       toast({
         title: "Demo request submitted!",
