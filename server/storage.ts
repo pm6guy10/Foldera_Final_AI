@@ -1,5 +1,7 @@
-import { type User, type InsertUser, type DemoRequest, type InsertDemoRequest } from "@shared/schema";
-import { randomUUID } from "crypto";
+import { type User, type InsertUser, type DemoRequest, type InsertDemoRequest, users, demoRequests } from "@shared/schema";
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
+import { eq } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -10,6 +12,55 @@ export interface IStorage {
   createDemoRequest(request: InsertDemoRequest): Promise<DemoRequest>;
 }
 
+// Initialize database connection
+const sql = neon(process.env.DATABASE_URL!);
+const db = drizzle(sql);
+
+export class DrizzleStorage implements IStorage {
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.id, id));
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.username, username));
+    return result[0];
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const result = await db.select().from(users).where(eq(users.email, email));
+    return result[0];
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await db.insert(users).values(insertUser).returning();
+    return result[0];
+  }
+
+  async updateUserStripeInfo(id: string, customerId: string, subscriptionId: string): Promise<User> {
+    const result = await db
+      .update(users)
+      .set({
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscriptionId,
+      })
+      .where(eq(users.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("User not found");
+    }
+    
+    return result[0];
+  }
+
+  async createDemoRequest(insertRequest: InsertDemoRequest): Promise<DemoRequest> {
+    const result = await db.insert(demoRequests).values(insertRequest).returning();
+    return result[0];
+  }
+}
+
+// Keep MemStorage as backup for development/testing
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private demoRequests: Map<string, DemoRequest>;
@@ -36,7 +87,7 @@ export class MemStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
+    const id = crypto.randomUUID();
     const user: User = { 
       ...insertUser, 
       id,
@@ -65,7 +116,7 @@ export class MemStorage implements IStorage {
   }
 
   async createDemoRequest(insertRequest: InsertDemoRequest): Promise<DemoRequest> {
-    const id = randomUUID();
+    const id = crypto.randomUUID();
     const request: DemoRequest = {
       ...insertRequest,
       id,
@@ -76,4 +127,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DrizzleStorage();
