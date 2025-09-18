@@ -2,6 +2,13 @@
 
 Foldera is an AI-powered legal compliance and document management platform designed to prevent disasters and protect careers. The application provides three pricing tiers with integrated Stripe payment processing for subscription management. It features real-time document scanning, conflict detection, and automated fixing capabilities with a dark-themed, modern user interface.
 
+## Advanced Features Completed (September 2025)
+- **A/B Testing Framework**: Complete split testing infrastructure with headline variations and conversion tracking
+- **Advanced Analytics**: Comprehensive user behavior tracking including session management, scroll depth, form analytics, and conversion funnels
+- **Customer Testimonials**: Professional testimonials and case study sections with admin management interface
+- **Interactive Product Demo**: Engaging demo showcasing document scanning and conflict detection capabilities
+- **Lead Scoring & CRM Integration**: Enterprise-grade lead scoring system with automated qualification and CRM export functionality
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -30,7 +37,11 @@ The application uses:
 - **PostgreSQL** as the primary database (configured via Drizzle)
 - **Neon Database** serverless PostgreSQL for cloud deployment
 - **Schema-driven** approach with Zod validation
-- **Database tables** for users, demo requests, matter metrics, violations, and filings
+- **Core tables**: users, demo requests, matter metrics, violations, and filings
+- **Analytics tables**: sessions, page views, section views, user consent, conversion funnels
+- **Marketing tables**: testimonials, case studies with admin management
+- **Lead scoring tables**: lead profiles, activities, scores, scoring rules, CRM export logs
+- **A/B testing tables**: experiments, variants, visitor assignments, conversions
 - **Stripe integration** fields for customer and subscription management
 
 ## Payment Processing
