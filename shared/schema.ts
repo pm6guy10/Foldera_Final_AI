@@ -59,6 +59,40 @@ export const filings = pgTable("filings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+export const experiments = pgTable("experiments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: text("key").notNull().unique(), // unique experiment identifier
+  status: text("status").notNull().default("draft"), // draft, active, paused, completed
+  allocation: integer("allocation").notNull().default(100), // percentage of traffic to include
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const variants = pgTable("variants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  experimentId: varchar("experiment_id").notNull().references(() => experiments.id),
+  key: text("key").notNull(), // variant identifier within experiment
+  weight: integer("weight").notNull().default(50), // weight for variant distribution
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const assignments = pgTable("assignments", {
+  visitorId: text("visitor_id").notNull(), // visitor identifier (anonymous or user ID)
+  experimentId: varchar("experiment_id").notNull().references(() => experiments.id),
+  variantKey: text("variant_key").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const events = pgTable("events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  visitorId: text("visitor_id").notNull(), // visitor identifier
+  type: text("type").notNull(), // event type: conversion, click, view, etc.
+  name: text("name").notNull(), // specific event name
+  experimentKey: text("experiment_key"), // associated experiment
+  variantKey: text("variant_key"), // associated variant
+  props: json("props"), // additional event properties
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
@@ -88,6 +122,25 @@ export const insertFilingSchema = createInsertSchema(filings).omit({
   updatedAt: true,
 });
 
+export const insertExperimentSchema = createInsertSchema(experiments).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertVariantSchema = createInsertSchema(variants).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertAssignmentSchema = createInsertSchema(assignments).omit({
+  createdAt: true,
+});
+
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertDemoRequest = z.infer<typeof insertDemoRequestSchema>;
@@ -98,3 +151,11 @@ export type InsertViolation = z.infer<typeof insertViolationSchema>;
 export type Violation = typeof violations.$inferSelect;
 export type InsertFiling = z.infer<typeof insertFilingSchema>;
 export type Filing = typeof filings.$inferSelect;
+export type InsertExperiment = z.infer<typeof insertExperimentSchema>;
+export type Experiment = typeof experiments.$inferSelect;
+export type InsertVariant = z.infer<typeof insertVariantSchema>;
+export type Variant = typeof variants.$inferSelect;
+export type InsertAssignment = z.infer<typeof insertAssignmentSchema>;
+export type Assignment = typeof assignments.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type Event = typeof events.$inferSelect;
