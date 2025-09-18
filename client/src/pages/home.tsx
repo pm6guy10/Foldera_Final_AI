@@ -4,6 +4,7 @@ import { Shield, Eye, TriangleAlert, Settings, CheckCircle, Calendar, Rocket, Ga
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import AuditLogVisualization from "@/components/audit-log-visualization";
+import { CalendlyModalButton } from "../components/calendly-widget";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -52,6 +53,16 @@ export default function Home() {
                   ➡️ Show Me My First Briefing
                 </Button>
               </Link>
+              <CalendlyModalButton 
+                url="https://calendly.com/foldera/enterprise-demo"
+                buttonText="Book Enterprise Demo"
+                className="px-8 py-4 rounded-lg font-semibold text-lg"
+              >
+                <Button variant="outline" className="border-border text-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-secondary transition-all" data-testid="button-book-demo">
+                  <Calendar className="mr-2 h-5 w-5" />
+                  Book Enterprise Demo
+                </Button>
+              </CalendlyModalButton>
               <p className="text-sm text-muted-foreground">🔥 1,292 professionals already joined.</p>
             </div>
           </div>
@@ -346,26 +357,27 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Pricing Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8" id="pricing" data-testid="pricing-section">
+      {/* Demo Booking Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8" id="pricing" data-testid="demo-section">
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
               ⚡ Stop Babysitting. <span className="text-primary">Start Winning</span>.
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Foldera is invite-only. Join now to get your first Executive Briefing before the next fire drill hits.
+              See Foldera in action. Book a personalized demo and watch it prevent disasters in real-time.
             </p>
           </div>
           
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-primary">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Waitlist Card */}
+            <Card className="border-2 border-primary/50">
               <CardContent className="p-8">
                 <div className="text-center mb-8">
-                  <div className="text-5xl mb-4">🛡️</div>
+                  <div className="text-5xl mb-4">📋</div>
                   <h3 className="text-2xl font-bold mb-4">Join the Waitlist</h3>
                   <p className="text-muted-foreground">
-                    Get early access to the AI that never ghosts you when it matters most.
+                    Get early access when we launch publicly.
                   </p>
                 </div>
                 
@@ -374,7 +386,34 @@ export default function Home() {
                 </Button>
                 
                 <p className="text-sm text-muted-foreground">
-                  No spam. No sales calls. Just early access to the career guardian that works while you sleep.
+                  No spam. No sales calls. Just early access notification.
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Enterprise Demo Card */}
+            <Card className="border-2 border-primary">
+              <CardContent className="p-8">
+                <div className="text-center mb-8">
+                  <div className="text-5xl mb-4">🛡️</div>
+                  <h3 className="text-2xl font-bold mb-4">Enterprise Demo</h3>
+                  <p className="text-muted-foreground">
+                    See Foldera protect your team in a live demonstration.
+                  </p>
+                </div>
+                
+                <CalendlyModalButton 
+                  url="https://calendly.com/foldera/enterprise-demo"
+                  buttonText="Book Enterprise Demo"
+                  className="w-full"
+                >
+                  <Button className="w-full py-4 text-lg font-semibold mb-4" data-testid="button-book-enterprise-demo">
+                    📅 Book Enterprise Demo
+                  </Button>
+                </CalendlyModalButton>
+                
+                <p className="text-sm text-muted-foreground">
+                  30-minute personalized demonstration with our team.
                 </p>
               </CardContent>
             </Card>
