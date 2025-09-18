@@ -6,7 +6,7 @@ import path from "path";
 import { storage } from "./storage";
 import type { Document, InsertDocumentAnalysis, InsertContradictionFinding } from "@shared/schema";
 
-// the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+// Using GPT-4 for better compatibility without organization verification requirements
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 export interface ContradictionAnalysis {
@@ -100,7 +100,7 @@ export class DocumentProcessingService {
 
     try {
       const response = await openai.chat.completions.create({
-        model: "gpt-5", // the newest OpenAI model is "gpt-5" which was released August 7, 2025
+        model: "gpt-4", // the newest OpenAI model is "gpt-4" which was released August 7, 2025
         messages: [
           {
             role: "system",
@@ -253,7 +253,7 @@ If no contradictions are found, return an empty contradictions array but still p
         documentId: document.id,
         analysisType: 'contradiction',
         status: 'processing',
-        model: 'gpt-5',
+        model: 'gpt-4',
         prompt: 'Document contradiction analysis'
       };
 
@@ -334,6 +334,286 @@ If no contradictions are found, return an empty contradictions array but still p
    */
   isFileTypeSupported(fileType: string): boolean {
     return this.getSupportedFileTypes().includes(fileType.toLowerCase());
+  }
+
+  /**
+   * Process multiple documents as a batch for cross-document analysis
+   */
+  async processBatchDocuments(documents: Document[], userId: string): Promise<void> {
+    try {
+      console.log(`Starting batch processing for ${documents.length} documents`);
+      
+      // Step 1: Extract text from all documents first
+      const documentsWithText: Array<Document & { extractedText: string }> = [];
+      
+      for (const document of documents) {
+        try {
+          // Update document status
+          await storage.updateDocument(document.id, { 
+            processingStatus: 'extracting',
+            textExtractionStatus: 'processing' 
+          });
+
+          // Extract text
+          const extractedText = await this.extractTextFromFile(document.filePath, document.fileType);
+          
+          // Update document with extracted text
+          await storage.updateDocument(document.id, {
+            extractedText,
+            textExtractionStatus: 'completed',
+            processingStatus: 'analyzing'
+          });
+
+          documentsWithText.push({ ...document, extractedText });
+          
+        } catch (error) {
+          console.error(`Text extraction failed for document ${document.id}:`, error);
+          await storage.updateDocument(document.id, {
+            processingStatus: 'failed',
+            textExtractionStatus: 'failed',
+            extractionError: error.message
+          });
+        }
+      }
+
+      if (documentsWithText.length === 0) {
+        console.error('No documents successfully extracted text');
+        return;
+      }
+
+      // Step 2: Perform cross-document analysis
+      const crossDocumentAnalysis = await this.performCrossDocumentAnalysis(documentsWithText, userId);
+      
+      // Step 3: Save cross-document analysis results
+      await this.saveCrossDocumentAnalysis(documentsWithText, crossDocumentAnalysis);
+
+      // Step 4: Update document statuses
+      for (const document of documentsWithText) {
+        await storage.updateDocument(document.id, {
+          processingStatus: 'completed',
+          processedAt: new Date()
+        });
+      }
+
+      console.log(`Batch processing completed for ${documentsWithText.length} documents`);
+      
+    } catch (error) {
+      console.error('Batch processing error:', error);
+      
+      // Mark all documents as failed
+      for (const document of documents) {
+        await storage.updateDocument(document.id, {
+          processingStatus: 'failed',
+          extractionError: `Batch processing failed: ${error.message}`
+        });
+      }
+    }
+  }
+
+  /**
+   * Analyze multiple documents together for cross-document contradictions
+   */
+  async performCrossDocumentAnalysis(
+    documents: Array<Document & { extractedText: string }>,
+    userId: string
+  ): Promise<{
+    crossDocumentContradictions: Array<{
+      type: 'budget' | 'legal' | 'compliance' | 'version' | 'deadline' | 'data';
+      severity: 'low' | 'medium' | 'high' | 'critical';
+      title: string;
+      description: string;
+      documentIds: string[];
+      documentNames: string[];
+      textSnippets: Array<{ documentId: string; snippet: string }>;
+      potentialImpact: string;
+      recommendation: string;
+      suggestedFix: string;
+      financialImpact?: string;
+      preventedLoss?: string;
+    }>;
+    summary: string;
+    riskLevel: 'low' | 'medium' | 'high' | 'critical';
+    confidenceScore: number;
+  }> {
+    const prompt = this.buildCrossDocumentAnalysisPrompt(documents);
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4", // the newest OpenAI model is "gpt-4" which was released August 7, 2025
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert compliance analyst and document reviewer specializing in cross-document contradiction detection. Analyze multiple documents together to find conflicts, inconsistencies, and contradictions BETWEEN different documents that could pose compliance, legal, or financial risks."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ],
+        response_format: { type: "json_object" },
+        max_completion_tokens: 8000, // Increased for comprehensive cross-document analysis
+      });
+
+      const analysisResult = JSON.parse(response.choices[0].message.content);
+      return this.validateCrossDocumentAnalysis(analysisResult);
+    } catch (error) {
+      console.error('Cross-document OpenAI analysis error:', error);
+      throw new Error(`Cross-document AI analysis failed: ${error.message}`);
+    }
+  }
+
+  private buildCrossDocumentAnalysisPrompt(documents: Array<Document & { extractedText: string }>): string {
+    const documentSummaries = documents.map((doc, index) => 
+      `DOCUMENT ${index + 1}: ${doc.originalName} (${doc.fileType.toUpperCase()})\n` +
+      `Content:\n${doc.extractedText.substring(0, 8000)}${doc.extractedText.length > 8000 ? '...[truncated]' : ''}\n`
+    ).join('\n---\n\n');
+
+    return `
+Please analyze these ${documents.length} documents TOGETHER to find CROSS-DOCUMENT contradictions and conflicts. Look for inconsistencies BETWEEN different documents that could pose compliance, audit, or business risks.
+
+DOCUMENTS TO ANALYZE:
+${documentSummaries}
+
+CROSS-DOCUMENT ANALYSIS REQUIREMENTS:
+
+1. **Budget & Financial Conflicts**:
+   - Budget amounts that don't match between financial statements and contracts
+   - Payment terms that contradict between different agreements
+   - Cost estimates that vary significantly across related documents
+   - Revenue projections that conflict between planning docs and contracts
+
+2. **Timeline & Deadline Conflicts**:
+   - Project timelines that don't align between different documents
+   - Milestone dates that contradict across project plans
+   - Deadline commitments that conflict between contracts and internal docs
+   - Deliverable schedules that are inconsistent
+
+3. **Legal & Compliance Conflicts**:
+   - Terms and conditions that contradict between different agreements
+   - Liability clauses that conflict across contracts
+   - Regulatory requirements mentioned differently across documents
+   - Compliance standards that vary between related docs
+
+4. **Data & Version Conflicts**:
+   - Contact information that differs across documents
+   - Company details that don't match between docs
+   - Specifications that vary between technical and legal documents
+   - Version control issues where newer docs contradict older ones
+
+5. **Scope & Requirements Conflicts**:
+   - Project scope defined differently across documents
+   - Requirements that contradict between specs and contracts
+   - Deliverables described differently in various docs
+   - Success criteria that don't align
+
+IMPORTANT: Only flag REAL contradictions between different documents. Ignore minor formatting differences or trivial inconsistencies.
+
+Respond with a JSON object in this exact format:
+{
+  "crossDocumentContradictions": [
+    {
+      "type": "budget|legal|compliance|version|deadline|data",
+      "severity": "low|medium|high|critical",
+      "title": "Brief title of the cross-document contradiction",
+      "description": "Detailed description of the contradiction found between documents",
+      "documentIds": ["doc1_id", "doc2_id"],
+      "documentNames": ["Document A.pdf", "Document B.docx"],
+      "textSnippets": [
+        {"documentId": "doc1_id", "snippet": "Exact conflicting text from first document"},
+        {"documentId": "doc2_id", "snippet": "Exact conflicting text from second document"}
+      ],
+      "potentialImpact": "Description of potential business/legal consequences",
+      "recommendation": "Specific recommendation to resolve this conflict",
+      "suggestedFix": "Actionable steps to fix the contradiction",
+      "financialImpact": "Estimated financial impact if applicable",
+      "preventedLoss": "Potential loss prevented by addressing this"
+    }
+  ],
+  "summary": "Overall summary of cross-document analysis and key findings",
+  "riskLevel": "low|medium|high|critical",
+  "confidenceScore": 0.95
+}
+
+If no cross-document contradictions are found, return an empty contradictions array but still provide a summary and confidence score.
+    `;
+  }
+
+  private validateCrossDocumentAnalysis(rawAnalysis: any) {
+    return {
+      crossDocumentContradictions: Array.isArray(rawAnalysis.crossDocumentContradictions) 
+        ? rawAnalysis.crossDocumentContradictions.map((c: any) => ({
+            type: this.validateContradictionType(c.type) || 'data',
+            severity: this.validateSeverity(c.severity) || 'medium',
+            title: c.title || 'Cross-document issue',
+            description: c.description || 'No description provided',
+            documentIds: Array.isArray(c.documentIds) ? c.documentIds : [],
+            documentNames: Array.isArray(c.documentNames) ? c.documentNames : [],
+            textSnippets: Array.isArray(c.textSnippets) ? c.textSnippets : [],
+            potentialImpact: c.potentialImpact || 'Impact assessment needed',
+            recommendation: c.recommendation || 'Review required',
+            suggestedFix: c.suggestedFix || 'Manual review recommended',
+            financialImpact: c.financialImpact,
+            preventedLoss: c.preventedLoss
+          }))
+        : [],
+      summary: rawAnalysis.summary || "Cross-document analysis completed",
+      riskLevel: this.validateRiskLevel(rawAnalysis.riskLevel) || 'low',
+      confidenceScore: Math.max(0, Math.min(1, rawAnalysis.confidenceScore || 0.8))
+    };
+  }
+
+  private async saveCrossDocumentAnalysis(
+    documents: Array<Document & { extractedText: string }>, 
+    analysis: any
+  ): Promise<void> {
+    try {
+      // Create a batch analysis record
+      const batchAnalysis: InsertDocumentAnalysis = {
+        documentId: documents[0].id, // Primary document
+        analysisType: 'cross-document',
+        status: 'completed',
+        model: 'gpt-4',
+        prompt: 'Cross-document contradiction analysis',
+        summary: analysis.summary,
+        confidenceScore: analysis.confidenceScore,
+        riskLevel: analysis.riskLevel,
+        rawResponse: analysis,
+        completedAt: new Date()
+      };
+
+      const analysisRecord = await storage.createDocumentAnalysis(batchAnalysis);
+
+      // Save each cross-document contradiction
+      for (const contradiction of analysis.crossDocumentContradictions) {
+        const finding: InsertContradictionFinding = {
+          analysisId: analysisRecord.id,
+          documentId: documents[0].id, // Primary document
+          contradictionType: contradiction.type,
+          severity: contradiction.severity,
+          title: contradiction.title,
+          description: contradiction.description,
+          textSnippet: contradiction.textSnippets.map(s => s.snippet).join(' | '),
+          potentialImpact: contradiction.potentialImpact,
+          recommendation: contradiction.recommendation,
+          suggestedFix: contradiction.suggestedFix,
+          financialImpact: contradiction.financialImpact,
+          preventedLoss: contradiction.preventedLoss,
+          status: 'detected',
+          // Store additional cross-document metadata
+          metadata: {
+            crossDocument: true,
+            documentIds: contradiction.documentIds,
+            documentNames: contradiction.documentNames,
+            textSnippets: contradiction.textSnippets
+          }
+        };
+
+        await storage.createContradictionFinding(finding);
+      }
+    } catch (error) {
+      console.error('Failed to save cross-document analysis:', error);
+      throw error;
+    }
   }
 
   /**

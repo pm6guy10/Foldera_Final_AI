@@ -138,8 +138,8 @@ const storage_config = multer.diskStorage({
 const upload = multer({
   storage: storage_config,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
-    files: 5 // Max 5 files at once
+    fileSize: 10 * 1024 * 1024, // 10MB limit per file
+    files: 50 // Max 50 files at once for bulk processing
   },
   fileFilter: (req, file, cb) => {
     // Check file type
@@ -162,8 +162,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Upload document(s)
   app.post("/api/documents/upload", 
-    createRateLimit(10, 60 * 1000), // 10 uploads per minute
-    upload.array('documents', 5), // Max 5 files
+    createRateLimit(5, 60 * 1000), // 5 bulk uploads per minute
+    upload.array('documents', 50), // Max 50 files
     async (req, res) => {
     try {
       if (!req.files || req.files.length === 0) {
@@ -173,6 +173,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.body.userId || 'demo-user'; // TODO: Replace with actual user auth
       const uploadedDocuments = [];
 
+      // Process each file and create document records
       for (const file of req.files as Express.Multer.File[]) {
         // Get file type from extension
         const fileExtension = path.extname(file.originalname).toLowerCase();
@@ -192,16 +193,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const document = await storage.createDocument(documentData);
         uploadedDocuments.push(document);
-
-        // Start background processing
-        setImmediate(async () => {
-          try {
-            await documentProcessingService.processDocument(document);
-          } catch (error) {
-            console.error('Background processing failed for document:', document.id, error);
-          }
-        });
       }
+
+      // Start batch processing for all uploaded documents
+      setImmediate(async () => {
+        try {
+          await documentProcessingService.processBatchDocuments(uploadedDocuments, userId);
+        } catch (error) {
+          console.error('Batch processing failed:', error);
+        }
+      });
 
       res.json({
         message: `${uploadedDocuments.length} document(s) uploaded successfully`,

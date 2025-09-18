@@ -32,6 +32,12 @@ interface ContradictionFinding {
   resolvedAt?: string;
   resolutionNotes?: string;
   createdAt: string;
+  metadata?: {
+    crossDocument?: boolean;
+    documentIds?: string[];
+    documentNames?: string[];
+    textSnippets?: Array<{ documentId: string; snippet: string }>;
+  };
 }
 
 interface Document {
@@ -61,9 +67,9 @@ const contradictionTypeConfig = {
 
 export default function AuditDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [severityFilter, setSeverityFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedContradiction, setSelectedContradiction] = useState<ContradictionFinding | null>(null);
   
   const { toast } = useToast();
@@ -270,7 +276,7 @@ export default function AuditDashboard() {
                 <SelectValue placeholder="Severity" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Severities</SelectItem>
+                <SelectItem value="all">All Severities</SelectItem>
                 <SelectItem value="critical">Critical</SelectItem>
                 <SelectItem value="high">High</SelectItem>
                 <SelectItem value="medium">Medium</SelectItem>
@@ -282,7 +288,7 @@ export default function AuditDashboard() {
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Types</SelectItem>
+                <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="budget">Budget</SelectItem>
                 <SelectItem value="legal">Legal</SelectItem>
                 <SelectItem value="compliance">Compliance</SelectItem>
@@ -296,7 +302,7 @@ export default function AuditDashboard() {
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Statuses</SelectItem>
+                <SelectItem value="all">All Statuses</SelectItem>
                 <SelectItem value="detected">Detected</SelectItem>
                 <SelectItem value="reviewing">Reviewing</SelectItem>
                 <SelectItem value="resolved">Resolved</SelectItem>
@@ -350,24 +356,58 @@ export default function AuditDashboard() {
                             <span className="mr-1">{severityConf.icon}</span>
                             {severityConf.label}
                           </Badge>
+                          {contradiction.metadata?.crossDocument && (
+                            <Badge variant="default" className="bg-purple-500">
+                              <Zap className="h-3 w-3 mr-1" />
+                              Cross-Document
+                            </Badge>
+                          )}
                           <Badge variant="outline">
                             {contradiction.status}
                           </Badge>
                         </div>
                         
-                        <p className="text-sm text-muted-foreground mb-2">
-                          <strong>Document:</strong> {getDocumentName(contradiction.documentId)}
-                          {contradiction.pageNumber && (
-                            <span> • Page {contradiction.pageNumber}</span>
-                          )}
-                          {contradiction.lineNumber && (
-                            <span> • Line {contradiction.lineNumber}</span>
-                          )}
-                        </p>
+                        {contradiction.metadata?.crossDocument && contradiction.metadata.documentNames ? (
+                          <div className="text-sm text-muted-foreground mb-2">
+                            <strong>Documents Involved:</strong>
+                            <div className="ml-2 mt-1">
+                              {contradiction.metadata.documentNames.map((name, index) => (
+                                <div key={index} className="flex items-center">
+                                  <span className="text-blue-500">•</span>
+                                  <span className="ml-2">{name}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground mb-2">
+                            <strong>Document:</strong> {getDocumentName(contradiction.documentId)}
+                            {contradiction.pageNumber && (
+                              <span> • Page {contradiction.pageNumber}</span>
+                            )}
+                            {contradiction.lineNumber && (
+                              <span> • Line {contradiction.lineNumber}</span>
+                            )}
+                          </p>
+                        )}
 
                         <p className="text-sm mb-3">{contradiction.description}</p>
                         
-                        {contradiction.textSnippet && (
+                        {contradiction.metadata?.crossDocument && contradiction.metadata.textSnippets ? (
+                          <div className="mb-3">
+                            <strong className="text-sm">Conflicting Text Snippets:</strong>
+                            <div className="space-y-2 mt-2">
+                              {contradiction.metadata.textSnippets.map((snippet, index) => (
+                                <div key={index} className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-sm">
+                                  <div className="font-semibold text-purple-600 mb-1">
+                                    {contradiction.metadata?.documentNames?.[index] || `Document ${index + 1}`}:
+                                  </div>
+                                  <div className="font-mono">"{snippet.snippet}"</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : contradiction.textSnippet && (
                           <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded text-sm font-mono mb-3">
                             <strong>Text:</strong> "{contradiction.textSnippet}"
                           </div>

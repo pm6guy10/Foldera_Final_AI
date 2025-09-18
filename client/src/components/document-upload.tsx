@@ -96,10 +96,19 @@ export default function DocumentUpload() {
       });
       formData.append('userId', 'demo-user'); // TODO: Replace with actual user auth
 
-      return apiRequest('/api/documents/upload', {
+      // Use direct fetch for file uploads since apiRequest doesn't handle FormData properly
+      const response = await fetch('/api/documents/upload', {
         method: 'POST',
         body: formData,
+        credentials: 'include',
       });
+
+      if (!response.ok) {
+        const text = await response.text() || response.statusText;
+        throw new Error(`${response.status}: ${text}`);
+      }
+
+      return response.json();
     },
     onSuccess: (data) => {
       toast({
@@ -246,7 +255,8 @@ export default function DocumentUpload() {
               Drag and drop files here, or click to browse
             </p>
             <p className="text-sm text-muted-foreground">
-              Supports PDF, Word documents, and text files (max 10MB each)
+              Supports PDF, Word documents, and text files (max 10MB each)<br/>
+              <span className="font-semibold text-primary">Upload dozens of files for cross-document contradiction analysis</span>
             </p>
             <input
               ref={fileInputRef}
@@ -271,10 +281,10 @@ export default function DocumentUpload() {
                     data-testid={`selected-file-${file.id}`}
                   >
                     <div className="flex items-center flex-1">
-                      <span className="text-2xl mr-3">{getFileIcon(file.name.split('.').pop() || '')}</span>
+                      <span className="text-2xl mr-3">{getFileIcon(file.name?.split('.').pop() || '')}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{file.name}</p>
-                        <p className="text-sm text-muted-foreground">{formatFileSize(file.size)}</p>
+                        <p className="font-medium truncate">{file.name || 'Unknown file'}</p>
+                        <p className="text-sm text-muted-foreground">{formatFileSize(file.size || 0)}</p>
                       </div>
                     </div>
                     <Button
