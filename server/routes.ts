@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertDemoRequestSchema, insertEventSchema } from "@shared/schema";
+import { insertDemoRequestSchema, insertEventSchema, insertSessionSchema, insertPageViewSchema, insertSectionViewSchema, insertFormInteractionSchema, insertConversionFunnelSchema, insertFunnelProgressionSchema, insertConsentSettingsSchema } from "@shared/schema";
 import { getPricingTier, isRecurringSubscription, isOneTimePayment } from "@shared/pricing";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -34,6 +34,168 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(event);
     } catch (error: any) {
       res.status(400).json({ message: "Invalid event data: " + error.message });
+    }
+  });
+
+  // Session management endpoints
+  app.post("/api/analytics/session", async (req, res) => {
+    try {
+      const validatedData = insertSessionSchema.parse(req.body);
+      const session = await storage.createSession(validatedData);
+      res.json(session);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid session data: " + error.message });
+    }
+  });
+
+  app.post("/api/analytics/session-end", async (req, res) => {
+    try {
+      const { sessionId, ...updates } = req.body;
+      if (!sessionId) {
+        return res.status(400).json({ message: "Session ID is required" });
+      }
+      const session = await storage.updateSession(sessionId, updates);
+      res.json(session);
+    } catch (error: any) {
+      res.status(400).json({ message: "Error updating session: " + error.message });
+    }
+  });
+
+  // Page view tracking endpoints
+  app.post("/api/analytics/page-view", async (req, res) => {
+    try {
+      const validatedData = insertPageViewSchema.parse(req.body);
+      const pageView = await storage.createPageView(validatedData);
+      res.json(pageView);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid page view data: " + error.message });
+    }
+  });
+
+  app.post("/api/analytics/page-view-update", async (req, res) => {
+    try {
+      const { id, ...updates } = req.body;
+      if (!id) {
+        return res.status(400).json({ message: "Page view ID is required" });
+      }
+      const pageView = await storage.updatePageView(id, updates);
+      res.json(pageView);
+    } catch (error: any) {
+      res.status(400).json({ message: "Error updating page view: " + error.message });
+    }
+  });
+
+  // Section view tracking endpoint
+  app.post("/api/analytics/section-view", async (req, res) => {
+    try {
+      const validatedData = insertSectionViewSchema.parse(req.body);
+      const sectionView = await storage.createSectionView(validatedData);
+      res.json(sectionView);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid section view data: " + error.message });
+    }
+  });
+
+  // Form interaction tracking endpoint
+  app.post("/api/analytics/form-interaction", async (req, res) => {
+    try {
+      const validatedData = insertFormInteractionSchema.parse(req.body);
+      const interaction = await storage.createFormInteraction(validatedData);
+      res.json(interaction);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid form interaction data: " + error.message });
+    }
+  });
+
+  // Conversion funnel endpoints
+  app.post("/api/analytics/funnel", async (req, res) => {
+    try {
+      const validatedData = insertConversionFunnelSchema.parse(req.body);
+      const funnel = await storage.createConversionFunnel(validatedData);
+      res.json(funnel);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid funnel data: " + error.message });
+    }
+  });
+
+  app.get("/api/analytics/funnels", async (req, res) => {
+    try {
+      const funnels = await storage.getActiveFunnels();
+      res.json(funnels);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching funnels: " + error.message });
+    }
+  });
+
+  app.post("/api/analytics/funnel-progression", async (req, res) => {
+    try {
+      const validatedData = insertFunnelProgressionSchema.parse(req.body);
+      const progression = await storage.createFunnelProgression(validatedData);
+      res.json(progression);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid funnel progression data: " + error.message });
+    }
+  });
+
+  // User journey endpoint
+  app.post("/api/analytics/user-journey", async (req, res) => {
+    try {
+      const { visitorId, ...updates } = req.body;
+      if (!visitorId) {
+        return res.status(400).json({ message: "Visitor ID is required" });
+      }
+      const journey = await storage.createOrUpdateUserJourney(visitorId, updates);
+      res.json(journey);
+    } catch (error: any) {
+      res.status(400).json({ message: "Error updating user journey: " + error.message });
+    }
+  });
+
+  app.get("/api/analytics/user-journey/:visitorId", async (req, res) => {
+    try {
+      const { visitorId } = req.params;
+      const journey = await storage.getUserJourney(visitorId);
+      if (!journey) {
+        return res.status(404).json({ message: "User journey not found" });
+      }
+      res.json(journey);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching user journey: " + error.message });
+    }
+  });
+
+  // Consent and privacy endpoint
+  app.post("/api/analytics/consent", async (req, res) => {
+    try {
+      const validatedData = insertConsentSettingsSchema.parse(req.body);
+      const consent = await storage.createConsentSettings(validatedData);
+      res.json(consent);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid consent data: " + error.message });
+    }
+  });
+
+  app.get("/api/analytics/consent/:visitorId", async (req, res) => {
+    try {
+      const { visitorId } = req.params;
+      const consent = await storage.getConsentSettings(visitorId);
+      if (!consent) {
+        return res.status(404).json({ message: "Consent settings not found" });
+      }
+      res.json(consent);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching consent settings: " + error.message });
+    }
+  });
+
+  app.put("/api/analytics/consent/:visitorId", async (req, res) => {
+    try {
+      const { visitorId } = req.params;
+      const updates = req.body;
+      const consent = await storage.updateConsentSettings(visitorId, updates);
+      res.json(consent);
+    } catch (error: any) {
+      res.status(400).json({ message: "Error updating consent settings: " + error.message });
     }
   });
 
