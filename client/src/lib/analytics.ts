@@ -1,5 +1,5 @@
 /**
- * Advanced Analytics Client
+ * Advanced Analytics Client with Lead Scoring
  * 
  * Comprehensive user behavior and conversion funnel tracking system.
  * Features:
@@ -12,6 +12,8 @@
  * - Performance optimized with throttling and debouncing
  * - Offline support with automatic retry
  * - Integration with A/B testing infrastructure
+ * - Real-time lead scoring and qualification tracking
+ * - CRM-ready lead profile data collection
  */
 
 import { getCurrentVisitorId } from './ab';
@@ -422,9 +424,8 @@ export async function startSession(referrer?: string): Promise<string> {
   
   currentSessionId = generateSessionId();
   
-  const sessionData: SessionData = {
+  const sessionData = {
     visitorId,
-    startedAt: new Date(),
     referrer: referrer || document.referrer,
     userAgent: navigator.userAgent,
     deviceType: getDeviceType()
@@ -868,8 +869,7 @@ export async function setConsentSettings(settings: ConsentSettings) {
   
   const consentData = {
     visitorId,
-    ...settings,
-    consentGivenAt: new Date()
+    ...settings
   };
   
   // Store consent settings
@@ -1304,6 +1304,302 @@ export function trackPageView(
       timestamp: Date.now(),
     },
   }, assignment);
+}
+
+/**
+ * Lead Scoring and CRM Integration Tracking
+ */
+
+// Lead identification data
+export interface LeadIdentificationData {
+  email?: string;
+  name?: string;
+  company?: string;
+  jobTitle?: string;
+  phoneNumber?: string;
+  source?: string;
+  medium?: string;
+  campaign?: string;
+}
+
+// Lead scoring activities with predefined point values
+export const LEAD_SCORING_ACTIVITIES = {
+  PAGE_VIEWS: {
+    home: 1,
+    pricing: 20,
+    demo: 10,
+    caseStudies: 15,
+    testimonials: 10,
+    contact: 25,
+    subscribe: 30,
+    other: 1
+  },
+  INTERACTIONS: {
+    demoStart: 25,
+    demoComplete: 50,
+    testimonialView: 10,
+    testimonialShare: 15,
+    caseStudyView: 15,
+    caseStudyShare: 20,
+    calendlyScheduled: 100,
+    calendlyCompleted: 150,
+    stripePaymentStarted: 200,
+    stripePaymentCompleted: 300,
+    newsletterSignup: 40,
+    contactFormSubmit: 60,
+    downloadResource: 30
+  },
+  ENGAGEMENT: {
+    timeOnPageBonus: 5, // Per minute on key pages
+    scrollDepthBonus: 2, // Per 25% scroll depth on key pages
+    returnVisitor: 10,
+    multipleSessionsBonus: 15
+  }
+} as const;
+
+// Track lead scoring activity
+export async function trackLeadScoringActivity(
+  activityType: string,
+  activityName: string,
+  points?: number,
+  metadata?: Record<string, any>
+): Promise<boolean> {
+  const visitorId = getCurrentVisitorId();
+  if (!visitorId || !hasConsent('analytics')) return false;
+
+  // Send to lead scoring endpoint
+  const activityData = {
+    visitorId,
+    sessionId: currentSessionId,
+    activityType,
+    activityName,
+    pointsAwarded: points,
+    metadata: {
+      timestamp: Date.now(),
+      pageUrl: window.location.href,
+      pagePath: window.location.pathname,
+      ...metadata
+    }
+  };
+
+  const success = await sendToEndpoint('/api/leads/scoring/activity', JSON.stringify(activityData));
+  
+  // Also track as regular analytics event for consistency
+  track({
+    type: 'lead_scoring',
+    name: activityName,
+    props: {
+      activityType,
+      points,
+      ...metadata
+    }
+  });
+
+  return success;
+}
+
+// Track page visit with lead scoring
+export async function trackLeadScoringPageView(
+  pageName: string,
+  timeSpent?: number,
+  scrollDepth?: number,
+  assignment?: Assignment | null
+): Promise<boolean> {
+  const pagePoints = LEAD_SCORING_ACTIVITIES.PAGE_VIEWS[pageName as keyof typeof LEAD_SCORING_ACTIVITIES.PAGE_VIEWS] || 
+                    LEAD_SCORING_ACTIVITIES.PAGE_VIEWS.other;
+  
+  let totalPoints = pagePoints;
+  
+  // Add engagement bonuses
+  if (timeSpent && timeSpent > 60000) { // More than 1 minute
+    const minutesBonus = Math.floor(timeSpent / 60000) * LEAD_SCORING_ACTIVITIES.ENGAGEMENT.timeOnPageBonus;
+    totalPoints += Math.min(minutesBonus, 25); // Cap bonus at 25 points
+  }
+  
+  if (scrollDepth && scrollDepth >= 25) {
+    const scrollBonus = Math.floor(scrollDepth / 25) * LEAD_SCORING_ACTIVITIES.ENGAGEMENT.scrollDepthBonus;
+    totalPoints += Math.min(scrollBonus, 8); // Cap bonus at 8 points (100% scroll)
+  }
+
+  return trackLeadScoringActivity(
+    'page_view',
+    `page_view_${pageName}`,
+    totalPoints,
+    { 
+      pageName, 
+      timeSpent, 
+      scrollDepth,
+      experimentKey: assignment?.experimentKey,
+      variantKey: assignment?.variantKey
+    }
+  );
+}
+
+// Track interaction with lead scoring
+export async function trackLeadScoringInteraction(
+  interactionName: keyof typeof LEAD_SCORING_ACTIVITIES.INTERACTIONS,
+  metadata?: Record<string, any>
+): Promise<boolean> {
+  const points = LEAD_SCORING_ACTIVITIES.INTERACTIONS[interactionName];
+  
+  return trackLeadScoringActivity(
+    'interaction',
+    interactionName,
+    points,
+    metadata
+  );
+}
+
+// Identify lead with contact information
+export async function identifyLead(
+  identificationData: LeadIdentificationData
+): Promise<boolean> {
+  const visitorId = getCurrentVisitorId();
+  if (!visitorId || !hasConsent('analytics')) return false;
+
+  const leadData = {
+    visitorId,
+    sessionId: currentSessionId,
+    ...identificationData,
+    identifiedAt: new Date().toISOString(),
+    source: identificationData.source || document.referrer,
+    currentUrl: window.location.href
+  };
+
+  const success = await sendToEndpoint('/api/leads/identify', JSON.stringify(leadData));
+  
+  // Track identification event
+  if (success) {
+    track({
+      type: 'lead_identification',
+      name: 'lead_identified',
+      props: {
+        hasEmail: !!identificationData.email,
+        hasName: !!identificationData.name,
+        hasCompany: !!identificationData.company,
+        source: identificationData.source
+      }
+    });
+  }
+
+  return success;
+}
+
+// Track demo interactions
+export async function trackDemoInteraction(
+  action: 'start' | 'step' | 'complete' | 'abandon',
+  stepName?: string,
+  metadata?: Record<string, any>
+): Promise<boolean> {
+  const points = action === 'start' ? 
+    LEAD_SCORING_ACTIVITIES.INTERACTIONS.demoStart :
+    action === 'complete' ? 
+    LEAD_SCORING_ACTIVITIES.INTERACTIONS.demoComplete :
+    0;
+
+  return trackLeadScoringActivity(
+    'demo_interaction',
+    `demo_${action}`,
+    points,
+    { stepName, ...metadata }
+  );
+}
+
+// Track Calendly interactions
+export async function trackCalendlyInteraction(
+  action: 'scheduled' | 'completed' | 'cancelled',
+  metadata?: Record<string, any>
+): Promise<boolean> {
+  const points = action === 'scheduled' ? 
+    LEAD_SCORING_ACTIVITIES.INTERACTIONS.calendlyScheduled :
+    action === 'completed' ? 
+    LEAD_SCORING_ACTIVITIES.INTERACTIONS.calendlyCompleted :
+    0;
+
+  return trackLeadScoringActivity(
+    'calendly_interaction',
+    `calendly_${action}`,
+    points,
+    metadata
+  );
+}
+
+// Track Stripe payment interactions
+export async function trackStripeInteraction(
+  action: 'payment_started' | 'payment_completed' | 'payment_failed',
+  metadata?: Record<string, any>
+): Promise<boolean> {
+  const points = action === 'payment_started' ? 
+    LEAD_SCORING_ACTIVITIES.INTERACTIONS.stripePaymentStarted :
+    action === 'payment_completed' ? 
+    LEAD_SCORING_ACTIVITIES.INTERACTIONS.stripePaymentCompleted :
+    0;
+
+  return trackLeadScoringActivity(
+    'stripe_interaction',
+    `stripe_${action}`,
+    points,
+    metadata
+  );
+}
+
+// Track form interactions with lead scoring
+export async function trackLeadScoringFormInteraction(
+  formType: 'contact' | 'newsletter' | 'download' | 'other',
+  action: 'submit' | 'abandon',
+  metadata?: Record<string, any>
+): Promise<boolean> {
+  const points = action === 'submit' ? (
+    formType === 'contact' ? LEAD_SCORING_ACTIVITIES.INTERACTIONS.contactFormSubmit :
+    formType === 'newsletter' ? LEAD_SCORING_ACTIVITIES.INTERACTIONS.newsletterSignup :
+    formType === 'download' ? LEAD_SCORING_ACTIVITIES.INTERACTIONS.downloadResource :
+    10
+  ) : 0;
+
+  return trackLeadScoringActivity(
+    'form_interaction',
+    `${formType}_form_${action}`,
+    points,
+    { formType, ...metadata }
+  );
+}
+
+// Get current lead score
+export async function getCurrentLeadScore(): Promise<number | null> {
+  const visitorId = getCurrentVisitorId();
+  if (!visitorId) return null;
+
+  try {
+    const response = await fetch(`/api/leads/score/${visitorId}`);
+    if (response.ok) {
+      const data = await response.json();
+      return data.score || 0;
+    }
+  } catch (error) {
+    console.warn('Failed to fetch lead score:', error);
+  }
+  
+  return null;
+}
+
+// Export lead data for CRM integration
+export async function exportLeadData(format: 'json' | 'csv' = 'json'): Promise<Blob | null> {
+  try {
+    const response = await fetch(`/api/leads/export?format=${format}`, {
+      method: 'GET',
+      headers: {
+        'Accept': format === 'json' ? 'application/json' : 'text/csv'
+      }
+    });
+    
+    if (response.ok) {
+      return await response.blob();
+    }
+  } catch (error) {
+    console.warn('Failed to export lead data:', error);
+  }
+  
+  return null;
 }
 
 /**

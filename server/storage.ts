@@ -1,7 +1,7 @@
-import { type User, type InsertUser, type DemoRequest, type InsertDemoRequest, type Experiment, type InsertExperiment, type Variant, type InsertVariant, type Assignment, type InsertAssignment, type Event, type InsertEvent, type Session, type InsertSession, type PageView, type InsertPageView, type SectionView, type InsertSectionView, type FormInteraction, type InsertFormInteraction, type ConversionFunnel, type InsertConversionFunnel, type FunnelProgression, type InsertFunnelProgression, type UserJourney, type InsertUserJourney, type ConsentSettings, type InsertConsentSettings, type Testimonial, type InsertTestimonial, type CaseStudy, type InsertCaseStudy, users, demoRequests, experiments, variants, assignments, events, sessions, pageViews, sectionViews, formInteractions, conversionFunnels, funnelProgression, userJourneys, consentSettings, testimonials, caseStudies } from "@shared/schema";
+import { type User, type InsertUser, type DemoRequest, type InsertDemoRequest, type Experiment, type InsertExperiment, type Variant, type InsertVariant, type Assignment, type InsertAssignment, type Event, type InsertEvent, type Session, type InsertSession, type PageView, type InsertPageView, type SectionView, type InsertSectionView, type FormInteraction, type InsertFormInteraction, type ConversionFunnel, type InsertConversionFunnel, type FunnelProgression, type InsertFunnelProgression, type UserJourney, type InsertUserJourney, type ConsentSettings, type InsertConsentSettings, type Testimonial, type InsertTestimonial, type CaseStudy, type InsertCaseStudy, type LeadProfile, type InsertLeadProfile, type LeadActivity, type InsertLeadActivity, type LeadScore, type InsertLeadScore, type LeadScoringRule, type InsertLeadScoringRule, type CrmExportLog, type InsertCrmExportLog, users, demoRequests, experiments, variants, assignments, events, sessions, pageViews, sectionViews, formInteractions, conversionFunnels, funnelProgression, userJourneys, consentSettings, testimonials, caseStudies, leadProfiles, leadActivities, leadScores, leadScoringRules, crmExportLog } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
@@ -80,6 +80,54 @@ export interface IStorage {
   updateCaseStudy(id: string, updates: Partial<InsertCaseStudy>): Promise<CaseStudy>;
   deleteCaseStudy(id: string): Promise<void>;
   getFeaturedCaseStudies(): Promise<CaseStudy[]>;
+
+  // Lead Management and Scoring
+  createOrUpdateLeadProfile(visitorId: string, updates: Partial<InsertLeadProfile>): Promise<LeadProfile>;
+  getLeadProfile(id: string): Promise<LeadProfile | undefined>;
+  getLeadProfileByVisitorId(visitorId: string): Promise<LeadProfile | undefined>;
+  getLeadProfileByEmail(email: string): Promise<LeadProfile | undefined>;
+  updateLeadProfile(id: string, updates: Partial<InsertLeadProfile>): Promise<LeadProfile>;
+  getLeads(filters?: {
+    qualification?: string;
+    stage?: string;
+    isQualified?: boolean;
+    assignedTo?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<LeadProfile[]>;
+  getLeadsCount(filters?: {
+    qualification?: string;
+    stage?: string;
+    isQualified?: boolean;
+    assignedTo?: string;
+  }): Promise<number>;
+
+  // Lead Activity Tracking
+  createLeadActivity(activity: InsertLeadActivity): Promise<LeadActivity>;
+  getLeadActivities(leadProfileId: string, limit?: number): Promise<LeadActivity[]>;
+  getLeadActivitiesByVisitor(visitorId: string, limit?: number): Promise<LeadActivity[]>;
+
+  // Lead Scoring
+  createLeadScore(score: InsertLeadScore): Promise<LeadScore>;
+  getLeadScoreHistory(leadProfileId: string, limit?: number): Promise<LeadScore[]>;
+  updateLeadScoreAndQualification(leadProfileId: string, newScore: number, reason: string, activityId?: string): Promise<{
+    leadProfile: LeadProfile;
+    scoreEntry: LeadScore;
+  }>;
+
+  // Lead Scoring Rules
+  createLeadScoringRule(rule: InsertLeadScoringRule): Promise<LeadScoringRule>;
+  getLeadScoringRules(activeOnly?: boolean): Promise<LeadScoringRule[]>;
+  getLeadScoringRule(id: string): Promise<LeadScoringRule | undefined>;
+  updateLeadScoringRule(id: string, updates: Partial<InsertLeadScoringRule>): Promise<LeadScoringRule>;
+  deleteLeadScoringRule(id: string): Promise<void>;
+
+  // CRM Integration
+  createCrmExportLog(log: InsertCrmExportLog): Promise<CrmExportLog>;
+  getCrmExportLogs(leadProfileId?: string, limit?: number): Promise<CrmExportLog[]>;
+  updateCrmExportLog(id: string, updates: Partial<InsertCrmExportLog>): Promise<CrmExportLog>;
+  getLeadsForCrmSync(crmSystem?: string, limit?: number): Promise<LeadProfile[]>;
+  markLeadAsSynced(leadProfileId: string, crmContactId: string): Promise<LeadProfile>;
 }
 
 // Initialize database connection
@@ -457,6 +505,336 @@ export class DrizzleStorage implements IStorage {
   async getFeaturedCaseStudies(): Promise<CaseStudy[]> {
     return await db.select().from(caseStudies)
       .where(and(eq(caseStudies.featured, true), eq(caseStudies.published, true)));
+  }
+
+  // Lead Management and Scoring implementations
+  async createOrUpdateLeadProfile(visitorId: string, updates: Partial<InsertLeadProfile>): Promise<LeadProfile> {
+    // Check if lead profile already exists
+    const existing = await db.select().from(leadProfiles).where(eq(leadProfiles.visitorId, visitorId));
+    
+    if (existing[0]) {
+      // Update existing profile
+      const result = await db
+        .update(leadProfiles)
+        .set({ ...updates, updatedAt: new Date() })
+        .where(eq(leadProfiles.visitorId, visitorId))
+        .returning();
+      
+      if (!result[0]) {
+        throw new Error("Failed to update lead profile");
+      }
+      
+      return result[0];
+    } else {
+      // Create new profile
+      const result = await db.insert(leadProfiles).values({
+        visitorId,
+        ...updates,
+      }).returning();
+      
+      return result[0];
+    }
+  }
+
+  async getLeadProfile(id: string): Promise<LeadProfile | undefined> {
+    const result = await db.select().from(leadProfiles).where(eq(leadProfiles.id, id));
+    return result[0];
+  }
+
+  async getLeadProfileByVisitorId(visitorId: string): Promise<LeadProfile | undefined> {
+    const result = await db.select().from(leadProfiles).where(eq(leadProfiles.visitorId, visitorId));
+    return result[0];
+  }
+
+  async getLeadProfileByEmail(email: string): Promise<LeadProfile | undefined> {
+    const result = await db.select().from(leadProfiles).where(eq(leadProfiles.email, email));
+    return result[0];
+  }
+
+  async updateLeadProfile(id: string, updates: Partial<InsertLeadProfile>): Promise<LeadProfile> {
+    const result = await db
+      .update(leadProfiles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(leadProfiles.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Lead profile not found");
+    }
+    
+    return result[0];
+  }
+
+  async getLeads(filters?: {
+    qualification?: string;
+    stage?: string;
+    isQualified?: boolean;
+    assignedTo?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<LeadProfile[]> {
+    let query = db.select().from(leadProfiles);
+    
+    const conditions = [];
+    if (filters?.qualification) {
+      conditions.push(eq(leadProfiles.qualification, filters.qualification));
+    }
+    if (filters?.stage) {
+      conditions.push(eq(leadProfiles.stage, filters.stage));
+    }
+    if (filters?.isQualified !== undefined) {
+      conditions.push(eq(leadProfiles.isQualified, filters.isQualified));
+    }
+    if (filters?.assignedTo) {
+      conditions.push(eq(leadProfiles.assignedTo, filters.assignedTo));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    // Add limit and offset if provided
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+    if (filters?.offset) {
+      query = query.offset(filters.offset);
+    }
+    
+    return await query;
+  }
+
+  async getLeadsCount(filters?: {
+    qualification?: string;
+    stage?: string;
+    isQualified?: boolean;
+    assignedTo?: string;
+  }): Promise<number> {
+    let query = db.select({ count: sql<number>`count(*)` }).from(leadProfiles);
+    
+    const conditions = [];
+    if (filters?.qualification) {
+      conditions.push(eq(leadProfiles.qualification, filters.qualification));
+    }
+    if (filters?.stage) {
+      conditions.push(eq(leadProfiles.stage, filters.stage));
+    }
+    if (filters?.isQualified !== undefined) {
+      conditions.push(eq(leadProfiles.isQualified, filters.isQualified));
+    }
+    if (filters?.assignedTo) {
+      conditions.push(eq(leadProfiles.assignedTo, filters.assignedTo));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    const result = await query;
+    return result[0]?.count || 0;
+  }
+
+  // Lead Activity Tracking
+  async createLeadActivity(activity: InsertLeadActivity): Promise<LeadActivity> {
+    const result = await db.insert(leadActivities).values(activity).returning();
+    return result[0];
+  }
+
+  async getLeadActivities(leadProfileId: string, limit = 50): Promise<LeadActivity[]> {
+    const result = await db.select().from(leadActivities)
+      .where(eq(leadActivities.leadProfileId, leadProfileId))
+      .orderBy(desc(leadActivities.createdAt))
+      .limit(limit);
+    return result;
+  }
+
+  async getLeadActivitiesByVisitor(visitorId: string, limit = 50): Promise<LeadActivity[]> {
+    const result = await db.select().from(leadActivities)
+      .where(eq(leadActivities.visitorId, visitorId))
+      .orderBy(desc(leadActivities.createdAt))
+      .limit(limit);
+    return result;
+  }
+
+  // Lead Scoring
+  async createLeadScore(score: InsertLeadScore): Promise<LeadScore> {
+    const result = await db.insert(leadScores).values(score).returning();
+    return result[0];
+  }
+
+  async getLeadScoreHistory(leadProfileId: string, limit = 50): Promise<LeadScore[]> {
+    const result = await db.select().from(leadScores)
+      .where(eq(leadScores.leadProfileId, leadProfileId))
+      .orderBy(desc(leadScores.createdAt))
+      .limit(limit);
+    return result;
+  }
+
+  async updateLeadScoreAndQualification(leadProfileId: string, newScore: number, reason: string, activityId?: string): Promise<{
+    leadProfile: LeadProfile;
+    scoreEntry: LeadScore;
+  }> {
+    // Get current lead profile
+    const currentProfile = await this.getLeadProfile(leadProfileId);
+    if (!currentProfile) {
+      throw new Error("Lead profile not found");
+    }
+
+    const previousScore = currentProfile.score;
+    const scoreChange = newScore - previousScore;
+
+    // Determine qualification based on score
+    let qualification = currentProfile.qualification;
+    let isQualified = currentProfile.isQualified;
+    
+    if (newScore >= 200) {
+      qualification = 'hot';
+      isQualified = true;
+    } else if (newScore >= 100) {
+      qualification = 'warm';
+      isQualified = true;
+    } else {
+      qualification = 'cold';
+      isQualified = false;
+    }
+
+    // Update the lead profile
+    const updatedProfile = await db
+      .update(leadProfiles)
+      .set({
+        score: newScore,
+        qualification,
+        isQualified,
+        lastActivityAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(leadProfiles.id, leadProfileId))
+      .returning();
+
+    // Create score history entry
+    const scoreEntry = await db.insert(leadScores).values({
+      leadProfileId,
+      previousScore,
+      newScore,
+      scoreChange,
+      activityId,
+      reason,
+    }).returning();
+
+    return {
+      leadProfile: updatedProfile[0],
+      scoreEntry: scoreEntry[0],
+    };
+  }
+
+  // Lead Scoring Rules
+  async createLeadScoringRule(rule: InsertLeadScoringRule): Promise<LeadScoringRule> {
+    const result = await db.insert(leadScoringRules).values(rule).returning();
+    return result[0];
+  }
+
+  async getLeadScoringRules(activeOnly = true): Promise<LeadScoringRule[]> {
+    let query = db.select().from(leadScoringRules);
+    
+    if (activeOnly) {
+      query = query.where(eq(leadScoringRules.isActive, true));
+    }
+    
+    const result = await query.orderBy(leadScoringRules.priority);
+    return result;
+  }
+
+  async getLeadScoringRule(id: string): Promise<LeadScoringRule | undefined> {
+    const result = await db.select().from(leadScoringRules).where(eq(leadScoringRules.id, id));
+    return result[0];
+  }
+
+  async updateLeadScoringRule(id: string, updates: Partial<InsertLeadScoringRule>): Promise<LeadScoringRule> {
+    const result = await db
+      .update(leadScoringRules)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(leadScoringRules.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Lead scoring rule not found");
+    }
+    
+    return result[0];
+  }
+
+  async deleteLeadScoringRule(id: string): Promise<void> {
+    await db.delete(leadScoringRules).where(eq(leadScoringRules.id, id));
+  }
+
+  // CRM Integration
+  async createCrmExportLog(log: InsertCrmExportLog): Promise<CrmExportLog> {
+    const result = await db.insert(crmExportLog).values(log).returning();
+    return result[0];
+  }
+
+  async getCrmExportLogs(leadProfileId?: string, limit = 50): Promise<CrmExportLog[]> {
+    let query = db.select().from(crmExportLog);
+    
+    if (leadProfileId) {
+      query = query.where(eq(crmExportLog.leadProfileId, leadProfileId));
+    }
+    
+    const result = await query
+      .orderBy(desc(crmExportLog.createdAt))
+      .limit(limit);
+    return result;
+  }
+
+  async updateCrmExportLog(id: string, updates: Partial<InsertCrmExportLog>): Promise<CrmExportLog> {
+    const result = await db
+      .update(crmExportLog)
+      .set(updates)
+      .where(eq(crmExportLog.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("CRM export log not found");
+    }
+    
+    return result[0];
+  }
+
+  async getLeadsForCrmSync(crmSystem?: string, limit = 100): Promise<LeadProfile[]> {
+    let query = db.select().from(leadProfiles)
+      .where(eq(leadProfiles.crmSyncStatus, 'pending'));
+    
+    if (crmSystem) {
+      // Additional filtering based on CRM system if needed
+      query = query.where(and(
+        eq(leadProfiles.crmSyncStatus, 'pending'),
+        eq(leadProfiles.isQualified, true)
+      ));
+    }
+    
+    const result = await query
+      .orderBy(desc(leadProfiles.updatedAt))
+      .limit(limit);
+    return result;
+  }
+
+  async markLeadAsSynced(leadProfileId: string, crmContactId: string): Promise<LeadProfile> {
+    const result = await db
+      .update(leadProfiles)
+      .set({
+        crmSyncStatus: 'synced',
+        crmContactId,
+        crmLastSyncAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(leadProfiles.id, leadProfileId))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Lead profile not found");
+    }
+    
+    return result[0];
   }
 }
 

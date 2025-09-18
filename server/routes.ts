@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
-import { insertDemoRequestSchema, insertEventSchema, insertSessionSchema, insertPageViewSchema, insertSectionViewSchema, insertFormInteractionSchema, insertConversionFunnelSchema, insertFunnelProgressionSchema, insertConsentSettingsSchema, insertTestimonialSchema, insertCaseStudySchema } from "@shared/schema";
+import { insertDemoRequestSchema, insertEventSchema, insertSessionSchema, insertPageViewSchema, insertSectionViewSchema, insertFormInteractionSchema, insertConversionFunnelSchema, insertFunnelProgressionSchema, insertConsentSettingsSchema, insertTestimonialSchema, insertCaseStudySchema, insertLeadScoringRuleSchema, insertCrmExportLogSchema, insertLeadActivitySchema } from "@shared/schema";
 import { getPricingTier, isRecurringSubscription, isOneTimePayment } from "@shared/pricing";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -13,10 +13,114 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2025-08-27.basil",
 });
 
+// Security and middleware utilities
+const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
+
+// Rate limiting middleware
+function createRateLimit(maxRequests: number, windowMs: number) {
+  return (req: any, res: any, next: any) => {
+    const key = req.ip || 'unknown';
+    const now = Date.now();
+    
+    let requestData = rateLimitStore.get(key);
+    if (!requestData || now > requestData.resetTime) {
+      requestData = { count: 0, resetTime: now + windowMs };
+    }
+    
+    requestData.count++;
+    rateLimitStore.set(key, requestData);
+    
+    if (requestData.count > maxRequests) {
+      return res.status(429).json({ 
+        message: 'Too many requests, please try again later',
+        retryAfter: Math.ceil((requestData.resetTime - now) / 1000)
+      });
+    }
+    
+    next();
+  };
+}
+
+// Consent validation middleware
+function requireConsent(consentType?: 'analytics' | 'marketing' | 'personalization') {
+  return async (req: any, res: any, next: any) => {
+    const visitorId = req.body?.visitorId || req.query?.visitorId;
+    
+    if (!visitorId) {
+      return next(); // If no visitor ID, allow request (for initial contact forms)
+    }
+    
+    try {
+      const consent = await storage.getConsentSettings(visitorId);
+      
+      if (consent && consent.optedOutAt) {
+        return res.status(403).json({ 
+          message: 'User has opted out of data processing',
+          optedOutAt: consent.optedOutAt
+        });
+      }
+      
+      if (consentType && consent) {
+        const hasConsent = consentType === 'analytics' ? consent.analyticsConsent :
+                          consentType === 'marketing' ? consent.marketingConsent :
+                          consentType === 'personalization' ? consent.personalizationConsent :
+                          false;
+        
+        if (!hasConsent) {
+          return res.status(403).json({ 
+            message: `${consentType} consent not granted`,
+            consentType
+          });
+        }
+      }
+      
+      next();
+    } catch (error) {
+      next(); // On error, allow request but log the issue
+      console.warn('Consent check failed:', error);
+    }
+  };
+}
+
+// Idempotency middleware for critical operations
+const idempotencyStore = new Map<string, { result: any; timestamp: number }>();
+
+function createIdempotencyMiddleware(windowMs: number = 5 * 60 * 1000) {
+  return (req: any, res: any, next: any) => {
+    const idempotencyKey = req.headers['idempotency-key'];
+    
+    if (!idempotencyKey) {
+      return next(); // Allow request without idempotency key
+    }
+    
+    const now = Date.now();
+    const existing = idempotencyStore.get(idempotencyKey);
+    
+    if (existing && (now - existing.timestamp) < windowMs) {
+      return res.json(existing.result);
+    }
+    
+    // Store original json method to capture response
+    const originalJson = res.json;
+    res.json = function(data: any) {
+      idempotencyStore.set(idempotencyKey, {
+        result: data,
+        timestamp: now
+      });
+      return originalJson.call(this, data);
+    };
+    
+    next();
+  };
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   
-  // Demo request endpoint
-  app.post("/api/demo-request", async (req, res) => {
+  // Demo request endpoint - with rate limiting and idempotency
+  app.post("/api/demo-request", 
+    createRateLimit(3, 60 * 1000), // 3 requests per minute
+    createIdempotencyMiddleware(), 
+    async (req, res) => {
     try {
       const validatedData = insertDemoRequestSchema.parse(req.body);
       const demoRequest = await storage.createDemoRequest(validatedData);
@@ -81,7 +185,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pageView = await storage.updatePageView(id, updates);
       res.json(pageView);
     } catch (error: any) {
-      res.status(400).json({ message: "Error updating page view: " + error.message });
+      // If page view not found, it's likely because the original creation failed
+      // Return success instead of error to prevent client retries
+      if (error.message === "Page view not found") {
+        res.json({ message: "Page view not found, but update acknowledged" });
+      } else {
+        res.status(400).json({ message: "Error updating page view: " + error.message });
+      }
     }
   });
 
@@ -444,6 +554,424 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Case study deleted successfully" });
     } catch (error: any) {
       res.status(500).json({ message: "Error deleting case study: " + error.message });
+    }
+  });
+
+  // Lead Scoring and Management API Routes
+  
+  // Lead profile management
+  app.get("/api/leads", async (req, res) => {
+    try {
+      const { qualification, stage, isQualified, assignedTo, limit = '50', offset = '0' } = req.query;
+      
+      const filters: any = {};
+      if (qualification) filters.qualification = qualification as string;
+      if (stage) filters.stage = stage as string;
+      if (isQualified !== undefined) filters.isQualified = isQualified === 'true';
+      if (assignedTo) filters.assignedTo = assignedTo as string;
+      filters.limit = parseInt(limit as string);
+      filters.offset = parseInt(offset as string);
+
+      const leads = await storage.getLeads(filters);
+      const totalCount = await storage.getLeadsCount(filters);
+      
+      res.json({
+        leads,
+        pagination: {
+          total: totalCount,
+          limit: filters.limit,
+          offset: filters.offset,
+          hasMore: filters.offset + filters.limit < totalCount
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching leads: " + error.message });
+    }
+  });
+
+  app.get("/api/leads/:id", async (req, res) => {
+    try {
+      const lead = await storage.getLeadProfile(req.params.id);
+      if (!lead) {
+        return res.status(404).json({ message: "Lead not found" });
+      }
+      res.json(lead);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching lead: " + error.message });
+    }
+  });
+
+  app.get("/api/leads/visitor/:visitorId", async (req, res) => {
+    try {
+      const lead = await storage.getLeadProfileByVisitorId(req.params.visitorId);
+      if (!lead) {
+        return res.status(404).json({ message: "Lead not found" });
+      }
+      res.json(lead);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching lead: " + error.message });
+    }
+  });
+
+  app.put("/api/leads/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      const lead = await storage.updateLeadProfile(req.params.id, updates);
+      res.json(lead);
+    } catch (error: any) {
+      res.status(400).json({ message: "Error updating lead: " + error.message });
+    }
+  });
+
+  // Lead activities and scoring history
+  app.get("/api/leads/:id/activities", async (req, res) => {
+    try {
+      const { limit = '50' } = req.query;
+      const activities = await storage.getLeadActivities(req.params.id, parseInt(limit as string));
+      res.json(activities);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching lead activities: " + error.message });
+    }
+  });
+
+  app.get("/api/leads/:id/score-history", async (req, res) => {
+    try {
+      const { limit = '50' } = req.query;
+      const scores = await storage.getLeadScoreHistory(req.params.id, parseInt(limit as string));
+      res.json(scores);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching score history: " + error.message });
+    }
+  });
+
+  // POST /api/leads/scoring/activity - Manual activity scoring endpoint with security
+  app.post("/api/leads/scoring/activity",
+    createRateLimit(20, 60 * 1000), // 20 requests per minute
+    createIdempotencyMiddleware(),
+    requireConsent('analytics'),
+    async (req, res) => {
+    try {
+      const validatedData = insertLeadActivitySchema.parse(req.body);
+      
+      // Create the activity record
+      const activity = await storage.createLeadActivity(validatedData);
+      
+      // If points are awarded, update the lead score
+      if (validatedData.pointsAwarded && validatedData.pointsAwarded > 0) {
+        const leadProfile = await storage.getLeadProfile(validatedData.leadProfileId);
+        if (leadProfile) {
+          const newScore = (leadProfile.score || 0) + validatedData.pointsAwarded;
+          const reason = `Manual activity: ${validatedData.activityName} (+${validatedData.pointsAwarded} points)`;
+          
+          const result = await storage.updateLeadScoreAndQualification(
+            validatedData.leadProfileId,
+            newScore,
+            reason,
+            activity.id
+          );
+          
+          res.json({
+            activity,
+            scoreUpdate: result,
+            message: "Lead activity recorded and score updated"
+          });
+        } else {
+          res.status(404).json({ message: "Lead profile not found" });
+        }
+      } else {
+        res.json({
+          activity,
+          message: "Lead activity recorded"
+        });
+      }
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid activity data: " + error.message });
+    }
+  });
+
+  // Lead scoring rules management
+  app.get("/api/scoring-rules", async (req, res) => {
+    try {
+      const { activeOnly = 'true' } = req.query;
+      const rules = await storage.getLeadScoringRules(activeOnly === 'true');
+      res.json(rules);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching scoring rules: " + error.message });
+    }
+  });
+
+  app.get("/api/scoring-rules/:id", async (req, res) => {
+    try {
+      const rule = await storage.getLeadScoringRule(req.params.id);
+      if (!rule) {
+        return res.status(404).json({ message: "Scoring rule not found" });
+      }
+      res.json(rule);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching scoring rule: " + error.message });
+    }
+  });
+
+  app.post("/api/scoring-rules", async (req, res) => {
+    try {
+      const validatedData = insertLeadScoringRuleSchema.parse(req.body);
+      const rule = await storage.createLeadScoringRule(validatedData);
+      res.json(rule);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid scoring rule data: " + error.message });
+    }
+  });
+
+  app.put("/api/scoring-rules/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      const rule = await storage.updateLeadScoringRule(req.params.id, updates);
+      res.json(rule);
+    } catch (error: any) {
+      res.status(400).json({ message: "Error updating scoring rule: " + error.message });
+    }
+  });
+
+  app.delete("/api/scoring-rules/:id", async (req, res) => {
+    try {
+      await storage.deleteLeadScoringRule(req.params.id);
+      res.json({ message: "Scoring rule deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: "Error deleting scoring rule: " + error.message });
+    }
+  });
+
+  // Lead scoring automation - Event processing endpoint
+  app.post("/api/lead-scoring/process-event", async (req, res) => {
+    try {
+      const { leadScoringService } = await import('./leadScoringService');
+      const eventData = req.body;
+      
+      const result = await leadScoringService.processAnalyticsEvent(eventData);
+      
+      if (result) {
+        res.json(result);
+      } else {
+        res.json({ message: "No scoring rules applied" });
+      }
+    } catch (error: any) {
+      res.status(400).json({ message: "Error processing scoring event: " + error.message });
+    }
+  });
+
+  // Enhanced analytics endpoints that trigger lead scoring
+  app.post("/api/analytics/page-view-scored", async (req, res) => {
+    try {
+      const validatedData = insertPageViewSchema.parse(req.body);
+      const pageView = await storage.createPageView(validatedData);
+
+      // Trigger lead scoring for page view
+      const { leadScoringService } = await import('./leadScoringService');
+      const scoringResult = await leadScoringService.processPageView({
+        visitorId: validatedData.visitorId,
+        sessionId: validatedData.sessionId,
+        url: validatedData.url,
+        path: validatedData.path,
+        title: validatedData.title || undefined,
+        duration: validatedData.duration || undefined,
+        scrollDepth: validatedData.maxScrollDepth || undefined,
+      });
+
+      res.json({
+        pageView,
+        scoring: scoringResult
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid page view data: " + error.message });
+    }
+  });
+
+  app.post("/api/analytics/form-interaction-scored", async (req, res) => {
+    try {
+      const validatedData = insertFormInteractionSchema.parse(req.body);
+      const interaction = await storage.createFormInteraction(validatedData);
+
+      // Trigger lead scoring for form interaction
+      const { leadScoringService } = await import('./leadScoringService');
+      const scoringResult = await leadScoringService.processFormInteraction({
+        visitorId: validatedData.visitorId,
+        sessionId: validatedData.sessionId,
+        formId: validatedData.formId,
+        action: validatedData.action as any,
+        completed: validatedData.completed || undefined,
+        fieldData: validatedData.fieldValue ? { [validatedData.fieldName || 'unknown']: validatedData.fieldValue } : undefined,
+      });
+
+      // Update lead profile with form data if it's a submission
+      if (validatedData.action === 'submit' && validatedData.fieldValue) {
+        const formData: any = {};
+        if (validatedData.fieldName) {
+          formData[validatedData.fieldName] = validatedData.fieldValue;
+        }
+        await leadScoringService.updateLeadFromFormData(validatedData.visitorId, formData);
+      }
+
+      res.json({
+        interaction,
+        scoring: scoringResult
+      });
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid form interaction data: " + error.message });
+    }
+  });
+
+  // CRM Integration endpoints
+  app.get("/api/crm/export-ready", async (req, res) => {
+    try {
+      const { crmSystem, limit = '100' } = req.query;
+      const leads = await storage.getLeadsForCrmSync(
+        crmSystem as string || undefined,
+        parseInt(limit as string)
+      );
+      res.json(leads);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching CRM export data: " + error.message });
+    }
+  });
+
+  app.post("/api/crm/export-log", async (req, res) => {
+    try {
+      const validatedData = insertCrmExportLogSchema.parse(req.body);
+      const log = await storage.createCrmExportLog(validatedData);
+      res.json(log);
+    } catch (error: any) {
+      res.status(400).json({ message: "Invalid CRM export log data: " + error.message });
+    }
+  });
+
+  app.get("/api/crm/export-logs", async (req, res) => {
+    try {
+      const { leadProfileId, limit = '50' } = req.query;
+      const logs = await storage.getCrmExportLogs(
+        leadProfileId as string || undefined,
+        parseInt(limit as string)
+      );
+      res.json(logs);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching CRM export logs: " + error.message });
+    }
+  });
+
+  app.post("/api/crm/mark-synced", async (req, res) => {
+    try {
+      const { leadProfileId, crmContactId } = req.body;
+      
+      if (!leadProfileId || !crmContactId) {
+        return res.status(400).json({ message: "Lead profile ID and CRM contact ID are required" });
+      }
+
+      const lead = await storage.markLeadAsSynced(leadProfileId, crmContactId);
+      res.json(lead);
+    } catch (error: any) {
+      res.status(400).json({ message: "Error marking lead as synced: " + error.message });
+    }
+  });
+
+  // Specific CRM system export endpoints
+  app.get("/api/crm/hubspot/leads", async (req, res) => {
+    try {
+      const { limit = '50' } = req.query;
+      const leads = await storage.getLeadsForCrmSync('hubspot', parseInt(limit as string));
+      
+      // Transform data for HubSpot format
+      const hubspotLeads = leads.map(lead => ({
+        id: lead.id,
+        email: lead.email,
+        firstname: lead.name?.split(' ')[0] || '',
+        lastname: lead.name?.split(' ').slice(1).join(' ') || '',
+        company: lead.company,
+        jobtitle: lead.jobTitle,
+        phone: lead.phoneNumber,
+        hubspot_owner_id: lead.assignedTo,
+        lead_score: lead.score,
+        lead_status: lead.qualification,
+        lifecycle_stage: lead.stage === 'customer' ? 'customer' : (lead.isQualified ? 'marketingqualifiedlead' : 'lead'),
+        website: lead.website,
+        first_conversion_date: lead.firstSeenAt,
+        last_activity_date: lead.lastActivityAt,
+        foldera_visitor_id: lead.visitorId,
+        source: lead.source,
+      }));
+
+      res.json({
+        leads: hubspotLeads,
+        total: hubspotLeads.length,
+        nextPageToken: null, // Implement pagination if needed
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching leads for HubSpot export: " + error.message });
+    }
+  });
+
+  app.get("/api/crm/salesforce/leads", async (req, res) => {
+    try {
+      const { limit = '50' } = req.query;
+      const leads = await storage.getLeadsForCrmSync('salesforce', parseInt(limit as string));
+      
+      // Transform data for Salesforce format
+      const salesforceLeads = leads.map(lead => ({
+        Id: lead.crmContactId || undefined,
+        FirstName: lead.name?.split(' ')[0] || '',
+        LastName: lead.name?.split(' ').slice(1).join(' ') || 'Unknown',
+        Email: lead.email,
+        Company: lead.company || 'Unknown Company',
+        Title: lead.jobTitle,
+        Phone: lead.phoneNumber,
+        Website: lead.website,
+        LeadSource: lead.source || 'Website',
+        Status: lead.qualification === 'hot' ? 'Working - Contacted' : 
+                lead.qualification === 'warm' ? 'Open - Not Contacted' : 'New',
+        Rating: lead.qualification === 'hot' ? 'Hot' : 
+                lead.qualification === 'warm' ? 'Warm' : 'Cold',
+        LeadScore: lead.score,
+        Description: `Foldera lead imported from visitor ID: ${lead.visitorId}`,
+        OwnerId: lead.assignedTo,
+        // Custom fields
+        Foldera_Visitor_ID__c: lead.visitorId,
+        Foldera_Lead_ID__c: lead.id,
+        Total_Page_Views__c: lead.totalPageViews,
+        Total_Sessions__c: lead.totalSessions,
+        First_Seen_Date__c: lead.firstSeenAt,
+        Last_Activity_Date__c: lead.lastActivityAt,
+        Lead_Stage__c: lead.stage,
+      }));
+
+      res.json({
+        records: salesforceLeads,
+        totalSize: salesforceLeads.length,
+        done: true,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching leads for Salesforce export: " + error.message });
+    }
+  });
+
+  // Lead analytics and reporting
+  app.get("/api/leads/analytics/summary", async (req, res) => {
+    try {
+      const totalLeads = await storage.getLeadsCount();
+      const qualifiedLeads = await storage.getLeadsCount({ isQualified: true });
+      const hotLeads = await storage.getLeadsCount({ qualification: 'hot' });
+      const warmLeads = await storage.getLeadsCount({ qualification: 'warm' });
+      const coldLeads = await storage.getLeadsCount({ qualification: 'cold' });
+
+      res.json({
+        summary: {
+          total: totalLeads,
+          qualified: qualifiedLeads,
+          hot: hotLeads,
+          warm: warmLeads,
+          cold: coldLeads,
+          qualificationRate: totalLeads > 0 ? (qualifiedLeads / totalLeads) * 100 : 0
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching lead analytics: " + error.message });
     }
   });
 

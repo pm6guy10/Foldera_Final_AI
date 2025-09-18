@@ -430,3 +430,174 @@ export type SelectTestimonial = typeof testimonials.$inferSelect;
 export type InsertCaseStudy = z.infer<typeof insertCaseStudySchema>;
 export type CaseStudy = typeof caseStudies.$inferSelect;
 export type SelectCaseStudy = typeof caseStudies.$inferSelect;
+
+// Lead Scoring and CRM Integration Tables
+
+// Lead Profiles - comprehensive prospect information
+export const leadProfiles = pgTable("lead_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  visitorId: text("visitor_id").notNull().unique(), // links to analytics visitor
+  email: text("email"), // captured from forms
+  name: text("name"), // captured from forms
+  company: text("company"), // captured from forms
+  jobTitle: text("job_title"), // captured from forms
+  phoneNumber: text("phone_number"), // captured from forms
+  
+  // Lead qualification data
+  score: integer("score").default(0), // current lead score
+  qualification: text("qualification").default("cold"), // hot, warm, cold
+  stage: text("stage").default("visitor"), // visitor, lead, mql, sql, opportunity, customer
+  
+  // Lead source and attribution
+  firstSource: text("first_source"), // utm_source from first visit
+  firstMedium: text("first_medium"), // utm_medium from first visit
+  firstCampaign: text("first_campaign"), // utm_campaign from first visit
+  lastSource: text("last_source"), // most recent source
+  lastMedium: text("last_medium"), // most recent medium
+  lastCampaign: text("last_campaign"), // most recent campaign
+  
+  // Engagement metrics
+  totalPageViews: integer("total_page_views").default(0),
+  totalSessions: integer("total_sessions").default(0),
+  totalTimeOnSite: integer("total_time_on_site").default(0), // milliseconds
+  lastActivityAt: timestamp("last_activity_at"),
+  firstSeenAt: timestamp("first_seen_at").defaultNow(),
+  
+  // CRM integration status
+  crmSyncStatus: text("crm_sync_status").default("pending"), // pending, synced, failed
+  crmContactId: text("crm_contact_id"), // ID in external CRM
+  crmLastSyncAt: timestamp("crm_last_sync_at"),
+  
+  // Lifecycle management
+  isActive: boolean("is_active").default(true),
+  isQualified: boolean("is_qualified").default(false),
+  assignedTo: text("assigned_to"), // sales rep assignment
+  handoffTriggered: boolean("handoff_triggered").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Lead Activities - detailed activity tracking for scoring
+export const leadActivities = pgTable("lead_activities", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  leadProfileId: varchar("lead_profile_id").notNull().references(() => leadProfiles.id),
+  visitorId: text("visitor_id").notNull(), // for faster queries
+  
+  // Activity details
+  activityType: text("activity_type").notNull(), // page_view, form_interaction, demo_view, etc.
+  activityName: text("activity_name").notNull(), // specific activity name
+  
+  // Scoring data
+  pointsAwarded: integer("points_awarded").default(0),
+  scoringRuleId: text("scoring_rule_id"), // which rule triggered the points
+  
+  // Activity context
+  pageUrl: text("page_url"),
+  sessionId: text("session_id"),
+  metadata: json("metadata"), // additional activity-specific data
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Lead Scores - historical score tracking and rules
+export const leadScores = pgTable("lead_scores", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  leadProfileId: varchar("lead_profile_id").notNull().references(() => leadProfiles.id),
+  
+  // Score change details
+  previousScore: integer("previous_score").default(0),
+  newScore: integer("new_score").notNull(),
+  scoreChange: integer("score_change").notNull(),
+  
+  // What caused the score change
+  activityId: varchar("activity_id").references(() => leadActivities.id),
+  reason: text("reason").notNull(), // description of scoring reason
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Lead Scoring Rules - configurable scoring system
+export const leadScoringRules = pgTable("lead_scoring_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  
+  // Rule identification
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  category: text("category").notNull(), // page_visit, form_action, engagement, etc.
+  
+  // Rule conditions
+  conditions: json("conditions").notNull(), // JSON conditions for triggering
+  pointValue: integer("point_value").notNull(),
+  maxPoints: integer("max_points"), // maximum points from this rule per lead
+  timeWindow: integer("time_window"), // time window in hours for max points
+  
+  // Rule status
+  isActive: boolean("is_active").default(true),
+  priority: integer("priority").default(0), // for rule ordering
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// CRM Export Log - track CRM integration activities
+export const crmExportLog = pgTable("crm_export_log", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  leadProfileId: varchar("lead_profile_id").notNull().references(() => leadProfiles.id),
+  
+  // Export details
+  crmSystem: text("crm_system").notNull(), // hubspot, salesforce, etc.
+  exportType: text("export_type").notNull(), // create, update, delete
+  status: text("status").notNull(), // pending, success, failed
+  
+  // Export data
+  requestPayload: json("request_payload"),
+  responseData: json("response_data"),
+  errorMessage: text("error_message"),
+  
+  // Metadata
+  exportedBy: text("exported_by"), // user who triggered export
+  retryCount: integer("retry_count").default(0),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Create insert schemas for lead scoring tables
+export const insertLeadProfileSchema = createInsertSchema(leadProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertLeadActivitySchema = createInsertSchema(leadActivities).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLeadScoreSchema = createInsertSchema(leadScores).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertLeadScoringRuleSchema = createInsertSchema(leadScoringRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCrmExportLogSchema = createInsertSchema(crmExportLog).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Export types for lead scoring
+export type InsertLeadProfile = z.infer<typeof insertLeadProfileSchema>;
+export type LeadProfile = typeof leadProfiles.$inferSelect;
+export type InsertLeadActivity = z.infer<typeof insertLeadActivitySchema>;
+export type LeadActivity = typeof leadActivities.$inferSelect;
+export type InsertLeadScore = z.infer<typeof insertLeadScoreSchema>;
+export type LeadScore = typeof leadScores.$inferSelect;
+export type InsertLeadScoringRule = z.infer<typeof insertLeadScoringRuleSchema>;
+export type LeadScoringRule = typeof leadScoringRules.$inferSelect;
+export type InsertCrmExportLog = z.infer<typeof insertCrmExportLogSchema>;
+export type CrmExportLog = typeof crmExportLog.$inferSelect;
