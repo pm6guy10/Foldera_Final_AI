@@ -601,3 +601,153 @@ export type InsertLeadScoringRule = z.infer<typeof insertLeadScoringRuleSchema>;
 export type LeadScoringRule = typeof leadScoringRules.$inferSelect;
 export type InsertCrmExportLog = z.infer<typeof insertCrmExportLogSchema>;
 export type CrmExportLog = typeof crmExportLog.$inferSelect;
+
+// Document Processing System Tables
+export const documents = pgTable("documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  
+  // File information
+  fileName: text("file_name").notNull(),
+  originalName: text("original_name").notNull(),
+  fileType: text("file_type").notNull(), // pdf, docx, txt
+  fileSize: integer("file_size").notNull(), // in bytes
+  filePath: text("file_path").notNull(), // path to stored file
+  
+  // Content extraction
+  extractedText: text("extracted_text"),
+  textExtractionStatus: text("text_extraction_status").notNull().default("pending"), // pending, processing, completed, failed
+  extractionError: text("extraction_error"),
+  
+  // Processing status
+  processingStatus: text("processing_status").notNull().default("uploaded"), // uploaded, extracting, analyzing, completed, failed
+  
+  // Metadata
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  processedAt: timestamp("processed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const documentAnalysis = pgTable("document_analysis", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: varchar("document_id").notNull().references(() => documents.id),
+  
+  // Analysis results
+  analysisType: text("analysis_type").notNull(), // contradiction, compliance, legal, risk
+  status: text("status").notNull().default("pending"), // pending, processing, completed, failed
+  
+  // AI Analysis metadata  
+  model: text("model").default("gpt-5"), // AI model used
+  prompt: text("prompt"), // prompt used for analysis
+  rawResponse: json("raw_response"), // full AI response
+  
+  // Analysis summary
+  summary: text("summary"),
+  confidenceScore: real("confidence_score"), // 0-1 confidence level
+  riskLevel: text("risk_level"), // low, medium, high, critical
+  
+  // Processing metadata
+  processingTimeMs: integer("processing_time_ms"),
+  analysisError: text("analysis_error"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const contradictionFindings = pgTable("contradiction_findings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  analysisId: varchar("analysis_id").notNull().references(() => documentAnalysis.id),
+  documentId: varchar("document_id").notNull().references(() => documents.id),
+  
+  // Contradiction details
+  contradictionType: text("contradiction_type").notNull(), // budget, legal, compliance, version, deadline, data
+  severity: text("severity").notNull(), // low, medium, high, critical
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  
+  // Location in document
+  pageNumber: integer("page_number"),
+  lineNumber: integer("line_number"),
+  textSnippet: text("text_snippet"), // relevant text from document
+  
+  // Impact and recommendations
+  potentialImpact: text("potential_impact"),
+  recommendation: text("recommendation"),
+  suggestedFix: text("suggested_fix"),
+  
+  // Related documents (for cross-document contradictions)
+  relatedDocumentIds: text("related_document_ids").array(), // array of related document IDs
+  
+  // Resolution status
+  status: text("status").notNull().default("detected"), // detected, reviewing, resolved, ignored
+  resolvedBy: varchar("resolved_by").references(() => users.id),
+  resolvedAt: timestamp("resolved_at"),
+  resolutionNotes: text("resolution_notes"),
+  
+  // Value/cost implications
+  financialImpact: text("financial_impact"), // estimated financial impact
+  preventedLoss: text("prevented_loss"), // potential loss prevented
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Document processing jobs for background processing
+export const documentProcessingJobs = pgTable("document_processing_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  documentId: varchar("document_id").notNull().references(() => documents.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  
+  // Job details
+  jobType: text("job_type").notNull(), // text_extraction, ai_analysis, contradiction_detection
+  status: text("status").notNull().default("queued"), // queued, processing, completed, failed, cancelled
+  priority: integer("priority").default(0), // higher = more priority
+  
+  // Processing metadata
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+  processingTimeMs: integer("processing_time_ms"),
+  
+  // Error handling
+  retryCount: integer("retry_count").default(0),
+  maxRetries: integer("max_retries").default(3),
+  errorMessage: text("error_message"),
+  
+  // Progress tracking
+  progress: integer("progress").default(0), // 0-100 percentage
+  statusMessage: text("status_message"),
+  
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Create insert schemas for document processing
+export const insertDocumentSchema = createInsertSchema(documents).omit({
+  id: true,
+  createdAt: true,
+  uploadedAt: true,
+});
+
+export const insertDocumentAnalysisSchema = createInsertSchema(documentAnalysis).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+export const insertContradictionFindingSchema = createInsertSchema(contradictionFindings).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertDocumentProcessingJobSchema = createInsertSchema(documentProcessingJobs).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Export types for document processing
+export type InsertDocument = z.infer<typeof insertDocumentSchema>;
+export type Document = typeof documents.$inferSelect;
+export type InsertDocumentAnalysis = z.infer<typeof insertDocumentAnalysisSchema>;
+export type DocumentAnalysis = typeof documentAnalysis.$inferSelect;
+export type InsertContradictionFinding = z.infer<typeof insertContradictionFindingSchema>;
+export type ContradictionFinding = typeof contradictionFindings.$inferSelect;
+export type InsertDocumentProcessingJob = z.infer<typeof insertDocumentProcessingJobSchema>;
+export type DocumentProcessingJob = typeof documentProcessingJobs.$inferSelect;

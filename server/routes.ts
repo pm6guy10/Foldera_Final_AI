@@ -1,8 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Stripe from "stripe";
+import multer from "multer";
+import path from "path";
+import fs from "fs/promises";
 import { storage } from "./storage";
-import { insertDemoRequestSchema, insertEventSchema, insertSessionSchema, insertPageViewSchema, insertSectionViewSchema, insertFormInteractionSchema, insertConversionFunnelSchema, insertFunnelProgressionSchema, insertConsentSettingsSchema, insertTestimonialSchema, insertCaseStudySchema, insertLeadScoringRuleSchema, insertCrmExportLogSchema, insertLeadActivitySchema } from "@shared/schema";
+import { documentProcessingService } from "./documentProcessingService";
+import { insertDemoRequestSchema, insertEventSchema, insertSessionSchema, insertPageViewSchema, insertSectionViewSchema, insertFormInteractionSchema, insertConversionFunnelSchema, insertFunnelProgressionSchema, insertConsentSettingsSchema, insertTestimonialSchema, insertCaseStudySchema, insertLeadScoringRuleSchema, insertCrmExportLogSchema, insertLeadActivitySchema, insertDocumentSchema, insertDocumentAnalysisSchema, insertContradictionFindingSchema, insertDocumentProcessingJobSchema } from "@shared/schema";
 import { getPricingTier, isRecurringSubscription, isOneTimePayment } from "@shared/pricing";
 
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -114,8 +118,212 @@ function createIdempotencyMiddleware(windowMs: number = 5 * 60 * 1000) {
   };
 }
 
+// Configure multer for file uploads
+const uploadDir = path.join(process.cwd(), 'uploads');
+
+// Ensure upload directory exists
+fs.mkdir(uploadDir, { recursive: true }).catch(console.error);
+
+const storage_config = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    // Generate unique filename with timestamp and random string
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.originalname}`;
+    cb(null, uniqueName);
+  }
+});
+
+const upload = multer({
+  storage: storage_config,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 5 // Max 5 files at once
+  },
+  fileFilter: (req, file, cb) => {
+    // Check file type
+    const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+    const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt'];
+    
+    const fileExtension = path.extname(file.originalname).toLowerCase();
+    
+    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
+      cb(null, true);
+    } else {
+      cb(new Error(`Unsupported file type. Only PDF, Word documents, and text files are allowed. Got: ${file.mimetype}`));
+    }
+  }
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   
+  // Document Processing Endpoints
+  
+  // Upload document(s)
+  app.post("/api/documents/upload", 
+    createRateLimit(10, 60 * 1000), // 10 uploads per minute
+    upload.array('documents', 5), // Max 5 files
+    async (req, res) => {
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ message: "No files uploaded" });
+      }
+
+      const userId = req.body.userId || 'demo-user'; // TODO: Replace with actual user auth
+      const uploadedDocuments = [];
+
+      for (const file of req.files as Express.Multer.File[]) {
+        // Get file type from extension
+        const fileExtension = path.extname(file.originalname).toLowerCase();
+        const fileType = fileExtension.replace('.', '');
+
+        // Create document record
+        const documentData = {
+          userId,
+          fileName: file.filename,
+          originalName: file.originalname,
+          fileType,
+          fileSize: file.size,
+          filePath: file.path,
+          processingStatus: 'uploaded' as const,
+          textExtractionStatus: 'pending' as const
+        };
+
+        const document = await storage.createDocument(documentData);
+        uploadedDocuments.push(document);
+
+        // Start background processing
+        setImmediate(async () => {
+          try {
+            await documentProcessingService.processDocument(document);
+          } catch (error) {
+            console.error('Background processing failed for document:', document.id, error);
+          }
+        });
+      }
+
+      res.json({
+        message: `${uploadedDocuments.length} document(s) uploaded successfully`,
+        documents: uploadedDocuments
+      });
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      res.status(500).json({ message: "Upload failed: " + error.message });
+    }
+  });
+
+  // Get user's documents
+  app.get("/api/documents", async (req, res) => {
+    try {
+      const userId = req.query.userId || 'demo-user'; // TODO: Replace with actual user auth
+      const documents = await storage.getUserDocuments(userId as string);
+      res.json(documents);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to fetch documents: " + error.message });
+    }
+  });
+
+  // Get specific document
+  app.get("/api/documents/:id", async (req, res) => {
+    try {
+      const document = await storage.getDocument(req.params.id);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      res.json(document);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to fetch document: " + error.message });
+    }
+  });
+
+  // Get document analysis results
+  app.get("/api/documents/:id/analysis", async (req, res) => {
+    try {
+      const analyses = await storage.getDocumentAnalysesByDocument(req.params.id);
+      res.json(analyses);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to fetch analysis: " + error.message });
+    }
+  });
+
+  // Get contradictions for a document
+  app.get("/api/documents/:id/contradictions", async (req, res) => {
+    try {
+      const contradictions = await storage.getContradictionsByDocument(req.params.id);
+      res.json(contradictions);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to fetch contradictions: " + error.message });
+    }
+  });
+
+  // Get user's contradictions with filters
+  app.get("/api/contradictions", async (req, res) => {
+    try {
+      const userId = req.query.userId || 'demo-user'; // TODO: Replace with actual user auth
+      const filters = {
+        severity: req.query.severity as string,
+        status: req.query.status as string,
+        contradictionType: req.query.type as string,
+        limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
+        offset: req.query.offset ? parseInt(req.query.offset as string) : 0
+      };
+
+      const contradictions = await storage.getUserContradictions(userId as string, filters);
+      res.json(contradictions);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to fetch contradictions: " + error.message });
+    }
+  });
+
+  // Resolve contradiction
+  app.post("/api/contradictions/:id/resolve", async (req, res) => {
+    try {
+      const userId = req.body.userId || 'demo-user'; // TODO: Replace with actual user auth
+      const notes = req.body.notes || '';
+      
+      const contradiction = await storage.resolveContradiction(req.params.id, userId, notes);
+      res.json(contradiction);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to resolve contradiction: " + error.message });
+    }
+  });
+
+  // Update contradiction status
+  app.put("/api/contradictions/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      const contradiction = await storage.updateContradictionFinding(req.params.id, updates);
+      res.json(contradiction);
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to update contradiction: " + error.message });
+    }
+  });
+
+  // Delete document
+  app.delete("/api/documents/:id", async (req, res) => {
+    try {
+      const document = await storage.getDocument(req.params.id);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Delete file from filesystem
+      try {
+        await fs.unlink(document.filePath);
+      } catch (error) {
+        console.warn('Failed to delete file:', document.filePath, error);
+      }
+
+      // Delete from database
+      await storage.deleteDocument(req.params.id);
+      
+      res.json({ message: "Document deleted successfully" });
+    } catch (error: any) {
+      res.status(500).json({ message: "Failed to delete document: " + error.message });
+    }
+  });
+
   // Demo request endpoint - with rate limiting and idempotency
   app.post("/api/demo-request", 
     createRateLimit(3, 60 * 1000), // 3 requests per minute

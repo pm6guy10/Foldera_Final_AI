@@ -372,7 +372,55 @@ export default function Home() {
             </p>
           </div>
           
-          <InteractiveDemo />
+          {/* Live Document Processing Demo */}
+          <div className="bg-card border border-border rounded-lg p-8 glow-border">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold mb-4">Ready to Process Real Documents?</h3>
+              <p className="text-muted-foreground mb-6">
+                Upload your actual PDF, Word, or text files and see AI-powered contradiction detection in action
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link href="/documents">
+                <Button size="lg" className="w-full sm:w-auto" data-testid="try-real-system-button">
+                  <Rocket className="h-5 w-5 mr-2" />
+                  Try Real Document Analysis
+                </Button>
+              </Link>
+              
+              <CalendlyModalButton>
+                <Button variant="outline" size="lg" className="w-full sm:w-auto" data-testid="demo-call-button">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  Book a Demo Call
+                </Button>
+              </CalendlyModalButton>
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div className="text-center">
+                <div className="bg-green-500/10 p-3 rounded-lg mb-2">
+                  <CheckCircle className="h-6 w-6 mx-auto text-green-500" />
+                </div>
+                <p className="font-semibold">Real AI Analysis</p>
+                <p className="text-muted-foreground">Powered by GPT-5 for accurate contradiction detection</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-blue-500/10 p-3 rounded-lg mb-2">
+                  <Shield className="h-6 w-6 mx-auto text-blue-500" />
+                </div>
+                <p className="font-semibold">Secure Processing</p>
+                <p className="text-muted-foreground">Your documents are processed securely and privately</p>
+              </div>
+              <div className="text-center">
+                <div className="bg-purple-500/10 p-3 rounded-lg mb-2">
+                  <Eye className="h-6 w-6 mx-auto text-purple-500" />
+                </div>
+                <p className="font-semibold">Live Dashboard</p>
+                <p className="text-muted-foreground">Real-time insights with actionable recommendations</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
       

@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type DemoRequest, type InsertDemoRequest, type Experiment, type InsertExperiment, type Variant, type InsertVariant, type Assignment, type InsertAssignment, type Event, type InsertEvent, type Session, type InsertSession, type PageView, type InsertPageView, type SectionView, type InsertSectionView, type FormInteraction, type InsertFormInteraction, type ConversionFunnel, type InsertConversionFunnel, type FunnelProgression, type InsertFunnelProgression, type UserJourney, type InsertUserJourney, type ConsentSettings, type InsertConsentSettings, type Testimonial, type InsertTestimonial, type CaseStudy, type InsertCaseStudy, type LeadProfile, type InsertLeadProfile, type LeadActivity, type InsertLeadActivity, type LeadScore, type InsertLeadScore, type LeadScoringRule, type InsertLeadScoringRule, type CrmExportLog, type InsertCrmExportLog, users, demoRequests, experiments, variants, assignments, events, sessions, pageViews, sectionViews, formInteractions, conversionFunnels, funnelProgression, userJourneys, consentSettings, testimonials, caseStudies, leadProfiles, leadActivities, leadScores, leadScoringRules, crmExportLog } from "@shared/schema";
+import { type User, type InsertUser, type DemoRequest, type InsertDemoRequest, type Experiment, type InsertExperiment, type Variant, type InsertVariant, type Assignment, type InsertAssignment, type Event, type InsertEvent, type Session, type InsertSession, type PageView, type InsertPageView, type SectionView, type InsertSectionView, type FormInteraction, type InsertFormInteraction, type ConversionFunnel, type InsertConversionFunnel, type FunnelProgression, type InsertFunnelProgression, type UserJourney, type InsertUserJourney, type ConsentSettings, type InsertConsentSettings, type Testimonial, type InsertTestimonial, type CaseStudy, type InsertCaseStudy, type LeadProfile, type InsertLeadProfile, type LeadActivity, type InsertLeadActivity, type LeadScore, type InsertLeadScore, type LeadScoringRule, type InsertLeadScoringRule, type CrmExportLog, type InsertCrmExportLog, type Document, type InsertDocument, type DocumentAnalysis, type InsertDocumentAnalysis, type ContradictionFinding, type InsertContradictionFinding, type DocumentProcessingJob, type InsertDocumentProcessingJob, users, demoRequests, experiments, variants, assignments, events, sessions, pageViews, sectionViews, formInteractions, conversionFunnels, funnelProgression, userJourneys, consentSettings, testimonials, caseStudies, leadProfiles, leadActivities, leadScores, leadScoringRules, crmExportLog, documents, documentAnalysis, contradictionFindings, documentProcessingJobs } from "@shared/schema";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -128,6 +128,41 @@ export interface IStorage {
   updateCrmExportLog(id: string, updates: Partial<InsertCrmExportLog>): Promise<CrmExportLog>;
   getLeadsForCrmSync(crmSystem?: string, limit?: number): Promise<LeadProfile[]>;
   markLeadAsSynced(leadProfileId: string, crmContactId: string): Promise<LeadProfile>;
+
+  // Document Processing System
+  createDocument(document: InsertDocument): Promise<Document>;
+  getDocument(id: string): Promise<Document | undefined>;
+  getUserDocuments(userId: string): Promise<Document[]>;
+  updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document>;
+  deleteDocument(id: string): Promise<void>;
+  
+  // Document Analysis
+  createDocumentAnalysis(analysis: InsertDocumentAnalysis): Promise<DocumentAnalysis>;
+  getDocumentAnalysis(id: string): Promise<DocumentAnalysis | undefined>;
+  getDocumentAnalysesByDocument(documentId: string): Promise<DocumentAnalysis[]>;
+  updateDocumentAnalysis(id: string, updates: Partial<InsertDocumentAnalysis>): Promise<DocumentAnalysis>;
+  
+  // Contradiction Findings
+  createContradictionFinding(finding: InsertContradictionFinding): Promise<ContradictionFinding>;
+  getContradictionFinding(id: string): Promise<ContradictionFinding | undefined>;
+  getContradictionsByDocument(documentId: string): Promise<ContradictionFinding[]>;
+  getContradictionsByAnalysis(analysisId: string): Promise<ContradictionFinding[]>;
+  getUserContradictions(userId: string, filters?: {
+    severity?: string;
+    status?: string;
+    contradictionType?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ContradictionFinding[]>;
+  updateContradictionFinding(id: string, updates: Partial<InsertContradictionFinding>): Promise<ContradictionFinding>;
+  resolveContradiction(id: string, userId: string, notes: string): Promise<ContradictionFinding>;
+  
+  // Processing Jobs
+  createDocumentProcessingJob(job: InsertDocumentProcessingJob): Promise<DocumentProcessingJob>;
+  getDocumentProcessingJob(id: string): Promise<DocumentProcessingJob | undefined>;
+  getProcessingJobsByDocument(documentId: string): Promise<DocumentProcessingJob[]>;
+  updateProcessingJob(id: string, updates: Partial<InsertDocumentProcessingJob>): Promise<DocumentProcessingJob>;
+  getQueuedJobs(jobType?: string, limit?: number): Promise<DocumentProcessingJob[]>;
 }
 
 // Initialize database connection
@@ -835,6 +870,231 @@ export class DrizzleStorage implements IStorage {
     }
     
     return result[0];
+  }
+
+  // Document Processing System Implementation
+  async createDocument(insertDocument: InsertDocument): Promise<Document> {
+    const result = await db.insert(documents).values(insertDocument).returning();
+    return result[0];
+  }
+
+  async getDocument(id: string): Promise<Document | undefined> {
+    const result = await db.select().from(documents).where(eq(documents.id, id));
+    return result[0];
+  }
+
+  async getUserDocuments(userId: string): Promise<Document[]> {
+    const result = await db
+      .select()
+      .from(documents)
+      .where(eq(documents.userId, userId))
+      .orderBy(desc(documents.createdAt));
+    return result;
+  }
+
+  async updateDocument(id: string, updates: Partial<InsertDocument>): Promise<Document> {
+    const result = await db
+      .update(documents)
+      .set(updates)
+      .where(eq(documents.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Document not found");
+    }
+    
+    return result[0];
+  }
+
+  async deleteDocument(id: string): Promise<void> {
+    await db.delete(documents).where(eq(documents.id, id));
+  }
+
+  // Document Analysis Implementation
+  async createDocumentAnalysis(insertAnalysis: InsertDocumentAnalysis): Promise<DocumentAnalysis> {
+    const result = await db.insert(documentAnalysis).values(insertAnalysis).returning();
+    return result[0];
+  }
+
+  async getDocumentAnalysis(id: string): Promise<DocumentAnalysis | undefined> {
+    const result = await db.select().from(documentAnalysis).where(eq(documentAnalysis.id, id));
+    return result[0];
+  }
+
+  async getDocumentAnalysesByDocument(documentId: string): Promise<DocumentAnalysis[]> {
+    const result = await db
+      .select()
+      .from(documentAnalysis)
+      .where(eq(documentAnalysis.documentId, documentId))
+      .orderBy(desc(documentAnalysis.createdAt));
+    return result;
+  }
+
+  async updateDocumentAnalysis(id: string, updates: Partial<InsertDocumentAnalysis>): Promise<DocumentAnalysis> {
+    const result = await db
+      .update(documentAnalysis)
+      .set(updates)
+      .where(eq(documentAnalysis.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Document analysis not found");
+    }
+    
+    return result[0];
+  }
+
+  // Contradiction Findings Implementation
+  async createContradictionFinding(insertFinding: InsertContradictionFinding): Promise<ContradictionFinding> {
+    const result = await db.insert(contradictionFindings).values(insertFinding).returning();
+    return result[0];
+  }
+
+  async getContradictionFinding(id: string): Promise<ContradictionFinding | undefined> {
+    const result = await db.select().from(contradictionFindings).where(eq(contradictionFindings.id, id));
+    return result[0];
+  }
+
+  async getContradictionsByDocument(documentId: string): Promise<ContradictionFinding[]> {
+    const result = await db
+      .select()
+      .from(contradictionFindings)
+      .where(eq(contradictionFindings.documentId, documentId))
+      .orderBy(desc(contradictionFindings.createdAt));
+    return result;
+  }
+
+  async getContradictionsByAnalysis(analysisId: string): Promise<ContradictionFinding[]> {
+    const result = await db
+      .select()
+      .from(contradictionFindings)
+      .where(eq(contradictionFindings.analysisId, analysisId))
+      .orderBy(desc(contradictionFindings.createdAt));
+    return result;
+  }
+
+  async getUserContradictions(userId: string, filters?: {
+    severity?: string;
+    status?: string;
+    contradictionType?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ContradictionFinding[]> {
+    let query = db
+      .select()
+      .from(contradictionFindings)
+      .innerJoin(documents, eq(contradictionFindings.documentId, documents.id))
+      .where(eq(documents.userId, userId));
+
+    if (filters?.severity) {
+      query = query.where(eq(contradictionFindings.severity, filters.severity));
+    }
+    if (filters?.status) {
+      query = query.where(eq(contradictionFindings.status, filters.status));
+    }
+    if (filters?.contradictionType) {
+      query = query.where(eq(contradictionFindings.contradictionType, filters.contradictionType));
+    }
+
+    query = query.orderBy(desc(contradictionFindings.createdAt));
+
+    if (filters?.limit) {
+      query = query.limit(filters.limit);
+    }
+    if (filters?.offset) {
+      query = query.offset(filters.offset);
+    }
+
+    const result = await query;
+    return result.map((r: any) => r.contradiction_findings);
+  }
+
+  async updateContradictionFinding(id: string, updates: Partial<InsertContradictionFinding>): Promise<ContradictionFinding> {
+    const result = await db
+      .update(contradictionFindings)
+      .set(updates)
+      .where(eq(contradictionFindings.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Contradiction finding not found");
+    }
+    
+    return result[0];
+  }
+
+  async resolveContradiction(id: string, userId: string, notes: string): Promise<ContradictionFinding> {
+    const result = await db
+      .update(contradictionFindings)
+      .set({
+        status: 'resolved',
+        resolvedBy: userId,
+        resolvedAt: new Date(),
+        resolutionNotes: notes,
+      })
+      .where(eq(contradictionFindings.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Contradiction finding not found");
+    }
+    
+    return result[0];
+  }
+
+  // Processing Jobs Implementation
+  async createDocumentProcessingJob(insertJob: InsertDocumentProcessingJob): Promise<DocumentProcessingJob> {
+    const result = await db.insert(documentProcessingJobs).values(insertJob).returning();
+    return result[0];
+  }
+
+  async getDocumentProcessingJob(id: string): Promise<DocumentProcessingJob | undefined> {
+    const result = await db.select().from(documentProcessingJobs).where(eq(documentProcessingJobs.id, id));
+    return result[0];
+  }
+
+  async getProcessingJobsByDocument(documentId: string): Promise<DocumentProcessingJob[]> {
+    const result = await db
+      .select()
+      .from(documentProcessingJobs)
+      .where(eq(documentProcessingJobs.documentId, documentId))
+      .orderBy(desc(documentProcessingJobs.createdAt));
+    return result;
+  }
+
+  async updateProcessingJob(id: string, updates: Partial<InsertDocumentProcessingJob>): Promise<DocumentProcessingJob> {
+    const result = await db
+      .update(documentProcessingJobs)
+      .set(updates)
+      .where(eq(documentProcessingJobs.id, id))
+      .returning();
+    
+    if (!result[0]) {
+      throw new Error("Processing job not found");
+    }
+    
+    return result[0];
+  }
+
+  async getQueuedJobs(jobType?: string, limit?: number): Promise<DocumentProcessingJob[]> {
+    let query = db
+      .select()
+      .from(documentProcessingJobs)
+      .where(eq(documentProcessingJobs.status, 'queued'));
+
+    if (jobType) {
+      query = query.where(eq(documentProcessingJobs.jobType, jobType));
+    }
+
+    query = query
+      .orderBy(desc(documentProcessingJobs.priority), documentProcessingJobs.createdAt);
+
+    if (limit) {
+      query = query.limit(limit);
+    }
+
+    const result = await query;
+    return result;
   }
 }
 
