@@ -1,0 +1,97 @@
+Got it — let’s audit this heavily. Based on your screenshot, console logs, and repo context, here’s where things stand and what still needs attention:
+
+---
+
+## ✅ What Looks Good
+
+* **UI & Branding**
+  The live site matches your Foldera.ai shell: strong hero headline, trust bar, clean dark enterprise feel. This is visually solid — you don’t need to redo design.
+
+* **Core Integrations Stubbed In**
+  Stripe keys are wired, Supabase tables are declared, Calendly is set to embed. That’s the right architecture.
+
+* **Agent Logs Show Iteration**
+  You’re checkpointing, rolling back, and fixing progressively. That’s good hygiene — you’re not stuck in a single broken state.
+
+---
+
+## ❌ Technical Errors (Critical)
+
+1. **Fetch Bug (Upload)**
+
+   ```
+   Failed to execute 'fetch' on 'Window': '/api/documents/upload' is not a valid HTTP method.
+   ```
+
+   * Root cause: Your `apiRequest` abstraction is swapping arguments.
+   * Fix: Stop abstracting — use raw fetch with `{ method: 'POST', body: formData }`.
+   * You’re *still* seeing cached references to the broken function (`queryClient.ts:15`). That means old code is served → likely Vite caching. Do a clean rebuild, not just hot reload.
+
+2. **File Icon Split Error**
+
+   ```
+   Cannot read properties of undefined (reading 'split')
+   ```
+
+   * Root cause: `file` is undefined in your `map` loop.
+   * Fix: Guard it →
+
+     ```tsx
+     {files.map((file, idx) => file?.name ? (
+       <span>{getFileIcon(file.name.split('.').pop() || '')}</span>
+     ) : null)}
+     ```
+
+3. **Express vs Next.js Conflict**
+   Logs show the workflow still trying to boot an Express server even though you want Next.js. That’s extra overhead. In Replit, make sure your `start` script is `next dev` not `node server.js`.
+
+---
+
+## ⚠️ Architectural Risks
+
+* **Simulated “Brain”**
+  Right now, the “analysis” is fake. Upload → audit dashboard → wow demo = all mocked. If you demo to a real user, they’ll upload docs and hit a wall.
+  You need a *real processing loop*:
+
+  * Upload → Supabase storage bucket
+  * Extract text (`pdf-parse`, `mammoth`, etc.)
+  * Push chunks into embeddings table
+  * Run contradiction detection (basic regex first, ML later)
+  * Write flagged results back to Supabase + display in dashboard
+
+* **Stripe Setup Not Complete**
+  Stripe *keys* exist, but you need actual *price IDs*. Otherwise Checkout links won’t work. That means nobody can pay you yet.
+
+* **No Auth / User Layer**
+  Anyone who visits can upload docs. You’ll need Supabase auth (even email-only) if this is to survive beyond demo.
+
+---
+
+## 🎯 My Recommendation
+
+* **Short Term (Demo-Ready)**
+
+  1. Kill the `apiRequest` abstraction. Use direct fetch.
+  2. Add null guards in `document-upload.tsx`.
+  3. Clean rebuild → confirm upload of a single PDF works end-to-end (stored in Supabase).
+  4. Stub a “contradiction flag” that always returns one fake flag from uploaded docs (so demo has wow factor).
+
+* **Medium Term (MVP)**
+
+  * Wire real parsing & contradiction detection.
+  * Finish Stripe Checkout with price IDs.
+  * Add Supabase auth so each user sees only their docs.
+
+* **Long Term (Vision)**
+
+  * Evolve from “audit dashboard” → “auto-drafting fixes.”
+  * Add enterprise integrations (SharePoint, GDrive, etc).
+
+---
+
+👉 Bottom line:
+You’re close — design and scaffolding are strong. But right now the system **does not actually process real docs**. If someone outside your head tries it, they’ll hit upload errors. Fixing the fetch bug + file guard + Supabase storage is priority #1. That’s when you get the real “holy crap” moment.
+
+---
+
+Do you want me to give you **copy-paste ready patches** for `queryClient.ts` and `document-upload.tsx` so you can kill these errors immediately?

@@ -281,7 +281,7 @@ export default function DocumentUpload() {
                     data-testid={`selected-file-${file.id}`}
                   >
                     <div className="flex items-center flex-1">
-                      <span className="text-2xl mr-3">{getFileIcon(file.name?.split('.').pop() || '')}</span>
+                      <span className="text-2xl mr-3">{getFileIcon(file.name?.split('.')?.pop() || 'unknown')}</span>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium truncate">{file.name || 'Unknown file'}</p>
                         <p className="text-sm text-muted-foreground">{formatFileSize(file.size || 0)}</p>

@@ -147,10 +147,12 @@ export default function Subscribe() {
     setPricingTier(plan);
     setPaymentType(plan.period === 'monthly' ? 'subscription' : 'payment');
 
-    // Create payment using the new unified endpoint
-    apiRequest("POST", "/api/create-payment", { 
-      email: "user@example.com", // In a real app, this would come from auth
-      plan: planParam
+    // Create payment using the checkout endpoint
+    fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ planId: planParam }),
+      credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {

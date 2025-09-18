@@ -14,7 +14,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-08-27.basil",
+  apiVersion: "2024-06-20",
 });
 
 // Security and middleware utilities
@@ -322,6 +322,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Document deleted successfully" });
     } catch (error: any) {
       res.status(500).json({ message: "Failed to delete document: " + error.message });
+    }
+  });
+
+  // Payment Endpoints
+  
+  // Create Stripe checkout session
+  app.post("/api/checkout", async (req, res) => {
+    try {
+      const { planId } = req.body;
+      
+      if (!planId) {
+        return res.status(400).json({ message: "Plan ID is required" });
+      }
+
+      const tier = getPricingTier(planId);
+      if (!tier) {
+        return res.status(400).json({ message: "Invalid plan ID" });
+      }
+
+      // Get price ID from environment or use default
+      let stripePriceId = tier.stripePriceId;
+      if (planId === 'self-serve' && process.env.STRIPE_SELF_SERVE_PRICE_ID) {
+        stripePriceId = process.env.STRIPE_SELF_SERVE_PRICE_ID;
+      } else if (planId === 'pro' && process.env.STRIPE_PRO_PRICE_ID) {
+        stripePriceId = process.env.STRIPE_PRO_PRICE_ID;
+      } else if (planId === 'pilot' && process.env.STRIPE_PILOT_PRICE_ID) {
+        stripePriceId = process.env.STRIPE_PILOT_PRICE_ID;
+      }
+
+      if (isRecurringSubscription(planId)) {
+        // Create subscription checkout session
+        const session = await stripe.checkout.sessions.create({
+          mode: 'subscription',
+          payment_method_types: ['card'],
+          line_items: [{
+            price: stripePriceId,
+            quantity: 1,
+          }],
+          success_url: `${req.headers.origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${req.headers.origin}/pricing`,
+          metadata: {
+            planId: planId
+          }
+        });
+
+        res.json({ sessionId: session.id, url: session.url });
+      } else {
+        // Create one-time payment checkout session
+        const session = await stripe.checkout.sessions.create({
+          mode: 'payment',
+          payment_method_types: ['card'],
+          line_items: [{
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: tier.name,
+                description: tier.description,
+              },
+              unit_amount: tier.price * 100, // Convert to cents
+            },
+            quantity: 1,
+          }],
+          success_url: `${req.headers.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${req.headers.origin}/pricing`,
+          metadata: {
+            planId: planId
+          }
+        });
+
+        res.json({ sessionId: session.id, url: session.url });
+      }
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
+      res.status(500).json({ message: "Error creating checkout session: " + error.message });
     }
   });
 
