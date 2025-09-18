@@ -4,6 +4,7 @@ import { Shield, Eye, TriangleAlert, Settings, CheckCircle, Calendar, Rocket, Ga
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import AuditLogVisualization from "@/components/audit-log-visualization";
+import InteractiveDemo from "@/components/interactive-demo";
 import { CalendlyModalButton } from "../components/calendly-widget";
 import Testimonials from "@/components/testimonials";
 import CaseStudies from "@/components/case-studies";
@@ -358,9 +359,25 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Interactive Demo Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8" data-testid="interactive-demo-section">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-black mb-6">
+              🎯 See Foldera <span className="text-primary glow-text">In Action</span>
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8">
+              Experience how Foldera analyzes documents, detects conflicts, and prevents disasters before they happen
+            </p>
+          </div>
+          
+          <InteractiveDemo />
+        </div>
+      </section>
       
       {/* Comparison Table Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8" data-testid="comparison-section">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card" data-testid="comparison-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
