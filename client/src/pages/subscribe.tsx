@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { getPricingTier, type PricingTier } from "@shared/pricing";
 
 // Make sure to call `loadStripe` outside of a component's render to avoid
 // recreating the `Stripe` object on every render.
@@ -16,11 +17,11 @@ if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 interface SubscribeFormProps {
-  planName: string;
-  planPrice: string;
+  plan: PricingTier;
+  paymentType: 'subscription' | 'payment';
 }
 
-const SubscribeForm = ({ planName, planPrice }: SubscribeFormProps) => {
+const SubscribeForm = ({ plan, paymentType }: SubscribeFormProps) => {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -49,26 +50,49 @@ const SubscribeForm = ({ planName, planPrice }: SubscribeFormProps) => {
         variant: "destructive",
       });
     } else {
+      const successMessage = paymentType === 'subscription' 
+        ? `Welcome to Foldera! Your ${plan.name} subscription is now active.`
+        : `Welcome to Foldera! Your ${plan.name} payment has been processed.`;
+      
       toast({
         title: "Payment Successful",
-        description: "Welcome to Foldera! Your subscription is now active.",
+        description: successMessage,
       });
     }
 
     setIsProcessing(false);
   };
 
+  const actionText = paymentType === 'subscription' ? 'Subscribe to' : 'Purchase';
+  const priceDisplay = plan.period === 'monthly' 
+    ? `$${plan.price}/month` 
+    : `$${plan.price.toLocaleString()} one-time`;
+
   return (
     <Card className="max-w-md mx-auto" data-testid="subscribe-form">
       <CardHeader>
         <CardTitle className="text-center">
-          Subscribe to {planName}
+          {actionText} {plan.name}
         </CardTitle>
-        <p className="text-center text-muted-foreground">
-          {planPrice}
+        <p className="text-center text-muted-foreground text-lg font-semibold">
+          {priceDisplay}
+        </p>
+        <p className="text-center text-sm text-muted-foreground">
+          {plan.description}
         </p>
       </CardHeader>
       <CardContent>
+        <div className="mb-6">
+          <h4 className="font-semibold mb-2">Included Features:</h4>
+          <ul className="text-sm space-y-1">
+            {plan.features.map((feature, index) => (
+              <li key={index} className="flex items-center text-muted-foreground">
+                <span className="mr-2">✓</span>
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <PaymentElement />
           <Button 
@@ -77,7 +101,7 @@ const SubscribeForm = ({ planName, planPrice }: SubscribeFormProps) => {
             disabled={!stripe || isProcessing}
             data-testid="button-subscribe"
           >
-            {isProcessing ? "Processing..." : `Subscribe to ${planName}`}
+            {isProcessing ? "Processing..." : `${actionText} ${plan.name}`}
           </Button>
         </form>
       </CardContent>
@@ -87,53 +111,67 @@ const SubscribeForm = ({ planName, planPrice }: SubscribeFormProps) => {
 
 export default function Subscribe() {
   const [clientSecret, setClientSecret] = useState("");
-  const [planDetails, setPlanDetails] = useState({
-    name: "Pro",
-    price: "$399/month",
-    priceId: "price_pro_monthly" // This would be set based on the selected plan
-  });
+  const [pricingTier, setPricingTier] = useState<PricingTier | null>(null);
+  const [paymentType, setPaymentType] = useState<'subscription' | 'payment'>('subscription');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Get plan details from URL params
     const urlParams = new URLSearchParams(window.location.search);
-    const plan = urlParams.get('plan');
+    const planParam = urlParams.get('plan') || 'pro'; // Default to pro
     
-    let priceId = "price_pro_monthly"; // Default
-    let name = "Pro";
-    let price = "$399/month";
-    
-    if (plan === 'self-serve') {
-      priceId = "price_selfserve_monthly";
-      name = "Self-Serve";
-      price = "$99/month";
-    } else if (plan === 'pilot') {
-      priceId = "price_pilot_monthly";
-      name = "Pilot";
-      price = "$5,000/pilot";
+    const plan = getPricingTier(planParam);
+    if (!plan) {
+      setError(`Invalid plan: ${planParam}`);
+      return;
     }
     
-    setPlanDetails({ name, price, priceId });
+    setPricingTier(plan);
+    setPaymentType(plan.period === 'monthly' ? 'subscription' : 'payment');
 
-    // Create subscription
-    apiRequest("POST", "/api/create-subscription", { 
+    // Create payment using the new unified endpoint
+    apiRequest("POST", "/api/create-payment", { 
       email: "user@example.com", // In a real app, this would come from auth
-      priceId 
+      plan: planParam
     })
       .then((res) => res.json())
       .then((data) => {
-        setClientSecret(data.clientSecret);
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+        } else {
+          setError('Failed to create payment session');
+        }
       })
       .catch((error) => {
-        console.error("Error creating subscription:", error);
+        console.error("Error creating payment:", error);
+        setError('Failed to initialize payment');
       });
   }, []);
 
-  if (!clientSecret) {
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="p-8 text-center">
+            <h3 className="text-lg font-semibold mb-2 text-destructive">Error</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Link href="/">
+              <Button variant="outline">Back to Home</Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!clientSecret || !pricingTier) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
-          <p className="text-muted-foreground">Setting up your subscription...</p>
+          <p className="text-muted-foreground">
+            Setting up your {paymentType === 'subscription' ? 'subscription' : 'payment'}...
+          </p>
         </div>
       </div>
     );
@@ -150,7 +188,7 @@ export default function Subscribe() {
         </div>
         
         <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <SubscribeForm planName={planDetails.name} planPrice={planDetails.price} />
+          <SubscribeForm plan={pricingTier} paymentType={paymentType} />
         </Elements>
       </div>
     </div>

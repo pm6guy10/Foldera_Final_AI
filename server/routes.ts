@@ -3,13 +3,14 @@ import { createServer, type Server } from "http";
 import Stripe from "stripe";
 import { storage } from "./storage";
 import { insertDemoRequestSchema } from "@shared/schema";
+import { getPricingTier, isRecurringSubscription, isOneTimePayment } from "@shared/pricing";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-06-20",
+  apiVersion: "2025-08-27.basil",
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -25,13 +26,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Stripe subscription endpoint
-  app.post('/api/create-subscription', async (req, res) => {
+  // Unified payment endpoint that handles both subscriptions and one-time payments
+  app.post('/api/create-payment', async (req, res) => {
     try {
-      const { email, priceId } = req.body;
+      const { email, plan } = req.body;
       
-      if (!email || !priceId) {
-        return res.status(400).json({ message: "Email and priceId are required" });
+      if (!email || !plan) {
+        return res.status(400).json({ message: "Email and plan are required" });
+      }
+
+      const pricingTier = getPricingTier(plan);
+      if (!pricingTier) {
+        return res.status(400).json({ message: "Invalid plan selected" });
       }
 
       // Create or retrieve customer
@@ -44,24 +50,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customer = await stripe.customers.create({ email });
       }
 
-      // Create subscription
-      const subscription = await stripe.subscriptions.create({
-        customer: customer.id,
-        items: [{ price: priceId }],
-        payment_behavior: 'default_incomplete',
-        payment_settings: { save_default_payment_method: 'on_subscription' },
-        expand: ['latest_invoice.payment_intent'],
-      });
+      if (isRecurringSubscription(plan)) {
+        // Handle monthly subscriptions (Self-Serve and Pro)
+        // Use environment variables for price IDs, fallback to defaults
+        let stripePriceId = pricingTier.stripePriceId;
+        if (plan === 'self-serve' && process.env.STRIPE_PRICE_ID_SELF_SERVE) {
+          stripePriceId = process.env.STRIPE_PRICE_ID_SELF_SERVE;
+        } else if (plan === 'pro' && process.env.STRIPE_PRICE_ID_PRO) {
+          stripePriceId = process.env.STRIPE_PRICE_ID_PRO;
+        }
 
-      const invoice = subscription.latest_invoice as Stripe.Invoice;
-      const paymentIntent = invoice.payment_intent as Stripe.PaymentIntent;
+        const subscription = await stripe.subscriptions.create({
+          customer: customer.id,
+          items: [{ price: stripePriceId }],
+          payment_behavior: 'default_incomplete',
+          payment_settings: { save_default_payment_method: 'on_subscription' },
+          expand: ['latest_invoice.payment_intent'],
+        });
 
-      res.json({
-        subscriptionId: subscription.id,
-        clientSecret: paymentIntent.client_secret,
-      });
+        let clientSecret = null;
+        
+        if (subscription.latest_invoice) {
+          const invoice = subscription.latest_invoice as any;
+          if (invoice.payment_intent && typeof invoice.payment_intent === 'object') {
+            clientSecret = (invoice.payment_intent as any).client_secret;
+          }
+        }
+
+        res.json({
+          type: 'subscription',
+          subscriptionId: subscription.id,
+          clientSecret,
+          plan: pricingTier
+        });
+      } else if (isOneTimePayment(plan)) {
+        // Handle one-time payments (Pilot)
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: Math.round(pricingTier.price * 100), // Convert to cents
+          currency: "usd",
+          customer: customer.id,
+          metadata: {
+            plan,
+            email
+          }
+        });
+
+        res.json({
+          type: 'payment',
+          clientSecret: paymentIntent.client_secret,
+          plan: pricingTier
+        });
+      } else {
+        res.status(400).json({ message: "Invalid payment type for plan" });
+      }
     } catch (error: any) {
-      res.status(400).json({ message: "Error creating subscription: " + error.message });
+      res.status(400).json({ message: "Error creating payment: " + error.message });
     }
   });
 
