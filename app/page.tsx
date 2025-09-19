@@ -202,22 +202,22 @@ export default function Home() {
           </div>
           
           <div className="grid md:grid-cols-3 gap-8">
-            {/* Self-Serve */}
-            <Card data-testid="pricing-self-serve">
+            {/* Individual */}
+            <Card data-testid="pricing-individual">
               <CardContent className="p-8">
                 <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-2">Self-Serve</h3>
-                  <p className="text-muted-foreground mb-4">Perfect for small teams</p>
-                  <div className="text-4xl font-black mb-2">$99<span className="text-lg text-muted-foreground">/mo</span></div>
+                  <h3 className="text-2xl font-bold mb-2">Individual</h3>
+                  <p className="text-muted-foreground mb-4">Perfect for solo professionals</p>
+                  <div className="text-4xl font-black mb-2">$49<span className="text-lg text-muted-foreground">/mo</span></div>
                 </div>
                 <ul className="space-y-3 mb-8">
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Up to 10 users</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Basic conflict detection</li>
+                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Up to 5 users</li>
+                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Basic discrepancy detection</li>
                   <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Email support</li>
                   <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Standard integrations</li>
                 </ul>
-                <Link href="/subscribe?plan=self-serve">
-                  <Button variant="secondary" className="w-full py-3" data-testid="button-self-serve">
+                <Link href="/subscribe?plan=individual">
+                  <Button variant="secondary" className="w-full py-3" data-testid="button-individual">
                     Start Trial
                   </Button>
                 </Link>
@@ -232,11 +232,11 @@ export default function Home() {
               <CardContent className="p-8">
                 <div className="text-center mb-8">
                   <h3 className="text-2xl font-bold mb-2">Pro</h3>
-                  <p className="text-muted-foreground mb-4">For growing organizations</p>
-                  <div className="text-4xl font-black mb-2">$399<span className="text-lg text-muted-foreground">/mo</span></div>
+                  <p className="text-muted-foreground mb-4">For growing teams</p>
+                  <div className="text-4xl font-black mb-2">$99<span className="text-lg text-muted-foreground">/mo</span></div>
                 </div>
                 <ul className="space-y-3 mb-8">
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Up to 100 users</li>
+                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Up to 25 users</li>
                   <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Advanced AI protection</li>
                   <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Priority support</li>
                   <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Custom workflows</li>
@@ -250,24 +250,24 @@ export default function Home() {
               </CardContent>
             </Card>
             
-            {/* Pilot */}
-            <Card data-testid="pricing-pilot">
+            {/* Team */}
+            <Card data-testid="pricing-team">
               <CardContent className="p-8">
                 <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-2">Pilot</h3>
-                  <p className="text-muted-foreground mb-4">Enterprise entry point</p>
-                  <div className="text-4xl font-black mb-2">$5,000<span className="text-lg text-muted-foreground">/pilot</span></div>
+                  <h3 className="text-2xl font-bold mb-2">Team</h3>
+                  <p className="text-muted-foreground mb-4">For large organizations</p>
+                  <div className="text-4xl font-black mb-2">$399<span className="text-lg text-muted-foreground">/mo</span></div>
                 </div>
                 <ul className="space-y-3 mb-8">
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Unlimited users</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Enterprise security</li>
+                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Up to 100 users</li>
+                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Enterprise AI features</li>
                   <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Dedicated support</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Custom integrations</li>
+                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Advanced integrations</li>
                   <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />SOC 2 compliance</li>
                 </ul>
-                <Link href="/subscribe?plan=pilot">
-                  <Button variant="outline" className="w-full py-3" data-testid="button-pilot">
-                    Book Enterprise Demo
+                <Link href="/subscribe?plan=team">
+                  <Button variant="outline" className="w-full py-3" data-testid="button-team">
+                    Start Trial
                   </Button>
                 </Link>
               </CardContent>
