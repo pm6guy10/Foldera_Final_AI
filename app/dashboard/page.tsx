@@ -47,13 +47,16 @@ export default function Dashboard() {
     enabled: !!user
   })
 
-  // Fetch recent discrepancies summary
-  const { data: recentActivity } = useQuery({
-    queryKey: ['/api/recent-activity'],
+  // Fetch discrepancies
+  const { data: discrepancies } = useQuery({
+    queryKey: ['/api/discrepancies'],
     queryFn: async () => {
-      const response = await fetch('/api/discrepancies?limit=5')
-      if (!response.ok) throw new Error('Failed to fetch recent activity')
-      return response.json()
+      const { data } = await supabase
+        .from('discrepancies')
+        .select('*')
+        .eq('project_id', user?.id)
+        .order('created_at', { ascending: false })
+      return data || []
     },
     enabled: !!user
   })
@@ -131,7 +134,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-sm text-muted-foreground mb-1">Risks Flagged</p>
                   <p className="text-3xl font-bold text-yellow-600">
-                    {recentActivity?.summary?.total || 0}
+                    {discrepancies?.length || 0}
                   </p>
                   <p className="text-sm text-muted-foreground">Discrepancies found</p>
                 </div>

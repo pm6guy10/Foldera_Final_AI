@@ -75,14 +75,33 @@ export class DocumentProcessingService {
   }
 
   private async extractPdfText(filePath: string): Promise<string> {
-    const dataBuffer = await fs.readFile(filePath);
-    const data = await pdfParse(dataBuffer);
-    return data.text;
+    try {
+      const dataBuffer = await fs.readFile(filePath);
+      const data = await pdfParse(dataBuffer);
+      return data.text;
+    } catch (error) {
+      console.warn(`PDF parsing failed for ${filePath}, falling back to plain text:`, error);
+      return await this.extractPlainTextFallback(filePath);
+    }
   }
 
   private async extractWordText(filePath: string): Promise<string> {
-    const result = await mammoth.extractRawText({ path: filePath });
-    return result.value;
+    try {
+      const result = await mammoth.extractRawText({ path: filePath });
+      return result.value;
+    } catch (error) {
+      console.warn(`Mammoth failed for ${filePath}, falling back to plain text:`, error);
+      return await this.extractPlainTextFallback(filePath);
+    }
+  }
+
+  private async extractPlainTextFallback(filePath: string): Promise<string> {
+    try {
+      return await fs.readFile(filePath, 'utf-8');
+    } catch (error) {
+      console.error(`Plain text fallback failed for ${filePath}:`, error);
+      return `[Unable to extract text from file: ${path.basename(filePath)}]`;
+    }
   }
 
   private async extractPlainText(filePath: string): Promise<string> {
