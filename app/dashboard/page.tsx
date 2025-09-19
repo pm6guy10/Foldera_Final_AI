@@ -203,7 +203,10 @@ export default function Dashboard() {
                     <p className="text-muted-foreground mb-4">
                       Upload your first batch of documents to get started
                     </p>
-                    <Button onClick={() => document.querySelector('[data-value="upload"]')?.click()}>
+                    <Button onClick={() => {
+                      const uploadTab = document.querySelector('[data-value="upload"]') as HTMLElement;
+                      uploadTab?.click();
+                    }}>
                       Upload Documents
                     </Button>
                   </div>
