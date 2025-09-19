@@ -1,0 +1,66 @@
+You are upgrading my Vite + React + Tailwind + shadcn/ui repo into a production-ready SaaS MVP. 
+Constraints: No emojis, professional theme (corporate SaaS), clean color scheme like Foldera.ai. 
+Target loop: auth → upload → parse → detect → dashboard → pay.
+
+Stack: React 18, Vite, TypeScript, Tailwind, shadcn/ui. 
+Serverless backend: Supabase (Auth, Storage, Database, Edge Functions). 
+Payments: Stripe. 
+Deploy target: Cloudflare Pages + Supabase backend. 
+
+Deliverables (full code, no stubs):
+1. **Authentication**
+   - Add Supabase Auth with email+password and magic links.
+   - Create `AuthProvider.tsx` and a `useAuth` hook.
+   - Protect dashboard and upload routes.
+
+2. **File Upload + Storage**
+   - Add `FileUpload.tsx` using shadcn Dropzone.
+   - Store PDFs/DOCX/TXT in Supabase Storage.
+   - Save metadata (filename, userId, timestamp) in `documents` table.
+
+3. **Parsing + Discrepancy Engine**
+   - Create Supabase Edge Function `parseAndCheck`:
+     - Parse PDFs with `pdf-parse`, DOCX with `mammoth`, TXT with fs.
+     - Run discrepancy checks:
+       * Date mismatch (MM/DD/YYYY).
+       * Year mismatch across files.
+       * Entity mismatch (names, agencies, amounts).
+     - Store parsed text + discrepancies in `discrepancies` table.
+   - Expose REST endpoint callable from frontend.
+
+4. **Dashboard**
+   - Update `AuditVisualization.tsx`:
+     - Query discrepancies per user.
+     - Show total count + table (rule, fileA, valueA, fileB, valueB).
+     - Add CSV export.
+
+5. **Stripe Integration**
+   - Add Supabase Edge Function `createCheckoutSession`.
+   - Use `stripe` SDK server-side with `STRIPE_SECRET_KEY`.
+   - Client calls via `/checkout`, uses `@stripe/stripe-js` for redirect.
+   - Webhook `handleStripeWebhook` updates `subscriptions` table.
+
+6. **Env + Config**
+   - Add `.env.example`:
+     ```
+     VITE_SUPABASE_URL=...
+     VITE_SUPABASE_ANON_KEY=...
+     STRIPE_SECRET_KEY=sk_test_xxx
+     VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+     ```
+   - Ensure Supabase client is initialized in `lib/supabase.ts`.
+
+7. **UI Polish**
+   - Remove emojis from all components.
+   - Apply neutral SaaS theme: slate/blue/gray Tailwind palette.
+   - Match Foldera.ai tone: professional, minimalist.
+
+8. **Deployment**
+   - Build with `npm run build`.
+   - Deploy frontend to Cloudflare Pages.
+   - Deploy Edge Functions to Supabase.
+   - Provide full `supabase/config.toml` and `cloudflare-pages.yml`.
+
+Provide final copy-paste ready code for all new files and updated components. 
+Do not output pseudo-code or placeholders. 
+Deliver production-quality TypeScript with error handling, loading states, and professional UI.
