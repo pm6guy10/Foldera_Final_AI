@@ -181,13 +181,19 @@ export default function Home() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link href="/documents">
+              <Link href="/simulation">
                 <Button 
                   size="lg" 
                   className="min-h-[48px] px-8 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all" 
                   data-testid="hero-primary-cta"
+                  onClick={() => {
+                    // Track hero CTA click
+                    if (typeof window !== 'undefined' && (window as any).analytics) {
+                      (window as any).analytics.track('hero_cta_click');
+                    }
+                  }}
                 >
-                  Show Me My First Briefing
+                  See Live Demo
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>

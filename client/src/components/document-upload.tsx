@@ -83,10 +83,27 @@ export default function DocumentUpload() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch user's documents
+  // Fetch user's documents with polling
   const { data: documents, isLoading: documentsLoading } = useQuery({
     queryKey: ['/api/documents', 'demo-user'], // Include userId in cache key
-    queryFn: () => fetch('/api/documents?userId=demo-user').then(res => res.json())
+    queryFn: () => {
+      // Add timestamp to prevent caching
+      const timestamp = Date.now();
+      return fetch(`/api/documents?userId=demo-user&ts=${timestamp}`).then(res => res.json());
+    },
+    // Poll every 2 seconds for documents that are processing
+    refetchInterval: (data) => {
+      // Check if any documents are still processing
+      const hasProcessingDocs = Array.isArray(data) && data.some((doc: Document) => 
+        doc.processingStatus === 'extracting' || 
+        doc.processingStatus === 'analyzing' ||
+        doc.textExtractionStatus === 'processing'
+      );
+      // If documents are processing, poll every 2 seconds, otherwise stop polling
+      return hasProcessingDocs ? 2000 : false;
+    },
+    // Also refetch on window focus for better UX
+    refetchOnWindowFocus: true
   });
 
   // Upload mutation

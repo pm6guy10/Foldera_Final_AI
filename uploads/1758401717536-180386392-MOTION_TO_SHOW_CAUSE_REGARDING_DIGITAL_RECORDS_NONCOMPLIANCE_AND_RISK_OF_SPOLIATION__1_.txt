@@ -1,0 +1,111 @@
+
+
+
+
+
+
+
+
+
+UNITED STATES DISTRICT COURTEASTERN DISTRICT OF WASHINGTON
+Brandon Kapp,Plaintiff,v.Jennifer McDaniel, Public Records Program Manager,Washington State Department of Veterans Affairs,Defendant.
+
+Case No. 1:25-cv-03109-SAB
+
+MOTION TO SHOW CAUSE
+REGARDING DIGITAL RECORDS NONCOMPLIANCE AND RISK OF SPOLIATION
+Plaintiff Brandon Kapp respectfully moves this Court to issue an order requiring Defendant Jennifer McDaniel to appear and show cause why sanctions should not be imposed for her failure to preserve, certify, or produce responsive metadata and digital records as required by federal law.
+
+I. INTRODUCTION
+This case centers on digital suppression. Critical records tied to ADA-related retaliation, agency misconduct, and ongoing litigation were withheld, altered, or stripped of metadata under Defendant McDaniel’s direct supervision.
+Despite live litigation and repeated warnings, Defendant failed to preserve audit trails, certify search completeness, or disclose search methods. The few documents released lack headers, timestamps, or any traceable origin. Native files and audit logs were never produced.
+The harm is ongoing and significant. Plaintiff is unable to validate, contest, or complete discovery without the digital evidence Defendant continues to withhold.
+
+II. FACTUAL BACKGROUND
+As WDVA’s Public Records Program Manager, Defendant McDaniel was the designated official responsible for fulfilling Plaintiff’s public records requests. Her obligations under RCW 42.56 were repeatedly stated in writing. Yet to date:
+No metadata has been disclosed
+No audit logs or search certifications have been produced
+No native files have been provided, only flattened PDFs lacking digital traceability
+No explanation has been given for these omissions despite direct requests
+In her own written responses (see Complaint ¶19, Exhibit A), Defendant admitted that WDVA lacks a metadata policy and is unable to produce audit trails or search history, even for litigation-relevant records.
+These failures occurred during and after active federal litigation in Kapp v. WDVA, where these records directly supported Plaintiff’s ADA retaliation claims. This is not administrative delay. This is digital obstruction.
+In one representative exchange, McDaniel wrote:“There is no agency policy that addresses the handling of native format documents and associated metadata.”
+In a June 6 email, Plaintiff wrote:“There are no communications reflecting ADA compliance, metadata retention, or internal deliberation.”
+In what may be the most telling line of all, McDaniel declared:“Your public records requests are separate from any pending or actual litigation. I will not be responding to you regarding your litigation.”
+This refusal to coordinate with parallel legal proceedings, despite full awareness, underscores the agency’s broader pattern of evasion and the risk of spoliation at issue here.
+III. SUMMARY OF VIOLATIONS
+Defendant McDaniel’s conduct includes:
+Refusal to produce metadata, headers, native-format files, or digital audit logs
+Failure to certify the completeness of any records search
+Repeated attempts to deliver flattened or incomplete data via thumb drive, despite Plaintiff’s lawful preference for native digital format
+Stalling and evasion under the guise of clarification demands and arbitrary delays
+Improperly conflating litigation relevance with PRA obligations — refusing to produce responsive records solely because of pending litigation
+
+IV. PATTERN OF DELAY, EVASION, AND MISAPPLICATION OF LAW
+The full email exchange between Plaintiff and Defendant McDaniel, spanning April 30 through June 30, 2025, reveals a consistent pattern of stalling, mischaracterizing agency obligations, and deflecting responsibility. These emails, included in Attachment A, show that:
+Plaintiff submitted two distinct, timely, and lawfully scoped public records requests (#25-16 and #25-18)
+Defendant refused to process either request without unnecessary clarification demands
+She ignored Plaintiff’s express approval of rolling production and repeatedly treated litigation-relevant material as outside her disclosure duties
+Defendant prematurely invoked exemptions and claimed certain categories were “not disclosable” even when redaction or indexing was clearly possible under RCW 42.56
+For example, when Plaintiff explicitly asked for digital delivery in native format, McDaniel responded that "records are too large to send via email" and insisted on mailing a thumb drive. No infeasibility explanation was given. Native digital format is both statutorily preferred and technologically trivial.
+On June 9, McDaniel claimed:“None of the items you list in your email are part of your public records request.”
+This is false. The request language and scope were clearly stated and acknowledged earlier — making her denial both misleading and damaging to Plaintiff’s rights under the PRA.
+ 
+V. KEY TIMELINE OF COMMUNICATIONS
+(See Attachment A for source emails)
+Date
+Event
+Key Statement or Action
+May 2, 2025
+Request #25-16 acknowledged
+“First installment anticipated May 30”
+May 30, 2025
+Digital delivery requested
+McDaniel refuses, citing file size, but never claims it’s infeasible or a burden
+June 4, 2025
+Metadata policy denial
+“There is no agency policy that addresses the handling of native format documents...”
+June 6, 2025
+Plaintiff’s own statement, included for context
+“There are no communications reflecting ADA compliance or metadata retention”
+June 9, 2025
+Misframing request scope
+“None of the items you list... are part of your public records request”
+June 27, 2025
+Delay via clarification demand
+McDaniel pushes installment from July 1 to July 14, citing lack of response
+July 3, 2025
+Partial production acknowledged
+“Only responsive record to Item 3... it only partially meets your request”
+Ongoing
+Litigation detachment asserted
+“I will not be responding to you regarding your litigation” (repeated)
+
+VI. LEGAL STANDARD
+Under Federal Rule of Civil Procedure 37(b), the Court may compel compliance and impose sanctions where a party fails to preserve or produce evidence. This includes metadata, search documentation, and audit trails.
+A party’s duty to preserve evidence arises when litigation is reasonably foreseeable.— Zubulake v. UBS Warburg LLC, 220 F.R.D. 212, 216 (S.D.N.Y. 2003)
+Sanctions are appropriate when a party obstructs discovery, fails to certify searches, or knowingly alters digital records. The duty to preserve is not optional and applies to named officials in exclusive possession of responsive materials.
+ 
+VII. RELIEF REQUESTED
+Plaintiff respectfully requests that the Court issue an order:
+Setting a Show Cause Hearing within 14 days
+Requiring Defendant McDaniel to appear and testify under oath regarding:
+What steps, if any, were taken to preserve metadata and search history
+Whether any records were deleted, altered, or withheld
+What internal tools or protocols were used to conduct searches
+Compelling immediate certification of search completeness and metadata preservation
+Setting a 21-day deadline to cure all outstanding deficiencies in records production
+Reserving the right to impose sanctions or appoint a forensic examiner if compliance is not fully achieved
+
+VIII. CONCLUSION
+Defendant cannot claim ignorance of metadata while simultaneously refusing to preserve audit logs, certify search accuracy, or coordinate with known litigation. Her actions have already compromised the evidentiary record.
+If there is no audit trail, there is no accountability.If metadata is missing, truth is unverifiable.
+The pattern is clear. The risk is ongoing. This Court should require Defendant to answer for her role in this digital breakdown — under oath and without delay.
+
+Footnote:Plaintiff anticipates that Defendant may again move for early dismissal without addressing the factual record. Plaintiff respectfully urges the Court to defer ruling on any such motion until discovery has commenced and factual evidence can be properly tested.
+
+
+
+
+DATED this 7th day of July, 2025.
+Respectfully submitted,Brandon Kapp3112 Wrangler Dr.Ellensburg, WA 98926b-kapp@outlook.com619-517-6069

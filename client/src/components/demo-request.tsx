@@ -21,6 +21,7 @@ interface DemoRequestData {
   email: string;
   company: string;
   title: string;
+  teamSize?: string;
   message?: string;
   preferredTime?: string;
 }
@@ -37,6 +38,7 @@ export function DemoRequest({
     email: '',
     company: '',
     title: '',
+    teamSize: '',
     message: '',
     preferredTime: ''
   });
@@ -44,26 +46,64 @@ export function DemoRequest({
 
   const demoRequestMutation = useMutation({
     mutationFn: async (data: DemoRequestData) => {
-      const response = await apiRequest('POST', '/api/demo-request', {
-        name: data.name,
-        email: data.email,
-        company: data.company,
-        title: data.title,
-        message: data.message,
-        preferredTime: data.preferredTime,
-        source: 'landing_page',
-        type: 'enterprise_demo'
-      });
-      return response.json();
+      // Set timeout to redirect to Calendly after 5 seconds if no response
+      const timeoutId = setTimeout(() => {
+        window.location.href = "https://calendly.com/foldera/demo";
+      }, 5000);
+
+      try {
+        const response = await apiRequest('POST', '/api/demo-request', {
+          name: data.name,
+          email: data.email,
+          company: data.company,
+          title: data.title,
+          teamSize: data.teamSize || '1-5', // Default to 1-5 if not provided
+          message: data.message,
+          preferredTime: data.preferredTime,
+          source: 'landing_page',
+          type: 'enterprise_demo'
+        });
+        clearTimeout(timeoutId);
+        return response.json();
+      } catch (error) {
+        clearTimeout(timeoutId);
+        throw error;
+      }
     },
     onSuccess: (data) => {
+      // Track success event
+      if (typeof window !== 'undefined' && (window as any).analytics) {
+        (window as any).analytics.track('demo_request_success', {
+          email: formData.email,
+          company: formData.company
+        });
+      }
+
       setIsSuccess(true);
       toast({
         title: "Demo Request Submitted!",
         description: "We'll contact you within 24 hours to schedule your personalized demo.",
       });
       
-      // Simulate providing Calendly link (in real implementation, backend would return this)
+      // Show referral code after success
+      const referralCode = btoa(formData.email).substring(0, 8).toUpperCase();
+      
+      setTimeout(() => {
+        toast({
+          title: "Share and Save!",
+          description: `Get 1 month free for every 3 friends who book a demo with code: ${referralCode}`,
+          duration: 10000
+        });
+        
+        // Track referral shown
+        if (typeof window !== 'undefined' && (window as any).analytics) {
+          (window as any).analytics.track('referral_shared', {
+            referralCode,
+            email: formData.email
+          });
+        }
+      }, 2500);
+      
       setTimeout(() => {
         setIsOpen(false);
         setIsSuccess(false);
@@ -72,27 +112,41 @@ export function DemoRequest({
           email: '',
           company: '',
           title: '',
+          teamSize: '',
           message: '',
           preferredTime: ''
         });
         
         // Open actual Calendly link if available
-        const calendlyUrl = import.meta.env.VITE_CALENDLY_URL || "https://calendly.com/foldera/enterprise-demo";
+        const calendlyUrl = "https://calendly.com/foldera/demo";
         window.open(calendlyUrl, '_blank');
-      }, 2000);
+      }, 4000);
     },
     onError: (error: any) => {
+      // Track failure event
+      if (typeof window !== 'undefined' && (window as any).analytics) {
+        (window as any).analytics.track('demo_request_fail', {
+          error: error.message,
+          email: formData.email
+        });
+      }
+
       toast({
         title: "Request Failed",
-        description: error.message || "Failed to submit demo request. Please try again.",
+        description: "Redirecting you to our calendar booking page...",
         variant: "destructive",
       });
+      
+      // Hard redirect to Calendly on error
+      setTimeout(() => {
+        window.location.href = "https://calendly.com/foldera/demo";
+      }, 1500);
     }
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.company) {
+    if (!formData.name || !formData.email || !formData.company || !formData.title) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -100,6 +154,16 @@ export function DemoRequest({
       });
       return;
     }
+    
+    // Track demo request sent event
+    if (typeof window !== 'undefined' && (window as any).analytics) {
+      (window as any).analytics.track('demo_request_sent', {
+        email: formData.email,
+        company: formData.company,
+        teamSize: formData.teamSize || '1-5'
+      });
+    }
+    
     demoRequestMutation.mutate(formData);
   };
 
@@ -181,26 +245,46 @@ export function DemoRequest({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
+                <Label htmlFor="title">Title *</Label>
                 <Input
                   id="title"
                   value={formData.title}
                   onChange={(e) => handleInputChange('title', e.target.value)}
                   placeholder="Your role"
+                  required
                   data-testid="input-title"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="preferredTime">Preferred Time</Label>
-              <Input
-                id="preferredTime"
-                value={formData.preferredTime}
-                onChange={(e) => handleInputChange('preferredTime', e.target.value)}
-                placeholder="e.g., Next Tuesday 2pm EST"
-                data-testid="input-preferred-time"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="teamSize">Team Size</Label>
+                <select
+                  id="teamSize"
+                  value={formData.teamSize}
+                  onChange={(e) => handleInputChange('teamSize', e.target.value)}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  data-testid="select-team-size"
+                >
+                  <option value="">Select team size</option>
+                  <option value="1-5">1-5</option>
+                  <option value="6-20">6-20</option>
+                  <option value="21-50">21-50</option>
+                  <option value="51-100">51-100</option>
+                  <option value="100+">100+</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="preferredTime">Preferred Time</Label>
+                <Input
+                  id="preferredTime"
+                  value={formData.preferredTime}
+                  onChange={(e) => handleInputChange('preferredTime', e.target.value)}
+                  placeholder="e.g., Next Tuesday 2pm EST"
+                  data-testid="input-preferred-time"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">

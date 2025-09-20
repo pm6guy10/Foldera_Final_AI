@@ -230,4 +230,96 @@
       transform: scale(1) rotate(0deg);
     }
   }
+  
+  /* Mobile Polish - Ensure tap targets are ≥48px and have proper spacing */
+  @media (max-width: 768px) {
+    /* Ensure all buttons have minimum 48px height on mobile */
+    button, 
+    .btn,
+    [role="button"],
+    a[href] {
+      min-height: 48px !important;
+      min-width: 48px;
+      padding: 12px 16px !important;
+    }
+    
+    /* Ensure form inputs are mobile-friendly */
+    input,
+    textarea,
+    select {
+      min-height: 48px !important;
+      font-size: 16px !important; /* Prevent zoom on iOS */
+      padding: 12px !important;
+    }
+    
+    /* Add spacing between interactive elements */
+    button + button,
+    a + a,
+    input + input,
+    .card + .card {
+      margin-top: 12px;
+    }
+    
+    /* Ensure clickable cards have proper tap targets */
+    .card {
+      padding: 16px !important;
+    }
+    
+    /* Navigation links need proper spacing */
+    nav a {
+      padding: 16px !important;
+      display: inline-block;
+    }
+    
+    /* Ensure dropdowns and selects are mobile-friendly */
+    .dropdown-menu,
+    .popover-content {
+      min-width: 200px;
+    }
+    
+    /* Badge and small elements should be tappable */
+    .badge {
+      padding: 8px 12px !important;
+      min-height: 32px;
+    }
+    
+    /* Ensure proper spacing in forms */
+    form > * + * {
+      margin-top: 16px;
+    }
+    
+    /* Pricing cards need extra padding on mobile */
+    .pricing-card {
+      padding: 20px !important;
+    }
+    
+    /* Dialog close buttons need to be easily tappable */
+    [aria-label="Close"],
+    .dialog-close {
+      min-width: 48px !important;
+      min-height: 48px !important;
+    }
+    
+    /* Ensure list items are tappable */
+    li > a,
+    li > button {
+      display: block;
+      padding: 16px !important;
+    }
+    
+    /* Fix text size to prevent zoom */
+    body {
+      font-size: 16px !important;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+    
+    /* Ensure h1-h6 are readable on mobile */
+    h1 { font-size: 2rem !important; }
+    h2 { font-size: 1.75rem !important; }
+    h3 { font-size: 1.5rem !important; }
+    h4 { font-size: 1.25rem !important; }
+    h5 { font-size: 1.125rem !important; }
+    h6 { font-size: 1rem !important; }
+  }
 }
