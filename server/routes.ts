@@ -124,6 +124,28 @@ const uploadDir = path.join(process.cwd(), 'uploads');
 // Ensure upload directory exists
 fs.mkdir(uploadDir, { recursive: true }).catch(console.error);
 
+// Tier configuration for mission requirements 
+const TIER_CONFIG = {
+  99: {
+    priceId: process.env.TIER99_PRICE_ID || '',
+    amount: 9900, // $99.00 in cents
+    name: 'Tier 99',
+    description: 'Entry level tier'
+  },
+  199: {
+    priceId: process.env.TIER199_PRICE_ID || '',
+    amount: 19900, // $199.00 in cents  
+    name: 'Tier 199',
+    description: 'Professional tier'
+  },
+  299: {
+    priceId: process.env.TIER299_PRICE_ID || '',
+    amount: 29900, // $299.00 in cents
+    name: 'Tier 299', 
+    description: 'Premium tier'
+  }
+};
+
 const storage_config = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -376,75 +398,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Payment Endpoints
   
-  // Create Stripe checkout session
-  app.post("/api/checkout", async (req, res) => {
+  // Mission-required checkout endpoint: /api/checkout?tier=99|199|299
+  app.get("/api/checkout", async (req, res) => {
     try {
-      const { planId } = req.body;
+      const tier = req.query.tier as string;
       
-      if (!planId) {
-        return res.status(400).json({ message: "Plan ID is required" });
+      if (!tier || !['99', '199', '299'].includes(tier)) {
+        return res.status(400).json({ 
+          message: "Invalid tier. Must be 99, 199, or 299",
+          allowedTiers: [99, 199, 299]
+        });
       }
 
-      const tier = getPricingTier(planId);
-      if (!tier) {
-        return res.status(400).json({ message: "Invalid plan ID" });
-      }
+      const tierNum = parseInt(tier) as 99 | 199 | 299;
+      const tierConfig = TIER_CONFIG[tierNum];
+      let priceId = tierConfig.priceId;
 
-      // Get price ID from environment or use default
-      let stripePriceId = tier.stripePriceId;
-      if (planId === 'self-serve' && process.env.STRIPE_SELF_SERVE_PRICE_ID) {
-        stripePriceId = process.env.STRIPE_SELF_SERVE_PRICE_ID;
-      } else if (planId === 'pro' && process.env.STRIPE_PRO_PRICE_ID) {
-        stripePriceId = process.env.STRIPE_PRO_PRICE_ID;
-      } else if (planId === 'pilot' && process.env.STRIPE_PILOT_PRICE_ID) {
-        stripePriceId = process.env.STRIPE_PILOT_PRICE_ID;
-      }
-
-      if (isRecurringSubscription(planId)) {
-        // Create subscription checkout session
-        const session = await stripe.checkout.sessions.create({
-          mode: 'subscription',
-          payment_method_types: ['card'],
-          line_items: [{
-            price: stripePriceId,
-            quantity: 1,
-          }],
-          success_url: `${req.headers.origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${req.headers.origin}/pricing`,
+      // Auto-create Product and Price if missing
+      if (!priceId) {
+        console.log(`Auto-creating Stripe product and price for tier ${tierNum}`);
+        
+        // Create product
+        const product = await stripe.products.create({
+          name: tierConfig.name,
+          description: tierConfig.description,
           metadata: {
-            planId: planId
+            tier: tier,
+            autoCreated: 'true'
           }
         });
 
-        res.json({ sessionId: session.id, url: session.url });
+        // Create price
+        const price = await stripe.prices.create({
+          unit_amount: tierConfig.amount,
+          currency: 'usd',
+          recurring: { interval: 'month' },
+          product: product.id,
+          metadata: {
+            tier: tier,
+            autoCreated: 'true'
+          }
+        });
+
+        priceId = price.id;
+        console.log(`Created Stripe product ${product.id} and price ${priceId} for tier ${tierNum}`);
+      }
+
+      // Fix URL base computation 
+      const baseUrl = `${req.protocol}://${req.get('host')}`;
+
+      // Create Stripe checkout session
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [{
+          price: priceId,
+          quantity: 1,
+        }],
+        success_url: `${baseUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}&tier=${tier}`,
+        cancel_url: `${baseUrl}/checkout/cancel?tier=${tier}`,
+        metadata: {
+          tier: tier,
+          tierAmount: tierConfig.amount.toString(),
+          tierName: tierConfig.name
+        }
+      });
+
+      // Log session.id for audit
+      console.log(`Audit Log: Stripe checkout session created`, {
+        sessionId: session.id,
+        tier: tierNum,
+        amount: tierConfig.amount,
+        priceId: priceId,
+        timestamp: new Date().toISOString(),
+        successUrl: session.success_url,
+        cancelUrl: session.cancel_url,
+        baseUrl: baseUrl
+      });
+
+      // For browser GET requests, redirect to Stripe. For programmatic requests, return JSON
+      const acceptsJson = req.headers.accept?.includes('application/json');
+      if (acceptsJson) {
+        res.json({ 
+          sessionId: session.id, 
+          url: session.url,
+          tier: tierNum,
+          amount: tierConfig.amount,
+          priceId: priceId
+        });
       } else {
-        // Create one-time payment checkout session
-        const session = await stripe.checkout.sessions.create({
-          mode: 'payment',
-          payment_method_types: ['card'],
-          line_items: [{
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: tier.name,
-                description: tier.description,
-              },
-              unit_amount: tier.price * 100, // Convert to cents
-            },
-            quantity: 1,
-          }],
-          success_url: `${req.headers.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${req.headers.origin}/pricing`,
-          metadata: {
-            planId: planId
-          }
-        });
-
-        res.json({ sessionId: session.id, url: session.url });
+        // Redirect browser to Stripe Checkout
+        res.redirect(303, session.url!);
       }
     } catch (error: any) {
-      console.error('Error creating checkout session:', error);
-      res.status(500).json({ message: "Error creating checkout session: " + error.message });
+      console.error('Error creating tier checkout session:', error);
+      res.status(500).json({ 
+        message: "Error creating checkout session: " + error.message,
+        tier: req.query.tier
+      });
     }
   });
 
