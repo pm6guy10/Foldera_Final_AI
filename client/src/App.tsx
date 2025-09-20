@@ -7,6 +7,7 @@ import Home from "./pages/home";
 import Subscribe from "./pages/subscribe";
 import Admin from "./pages/admin";
 import Documents from "./pages/documents";
+import DocumentViewer from "./pages/document-viewer";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -14,6 +15,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/documents" component={Documents} />
+      <Route path="/document/:id" component={DocumentViewer} />
       <Route path="/subscribe" component={Subscribe} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />

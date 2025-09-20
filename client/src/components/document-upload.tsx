@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { Link } from 'wouter';
 
 interface Document {
   id: string;
@@ -369,20 +370,15 @@ export default function DocumentUpload() {
                   
                   <div className="flex items-center gap-3">
                     {getStatusBadge(document.processingStatus)}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        // TODO: Implement document view
-                        toast({
-                          title: "Document View",
-                          description: "Document viewing will be implemented next",
-                        });
-                      }}
-                      data-testid={`view-document-${document.id}`}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    <Link href={`/document/${document.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        data-testid={`view-document-${document.id}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               ))}
