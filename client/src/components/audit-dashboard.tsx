@@ -88,18 +88,15 @@ export default function AuditDashboard() {
 
   // Fetch documents for reference
   const { data: documents } = useQuery({
-    queryKey: ['/api/documents'],
-    queryParams: { userId: 'demo-user' }
+    queryKey: ['/api/documents', 'demo-user'],
+    queryFn: () => fetch('/api/documents?userId=demo-user').then(res => res.json())
   });
 
   // Resolve contradiction mutation
   const resolveMutation = useMutation({
     mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
-      return apiRequest(`/api/contradictions/${id}/resolve`, {
-        method: 'POST',
-        body: JSON.stringify({ userId: 'demo-user', notes }),
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await apiRequest('POST', `/api/contradictions/${id}/resolve`, { userId: 'demo-user', notes });
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -121,11 +118,8 @@ export default function AuditDashboard() {
   // Update contradiction status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      return apiRequest(`/api/contradictions/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status }),
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await apiRequest('PUT', `/api/contradictions/${id}`, { status });
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -137,7 +131,8 @@ export default function AuditDashboard() {
   });
 
   // Filter contradictions based on search and filters
-  const filteredContradictions = contradictions?.filter((c: ContradictionFinding) => {
+  const contradictionsArray = Array.isArray(contradictions) ? contradictions : [];
+  const filteredContradictions = contradictionsArray.filter((c: ContradictionFinding) => {
     const matchesSearch = !searchTerm || 
       c.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -165,7 +160,7 @@ export default function AuditDashboard() {
   };
 
   const getDocumentName = (documentId: string) => {
-    const doc = documents?.find((d: Document) => d.id === documentId);
+    const doc = (documents || []).find((d: Document) => d.id === documentId);
     return doc?.originalName || 'Unknown Document';
   };
 
@@ -329,7 +324,7 @@ export default function AuditDashboard() {
               <Shield className="h-12 w-12 mx-auto mb-4 text-green-500" />
               <p className="text-lg font-semibold text-green-600">No Issues Found</p>
               <p className="text-muted-foreground mt-1">
-                {contradictions?.length === 0 
+                {(Array.isArray(contradictions) ? contradictions : []).length === 0 
                   ? "Upload documents to start contradiction analysis" 
                   : "All contradictions are resolved or your filters exclude all results"
                 }
