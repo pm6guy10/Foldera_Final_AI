@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import AuditLogVisualization from "@/components/audit-log-visualization";
 import InteractiveDemo from "@/components/interactive-demo";
-import { CalendlyModalButton } from "../components/calendly-widget";
+import { DemoRequest } from "../components/demo-request";
 import Testimonials from "@/components/testimonials";
 import CaseStudies from "@/components/case-studies";
 import { assignVariant, exposeExperiment, type Assignment } from "@/lib/ab";
@@ -141,9 +141,10 @@ export default function Home() {
               <span className="text-xl font-bold">Foldera</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-              <a href="#security" className="text-muted-foreground hover:text-foreground transition-colors">Security</a>
+              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-features">Features</a>
+              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-pricing">Pricing</a>
+              <a href="#security" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-security">Security</a>
+              <a href="/documents" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-briefing">Show Me My Briefing</a>
               <Link href="#pricing">
                 <Button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors" data-testid="button-start-trial">
                   Join Waitlist
@@ -166,8 +167,7 @@ export default function Home() {
                   Show Me My First Briefing
                 </Button>
               </Link>
-              <CalendlyModalButton 
-                url={import.meta.env.VITE_CALENDLY_URL || "https://calendly.com/foldera/enterprise-demo"}
+              <DemoRequest 
                 buttonText="Book Enterprise Demo"
                 className="px-8 py-4 rounded-lg font-semibold text-lg"
               >
@@ -175,8 +175,8 @@ export default function Home() {
                   <Calendar className="mr-2 h-5 w-5" />
                   Book Enterprise Demo
                 </Button>
-              </CalendlyModalButton>
-              <p className="text-sm text-muted-foreground">1,292 professionals already joined.</p>
+              </DemoRequest>
+              <p className="text-sm text-muted-foreground">Join the early access program.</p>
             </div>
           </div>
         </div>
@@ -186,7 +186,7 @@ export default function Home() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-border" data-testid="trust-bar">
         <div className="max-w-7xl mx-auto">
           <p className="text-center text-muted-foreground mb-8 text-sm uppercase tracking-wide">
-            Trusted by professionals at
+            Built and hardened for elite operators at organizations like
           </p>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center opacity-60">
             <div className="text-center" data-testid="trust-mckinsey">
@@ -389,15 +389,14 @@ export default function Home() {
                 </Button>
               </Link>
               
-              <CalendlyModalButton 
-                url={import.meta.env.VITE_CALENDLY_URL || "https://calendly.com/foldera/enterprise-demo"}
+              <DemoRequest 
                 buttonText="Book a Demo Call"
               >
                 <Button variant="outline" size="lg" className="w-full sm:w-auto" data-testid="demo-call-button">
                   <Calendar className="h-5 w-5 mr-2" />
                   Book a Demo Call
                 </Button>
-              </CalendlyModalButton>
+              </DemoRequest>
             </div>
 
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
@@ -488,16 +487,15 @@ export default function Home() {
               Why Professionals <span className="text-primary">Trust Foldera</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Used by operators at McKinsey, Notion, Accenture, and Deloitte.
+              Used in enterprise pilots by compliance and ops teams.
             </p>
           </div>
           
           <Card className="max-w-2xl mx-auto mb-12">
             <CardContent className="p-8 text-center">
-              <p className="text-xl italic text-muted-foreground mb-4">
-                "AI search feels like a goldfish. Foldera feels like a general."
+              <p className="text-xl text-muted-foreground mb-4">
+                Foldera helps compliance and operations teams catch contradictions before they become costly mistakes.
               </p>
-              <p className="text-sm text-muted-foreground">— Early Beta User</p>
             </CardContent>
           </Card>
           
@@ -521,48 +519,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8" data-testid="testimonials-section">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">
-              What Our <span className="text-primary glow-text">Clients Say</span>
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Real stories from professionals who trusted Foldera to protect their deals
-            </p>
-          </div>
-          
-          <Testimonials 
-            featured={true}
-            limit={6}
-            autoRotate={true}
-            rotationInterval={7000}
-            showNavigation={true}
-            showIndicators={true}
-          />
-        </div>
-      </section>
-
-      {/* Case Studies Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card" data-testid="case-studies-section">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">
-              Client <span className="text-primary glow-text">Success Stories</span>
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8">
-              See how Foldera transformed operations for enterprise clients
-            </p>
-          </div>
-          
-          <CaseStudies 
-            featured={true}
-            limit={3}
-            showMetrics={true}
-          />
-        </div>
-      </section>
 
       {/* Audit Log Visualization */}
       <section className="py-20 px-4 sm:px-6 lg:px-8" data-testid="audit-log-section">
@@ -600,7 +556,7 @@ export default function Home() {
                   <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-orange-500" />
                   <h3 className="text-2xl font-bold mb-4">Join the Waitlist</h3>
                   <p className="text-muted-foreground">
-                    Get early access when we launch publicly.
+                    Get early access to Foldera when we launch.
                   </p>
                 </div>
                 
@@ -625,15 +581,14 @@ export default function Home() {
                   </p>
                 </div>
                 
-                <CalendlyModalButton 
-                  url="https://calendly.com/foldera/enterprise-demo"
+                <DemoRequest 
                   buttonText="Book Enterprise Demo"
                   className="w-full"
                 >
                   <Button className="w-full py-4 text-lg font-semibold mb-4" data-testid="button-book-enterprise-demo">
                     📅 Book Enterprise Demo
                   </Button>
-                </CalendlyModalButton>
+                </DemoRequest>
                 
                 <p className="text-sm text-muted-foreground">
                   30-minute personalized demonstration with our team.

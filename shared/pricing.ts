@@ -44,9 +44,9 @@ export const PRICING_TIERS: Record<string, PricingTier> = {
   'pilot': {
     id: 'pilot',
     name: 'Pilot',
-    price: 5000,
+    price: 0, // Contact Sales - no price displayed
     period: 'one-time',
-    description: 'One-time pilot program for enterprise evaluation',
+    description: 'Contact Sales for enterprise pilot program',
     features: [
       'Full platform access',
       'Dedicated onboarding',
