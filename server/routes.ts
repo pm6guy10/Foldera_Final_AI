@@ -142,13 +142,23 @@ const upload = multer({
     files: 50 // Max 50 files at once for bulk processing
   },
   fileFilter: (req, file, cb) => {
-    // Check file type
+    // Check file type - handle generic MIME types like application/octet-stream from drag-and-drop
     const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
-    const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt'];
+    const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt', '.csv', '.json', '.xml', '.html', '.md'];
+    const genericTypes = ['application/octet-stream', ''];
     
     const fileExtension = path.extname(file.originalname).toLowerCase();
     
-    if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
+    // For generic MIME types (common from drag-and-drop), rely on extension
+    if (genericTypes.includes(file.mimetype)) {
+      if (allowedExtensions.includes(fileExtension)) {
+        cb(null, true);
+      } else {
+        cb(new Error(`Unsupported file type. Only PDF, Word documents, and text files are allowed. Got extension: ${fileExtension}`));
+      }
+    } 
+    // For specific MIME types, check both MIME type and extension
+    else if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
       cb(null, true);
     } else {
       cb(new Error(`Unsupported file type. Only PDF, Word documents, and text files are allowed. Got: ${file.mimetype}`));
