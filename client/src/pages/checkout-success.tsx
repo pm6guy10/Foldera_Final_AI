@@ -38,7 +38,7 @@ export default function CheckoutSuccess() {
             <CheckCircle className="h-16 w-16 text-green-500" />
           </div>
           <CardTitle className="text-3xl font-bold text-green-600">
-            Payment Successful! 🎉
+            Payment Successful!
           </CardTitle>
         </CardHeader>
         

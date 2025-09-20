@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { Shield, Eye, TriangleAlert, Settings, CheckCircle, Calendar, Rocket, Gavel, DollarSign, IdCard, Lock, Key, History } from "lucide-react";
+import { Shield, Eye, TriangleAlert, Settings, CheckCircle, Calendar, Rocket, Gavel, DollarSign, IdCard, Lock, Key, History, Building, FileText, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import AuditLogVisualization from "@/components/audit-log-visualization";
@@ -163,7 +163,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="#pricing">
                 <Button className="bg-primary text-primary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-all ghost-hover" data-testid="button-start-trial-hero">
-                  ➡️ Show Me My First Briefing
+                  Show Me My First Briefing
                 </Button>
               </Link>
               <CalendlyModalButton 
@@ -176,7 +176,7 @@ export default function Home() {
                   Book Enterprise Demo
                 </Button>
               </CalendlyModalButton>
-              <p className="text-sm text-muted-foreground">🔥 1,292 professionals already joined.</p>
+              <p className="text-sm text-muted-foreground">1,292 professionals already joined.</p>
             </div>
           </div>
         </div>
@@ -190,23 +190,23 @@ export default function Home() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center opacity-60">
             <div className="text-center" data-testid="trust-mckinsey">
-              <div className="text-3xl mb-2">🏢</div>
+              <Building className="h-8 w-8 mx-auto mb-2" />
               <p className="font-semibold">McKinsey</p>
             </div>
             <div className="text-center" data-testid="trust-notion">
-              <div className="text-3xl mb-2">📝</div>
+              <Building className="h-8 w-8 mx-auto mb-2" />
               <p className="font-semibold">Notion</p>
             </div>
             <div className="text-center" data-testid="trust-pwc">
-              <div className="text-3xl mb-2">📊</div>
+              <Building className="h-8 w-8 mx-auto mb-2" />
               <p className="font-semibold">PwC</p>
             </div>
             <div className="text-center" data-testid="trust-accenture">
-              <div className="text-3xl mb-2">⚡</div>
+              <Building className="h-8 w-8 mx-auto mb-2" />
               <p className="font-semibold">Accenture</p>
             </div>
             <div className="text-center" data-testid="trust-deloitte">
-              <div className="text-3xl mb-2">🔵</div>
+              <Building className="h-8 w-8 mx-auto mb-2" />
               <p className="font-semibold">Deloitte</p>
             </div>
           </div>
@@ -218,7 +218,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-6" data-testid="pain-headline">
-              📉 You Were Promised a <span className="text-primary">Partner</span>.
+              You Were Promised a <span className="text-primary">Partner</span>.
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
               Instead, you got a goldfish with amnesia. Gen‑1 AI dumps the thinking back on your plate.
@@ -228,21 +228,21 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="bg-background border-border text-center" data-testid="pain-time">
               <CardContent className="pt-8">
-                <div className="text-4xl mb-4">📋</div>
+                <FileText className="h-12 w-12 mx-auto mb-4" />
                 <p className="text-muted-foreground text-lg">"I spend more time reminding my AI than using it."</p>
               </CardContent>
             </Card>
             
             <Card className="bg-background border-border text-center" data-testid="pain-summaries">
               <CardContent className="pt-8">
-                <div className="text-4xl mb-4">📊</div>
+                <FileText className="h-12 w-12 mx-auto mb-4" />
                 <p className="text-muted-foreground text-lg">"Summaries are worthless. I need decisions."</p>
               </CardContent>
             </Card>
             
             <Card className="bg-background border-border text-center" data-testid="pain-goldfish">
               <CardContent className="pt-8">
-                <div className="text-4xl mb-4">🐠</div>
+                <FileText className="h-12 w-12 mx-auto mb-4" />
                 <p className="text-muted-foreground text-lg">"It's like talking to a goldfish."</p>
               </CardContent>
             </Card>
@@ -250,7 +250,7 @@ export default function Home() {
           
           <div className="text-center mt-12">
             <p className="text-xl text-muted-foreground">
-              🧠 Foldera fixes what other AI forgets — and acts before you even know it's broken.
+              Foldera fixes what other AI forgets — and acts before you even know it's broken.
             </p>
           </div>
         </div>
@@ -271,7 +271,7 @@ export default function Home() {
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="text-center ghost-hover" data-testid="feature-scanning">
               <CardContent className="pt-8">
-                <div className="text-4xl mb-4">👁️</div>
+                <FileText className="h-12 w-12 mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-4">1. It Sees Everything</h3>
                 <p className="text-muted-foreground">Foldera ingests your chaos. Every doc, transcript, and draft is scanned, compared, and remembered.</p>
               </CardContent>
@@ -279,7 +279,7 @@ export default function Home() {
             
             <Card className="text-center ghost-hover" data-testid="feature-detection">
               <CardContent className="pt-8">
-                <div className="text-4xl mb-4">🔗</div>
+                <FileText className="h-12 w-12 mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-4">2. It Connects Dots</h3>
                 <p className="text-muted-foreground">Contradictions, risks, and silent landmines? It flags them before they explode.</p>
               </CardContent>
@@ -287,7 +287,7 @@ export default function Home() {
             
             <Card className="text-center ghost-hover" data-testid="feature-remediation">
               <CardContent className="pt-8">
-                <div className="text-4xl mb-4">⚙️</div>
+                <FileText className="h-12 w-12 mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-4">3. It Makes Moves</h3>
                 <p className="text-muted-foreground">The counter-offer. The fixed deck. The compliant filing. You just hit approve.</p>
               </CardContent>
@@ -301,7 +301,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              ☕ Three Landmines. Three Deliverables. <span className="text-primary">All Before Coffee</span>.
+              Three Landmines. Three Deliverables. <span className="text-primary">All Before Coffee</span>.
             </h2>
             <p className="text-xl text-muted-foreground">
               Foldera doesn't alert you. It neutralizes threats and leaves the receipts.
@@ -312,7 +312,7 @@ export default function Home() {
             <Card className="ghost-hover" data-testid="landmine-budget">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <div className="text-5xl mb-4">💥</div>
+                  <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-orange-500" />
                   <h3 className="text-xl font-bold text-destructive mb-2">Budget Bomb Neutralized</h3>
                 </div>
                 <div className="bg-muted/20 p-4 rounded-lg mb-4">
@@ -328,7 +328,7 @@ export default function Home() {
             <Card className="ghost-hover" data-testid="landmine-version">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <div className="text-5xl mb-4">🔥</div>
+                  <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-orange-500" />
                   <h3 className="text-xl font-bold text-destructive mb-2">Version Grenade Disarmed</h3>
                 </div>
                 <div className="bg-muted/20 p-4 rounded-lg mb-4">
@@ -344,7 +344,7 @@ export default function Home() {
             <Card className="ghost-hover" data-testid="landmine-deadline">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <div className="text-5xl mb-4">⏰</div>
+                  <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-orange-500" />
                   <h3 className="text-xl font-bold text-destructive mb-2">Deadline Landmine Flagged</h3>
                 </div>
                 <div className="bg-muted/20 p-4 rounded-lg mb-4">
@@ -365,7 +365,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              🎯 See Foldera <span className="text-primary glow-text">In Action</span>
+              See Foldera <span className="text-primary glow-text">In Action</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
               Experience how Foldera analyzes documents, detects conflicts, and prevents disasters before they happen
@@ -432,7 +432,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              🔍 Every Other AI Is a <span className="text-destructive">Black Box</span>.
+              Every Other AI Is a <span className="text-destructive">Black Box</span>.
             </h2>
             <p className="text-xl text-muted-foreground">
               Foldera is proactive, transparent, and battle-tested.
@@ -485,7 +485,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              🛡️ Why Professionals <span className="text-primary">Trust Foldera</span>
+              Why Professionals <span className="text-primary">Trust Foldera</span>
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
               Used by operators at McKinsey, Notion, Accenture, and Deloitte.
@@ -504,7 +504,7 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-8">
             <Card className="text-center ghost-hover">
               <CardContent className="p-8">
-                <div className="text-4xl mb-4">⚙️</div>
+                <FileText className="h-12 w-12 mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-4">Battle-Hardened</h3>
                 <p className="text-muted-foreground">Forged in high-stakes workflows where a single miss = millions lost.</p>
               </CardContent>
@@ -512,7 +512,7 @@ export default function Home() {
             
             <Card className="text-center ghost-hover">
               <CardContent className="p-8">
-                <div className="text-4xl mb-4">🔍</div>
+                <FileText className="h-12 w-12 mx-auto mb-4" />
                 <h3 className="text-xl font-bold mb-4">Glass-Box Trust</h3>
                 <p className="text-muted-foreground">Every move traced. Every source logged. No black box. No hallucinations.</p>
               </CardContent>
@@ -585,7 +585,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <div className="mb-16">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              ⚡ Stop Babysitting. <span className="text-primary">Start Winning</span>.
+              Stop Babysitting. <span className="text-primary">Start Winning</span>.
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
               See Foldera in action. Book a personalized demo and watch it prevent disasters in real-time.
@@ -597,7 +597,7 @@ export default function Home() {
             <Card className="border-2 border-primary/50">
               <CardContent className="p-8">
                 <div className="text-center mb-8">
-                  <div className="text-5xl mb-4">📋</div>
+                  <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-orange-500" />
                   <h3 className="text-2xl font-bold mb-4">Join the Waitlist</h3>
                   <p className="text-muted-foreground">
                     Get early access when we launch publicly.
@@ -605,7 +605,7 @@ export default function Home() {
                 </div>
                 
                 <Button className="w-full py-4 text-lg font-semibold mb-4" data-testid="button-join-waitlist">
-                  ➡️ Join Waitlist
+                  Join Waitlist
                 </Button>
                 
                 <p className="text-sm text-muted-foreground">
@@ -618,7 +618,7 @@ export default function Home() {
             <Card className="border-2 border-primary">
               <CardContent className="p-8">
                 <div className="text-center mb-8">
-                  <div className="text-5xl mb-4">🛡️</div>
+                  <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-orange-500" />
                   <h3 className="text-2xl font-bold mb-4">Enterprise Demo</h3>
                   <p className="text-muted-foreground">
                     See Foldera protect your team in a live demonstration.
@@ -667,7 +667,7 @@ export default function Home() {
             
             <Card className="text-center ghost-hover" data-testid="security-hipaa">
               <CardContent className="p-6">
-                <div className="mx-auto text-blue-500 text-3xl mb-4">🏥</div>
+                <div className="mx-auto text-blue-500 text-3xl mb-4"></div>
                 <h3 className="font-bold mb-2">HIPAA</h3>
                 <p className="text-sm text-muted-foreground">Healthcare ready</p>
               </CardContent>
@@ -675,7 +675,7 @@ export default function Home() {
             
             <Card className="text-center ghost-hover" data-testid="security-gdpr">
               <CardContent className="p-6">
-                <div className="mx-auto text-purple-500 text-3xl mb-4">⚖️</div>
+                <div className="mx-auto text-purple-500 text-3xl mb-4"></div>
                 <h3 className="font-bold mb-2">GDPR</h3>
                 <p className="text-sm text-muted-foreground">Privacy compliant</p>
               </CardContent>

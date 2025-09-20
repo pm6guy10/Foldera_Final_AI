@@ -50,10 +50,10 @@ interface Document {
 }
 
 const severityConfig = {
-  low: { color: 'text-green-500', bg: 'bg-green-500/20', label: 'Low', icon: '🟢' },
-  medium: { color: 'text-yellow-500', bg: 'bg-yellow-500/20', label: 'Medium', icon: '🟡' },
-  high: { color: 'text-orange-500', bg: 'bg-orange-500/20', label: 'High', icon: '🟠' },
-  critical: { color: 'text-red-500', bg: 'bg-red-500/20', label: 'Critical', icon: '🔴' }
+  low: { color: 'text-green-500', bg: 'bg-green-500/20', label: 'Low', icon: CheckCircle },
+  medium: { color: 'text-yellow-500', bg: 'bg-yellow-500/20', label: 'Medium', icon: AlertTriangle },
+  high: { color: 'text-orange-500', bg: 'bg-orange-500/20', label: 'High', icon: AlertTriangle },
+  critical: { color: 'text-red-500', bg: 'bg-red-500/20', label: 'Critical', icon: AlertTriangle }
 };
 
 const contradictionTypeConfig = {

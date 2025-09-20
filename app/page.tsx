@@ -68,19 +68,19 @@ export default function Home() {
           </p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-60">
             <div className="text-center" data-testid="trust-microsoft">
-              <div className="text-3xl mb-2">🏢</div>
+              <div className="text-3xl mb-2"></div>
               <p className="font-semibold">Microsoft</p>
             </div>
             <div className="text-center" data-testid="trust-mckesson">
-              <div className="text-3xl mb-2">🏥</div>
+              <div className="text-3xl mb-2"></div>
               <p className="font-semibold">McKesson</p>
             </div>
             <div className="text-center" data-testid="trust-glean">
-              <div className="text-3xl mb-2">🔍</div>
+              <div className="text-3xl mb-2"></div>
               <p className="font-semibold">Glean</p>
             </div>
             <div className="text-center" data-testid="trust-notion">
-              <div className="text-3xl mb-2">📝</div>
+              <div className="text-3xl mb-2"></div>
               <p className="font-semibold">Notion</p>
             </div>
           </div>

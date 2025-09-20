@@ -25,14 +25,14 @@ interface Document {
 const getFileIcon = (fileType: string) => {
   switch (fileType.toLowerCase()) {
     case 'pdf':
-      return '📄';
+      return 'PDF';
     case 'docx':
     case 'doc':
-      return '📝';
+      return 'DOC';
     case 'txt':
-      return '📋';
+      return 'TXT';
     default:
-      return '📄';
+      return 'FILE';
   }
 };
 
