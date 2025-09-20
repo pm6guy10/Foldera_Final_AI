@@ -21,8 +21,9 @@ interface Document {
   processedAt?: string;
 }
 
-interface UploadedFile extends File {
+interface UploadedFile {
   id: string;
+  file: File;
   uploadProgress: number;
   status: 'pending' | 'uploading' | 'uploaded' | 'error';
   error?: string;
@@ -83,8 +84,8 @@ export default function DocumentUpload() {
 
   // Fetch user's documents
   const { data: documents, isLoading: documentsLoading } = useQuery({
-    queryKey: ['/api/documents'],
-    queryParams: { userId: 'demo-user' } // TODO: Replace with actual user auth
+    queryKey: ['/api/documents', 'demo-user'], // Include userId in cache key
+    queryFn: () => fetch('/api/documents?userId=demo-user').then(res => res.json())
   });
 
   // Upload mutation
@@ -116,7 +117,7 @@ export default function DocumentUpload() {
         description: data.message,
       });
       setSelectedFiles([]);
-      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/documents', 'demo-user'] });
     },
     onError: (error: any) => {
       toast({
@@ -166,8 +167,8 @@ export default function DocumentUpload() {
       }
 
       const uploadFile: UploadedFile = {
-        ...file,
         id: `${Date.now()}-${Math.random()}`,
+        file: file,
         uploadProgress: 0,
         status: 'pending'
       };
@@ -199,12 +200,14 @@ export default function DocumentUpload() {
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
+    console.log('Starting upload for files:', selectedFiles.map(f => ({ name: f.file.name, size: f.file.size, type: f.file.type })));
     setIsUploading(true);
     try {
-      // Convert UploadedFiles back to regular Files for upload
-      const filesToUpload = selectedFiles.map(f => new File([f], f.name, { type: f.type }));
-      await uploadMutation.mutateAsync(filesToUpload);
+      // Extract real File objects from selectedFiles 
+      const realFiles = selectedFiles.map(f => f.file);
+      await uploadMutation.mutateAsync(realFiles);
     } catch (error) {
+      console.error('Upload error:', error);
       // Error handled in mutation
     } finally {
       setIsUploading(false);
@@ -281,10 +284,10 @@ export default function DocumentUpload() {
                     data-testid={`selected-file-${file.id}`}
                   >
                     <div className="flex items-center flex-1">
-                      <span className="text-2xl mr-3">{getFileIcon(file.name?.split('.')?.pop() || 'unknown')}</span>
+                      <span className="text-2xl mr-3">{getFileIcon(file.file.name?.split('.')?.pop() || 'unknown')}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{file.name || 'Unknown file'}</p>
-                        <p className="text-sm text-muted-foreground">{formatFileSize(file.size || 0)}</p>
+                        <p className="font-medium truncate">{file.file.name || 'Unknown file'}</p>
+                        <p className="text-sm text-muted-foreground">{formatFileSize(file.file.size || 0)}</p>
                       </div>
                     </div>
                     <Button

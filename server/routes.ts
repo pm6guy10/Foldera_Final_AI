@@ -130,7 +130,9 @@ const storage_config = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     // Generate unique filename with timestamp and random string
-    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${file.originalname}`;
+    // Sanitize originalname to prevent path traversal attacks
+    const safeName = file.originalname ? path.basename(file.originalname).replace(/[^a-zA-Z0-9.-]/g, '_') : 'upload';
+    const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1E9)}-${safeName}`;
     cb(null, uniqueName);
   }
 });
@@ -147,21 +149,37 @@ const upload = multer({
     const allowedExtensions = ['.pdf', '.docx', '.doc', '.txt', '.csv', '.json', '.xml', '.html', '.md'];
     const genericTypes = ['application/octet-stream', ''];
     
-    const fileExtension = path.extname(file.originalname).toLowerCase();
+    // Safely extract file extension, handle missing originalname
+    const fileExtension = (file.originalname ? path.extname(file.originalname) : '').toLowerCase();
+    const hasValidExtension = allowedExtensions.includes(fileExtension);
+    const hasValidMimeType = allowedTypes.includes(file.mimetype);
+    
+    // Debug logging for upload issues
+    console.log('File upload filter:', {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      extension: fileExtension,
+      hasValidExtension,
+      hasValidMimeType
+    });
     
     // For generic MIME types (common from drag-and-drop), rely on extension
     if (genericTypes.includes(file.mimetype)) {
-      if (allowedExtensions.includes(fileExtension)) {
+      if (hasValidExtension) {
         cb(null, true);
       } else {
-        cb(new Error(`Unsupported file type. Only PDF, Word documents, and text files are allowed. Got extension: ${fileExtension}`));
+        cb(new Error(`Unsupported file type. Only PDF, Word documents, and text files are allowed. Got extension: ${fileExtension || 'none'}`));
       }
     } 
-    // For specific MIME types, check both MIME type and extension
-    else if (allowedTypes.includes(file.mimetype) || allowedExtensions.includes(fileExtension)) {
+    // For specific MIME types, accept if MIME type is valid (extension optional)
+    else if (hasValidMimeType) {
+      cb(null, true);
+    }
+    // Fallback: accept if extension is valid even with unknown MIME type
+    else if (hasValidExtension) {
       cb(null, true);
     } else {
-      cb(new Error(`Unsupported file type. Only PDF, Word documents, and text files are allowed. Got: ${file.mimetype}`));
+      cb(new Error(`Unsupported file type. Only PDF, Word documents, and text files are allowed. Got MIME: ${file.mimetype}, extension: ${fileExtension || 'none'}`));
     }
   }
 });
@@ -173,10 +191,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Upload document(s)
   app.post("/api/documents/upload", 
     createRateLimit(5, 60 * 1000), // 5 bulk uploads per minute
+    (req, res, next) => {
+      console.log('Upload endpoint hit:', {
+        method: req.method,
+        url: req.url,
+        contentType: req.headers['content-type'],
+        contentLength: req.headers['content-length']
+      });
+      next();
+    },
     upload.array('documents', 50), // Max 50 files
     async (req, res) => {
     try {
+      console.log('After multer processing:', {
+        files: req.files ? req.files.length : 0,
+        body: req.body,
+        fileDetails: req.files ? req.files.map(f => ({ 
+          originalname: f.originalname, 
+          mimetype: f.mimetype, 
+          size: f.size,
+          filename: f.filename
+        })) : null
+      });
+      
       if (!req.files || req.files.length === 0) {
+        console.log('No files received by multer');
         return res.status(400).json({ message: "No files uploaded" });
       }
 
