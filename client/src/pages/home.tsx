@@ -167,7 +167,7 @@ export default function Home() {
                 </Button>
               </Link>
               <CalendlyModalButton 
-                url="https://calendly.com/foldera/enterprise-demo"
+                url={import.meta.env.VITE_CALENDLY_URL || "https://calendly.com/foldera/enterprise-demo"}
                 buttonText="Book Enterprise Demo"
                 className="px-8 py-4 rounded-lg font-semibold text-lg"
               >
@@ -389,7 +389,10 @@ export default function Home() {
                 </Button>
               </Link>
               
-              <CalendlyModalButton>
+              <CalendlyModalButton 
+                url={import.meta.env.VITE_CALENDLY_URL || "https://calendly.com/foldera/enterprise-demo"}
+                buttonText="Book a Demo Call"
+              >
                 <Button variant="outline" size="lg" className="w-full sm:w-auto" data-testid="demo-call-button">
                   <Calendar className="h-5 w-5 mr-2" />
                   Book a Demo Call

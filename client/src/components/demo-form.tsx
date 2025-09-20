@@ -35,7 +35,9 @@ export default function DemoForm({ experimentAssignment }: DemoFormProps) {
 
   const onSubmit = async (data: DemoFormData) => {
     try {
-      await apiRequest("POST", "/api/demo-request", data);
+      // Use WAITLIST_FORM_ACTION if available, fallback to local endpoint
+      const endpoint = import.meta.env.VITE_WAITLIST_FORM_ACTION || "/api/demo-request";
+      await apiRequest("POST", endpoint, data);
       
       // Track successful demo form submission as conversion
       await trackConversion(
