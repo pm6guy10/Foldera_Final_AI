@@ -6,8 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import AuditLogVisualization from "@/components/audit-log-visualization";
 import InteractiveDemo from "@/components/interactive-demo";
 import { DemoRequest } from "../components/demo-request";
-import Testimonials from "@/components/testimonials";
-import CaseStudies from "@/components/case-studies";
+// Removed empty placeholder components
 import { assignVariant, exposeExperiment, type Assignment } from "@/lib/ab";
 import { trackExposure } from "@/lib/analytics";
 
@@ -144,12 +143,14 @@ export default function Home() {
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-features">Features</a>
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-pricing">Pricing</a>
               <a href="#security" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-security">Security</a>
-              <a href="/documents" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-briefing">Show Me My Briefing</a>
-              <Link href="#pricing">
+              <Link href="/documents" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-briefing">
+                Show Me My Briefing
+              </Link>
+              <a href="#pricing">
                 <Button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors" data-testid="button-start-trial">
                   Join Waitlist
                 </Button>
-              </Link>
+              </a>
             </div>
           </div>
         </div>
@@ -186,20 +187,12 @@ export default function Home() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-border" data-testid="trust-bar">
         <div className="max-w-7xl mx-auto">
           <p className="text-center text-muted-foreground mb-8 text-sm uppercase tracking-wide">
-            Built and hardened for elite operators at organizations like
+            Built and hardened for elite operators at organizations like McKinsey, Accenture, Deloitte.
           </p>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center opacity-60">
             <div className="text-center" data-testid="trust-mckinsey">
               <Building className="h-8 w-8 mx-auto mb-2" />
               <p className="font-semibold">McKinsey</p>
-            </div>
-            <div className="text-center" data-testid="trust-notion">
-              <Building className="h-8 w-8 mx-auto mb-2" />
-              <p className="font-semibold">Notion</p>
-            </div>
-            <div className="text-center" data-testid="trust-pwc">
-              <Building className="h-8 w-8 mx-auto mb-2" />
-              <p className="font-semibold">PwC</p>
             </div>
             <div className="text-center" data-testid="trust-accenture">
               <Building className="h-8 w-8 mx-auto mb-2" />
@@ -208,6 +201,14 @@ export default function Home() {
             <div className="text-center" data-testid="trust-deloitte">
               <Building className="h-8 w-8 mx-auto mb-2" />
               <p className="font-semibold">Deloitte</p>
+            </div>
+            <div className="text-center" data-testid="trust-bcg">
+              <Building className="h-8 w-8 mx-auto mb-2" />
+              <p className="font-semibold">BCG</p>
+            </div>
+            <div className="text-center" data-testid="trust-bain">
+              <Building className="h-8 w-8 mx-auto mb-2" />
+              <p className="font-semibold">Bain</p>
             </div>
           </div>
         </div>
