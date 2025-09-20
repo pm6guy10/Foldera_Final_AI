@@ -432,7 +432,7 @@ export default function Home() {
           </div>
           
           <div className="border-t border-border mt-12 pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 Foldera. All rights reserved. Built to protect, engineered to never ghost.</p>
+            <p>&copy; 2025 Foldera. All rights reserved. Built to protect, engineered to never ghost.</p>
           </div>
         </div>
       </footer>
