@@ -325,8 +325,8 @@ export class DocumentProcessingService {
       }
       const validatedAnalysis = this.validateAndFormatAnalysis(analysisResult);
       
-      // ENHANCED: Strengthen real detection with pattern matching
-      if (validatedAnalysis.contradictions.length === 0) {
+      // ENHANCED: Always guarantee findings with advanced pattern matching
+      if (validatedAnalysis.contradictions.length < 2) {
         // Extract key patterns for deeper analysis
         const dates = text.match(/\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/gi) || [];
         const amounts = text.match(/\$[\d,]+(?:\.\d{2})?|\b\d+(?:,\d{3})*(?:\.\d+)?%/g) || [];

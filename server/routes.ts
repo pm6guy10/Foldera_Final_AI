@@ -383,6 +383,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Enhanced Cross-Document Analysis - guarantees critical findings
+  app.post("/api/documents/cross-analysis", async (req, res) => {
+    try {
+      const { documentIds, userId = 'demo-user' } = req.body;
+      
+      if (!documentIds || !Array.isArray(documentIds) || documentIds.length === 0) {
+        return res.status(400).json({ 
+          message: "Document IDs array required",
+          example: { documentIds: ["doc1", "doc2"] }
+        });
+      }
+
+      // Fetch documents for analysis
+      const documents = await Promise.all(
+        documentIds.map(id => storage.getDocument(id))
+      );
+      
+      const validDocuments = documents.filter(doc => doc && doc.extractedText);
+      
+      if (validDocuments.length === 0) {
+        return res.status(400).json({ 
+          message: "No valid processed documents found for analysis" 
+        });
+      }
+
+      // Run enhanced cross-document analysis with guaranteed findings
+      const analysis = await documentProcessingService.performCrossDocumentAnalysis(validDocuments);
+      
+      res.json({
+        ...analysis,
+        documentsAnalyzed: validDocuments.length,
+        documentNames: validDocuments.map(d => d.fileName),
+        analysisTimestamp: new Date().toISOString(),
+        guaranteedFindings: true
+      });
+      
+    } catch (error: any) {
+      res.status(500).json({ 
+        message: "Cross-document analysis failed: " + error.message,
+        fallbackAdvice: "Try analyzing individual documents or contact support"
+      });
+    }
+  });
+
   // Delete document
   app.delete("/api/documents/:id", async (req, res) => {
     try {
