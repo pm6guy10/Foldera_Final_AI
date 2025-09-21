@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, FileText, Eye, CheckCircle, Clock, DollarSign, Shield, TrendingUp, Filter, Search, Zap } from 'lucide-react';
+import { AlertTriangle, FileText, Eye, CheckCircle, Clock, DollarSign, Shield, TrendingUp, Filter, Search, Zap, ChevronDown, ChevronUp, Mail, Calendar, FileCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -71,6 +71,7 @@ export default function AuditDashboard() {
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedContradiction, setSelectedContradiction] = useState<ContradictionFinding | null>(null);
+  const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -354,6 +355,8 @@ export default function AuditDashboard() {
               {filteredContradictions.map((contradiction: ContradictionFinding) => {
                 const severityConf = severityConfig[contradiction.severity];
                 const typeConf = contradictionTypeConfig[contradiction.contradictionType as keyof typeof contradictionTypeConfig];
+                const isExpanded = expandedItems.has(contradiction.id);
+                const hasDeliverable = contradiction.suggestedFix && contradiction.suggestedFix.includes('\n');
                 
                 return (
                   <div
@@ -367,7 +370,7 @@ export default function AuditDashboard() {
                           {typeConf && <typeConf.icon className={`h-4 w-4 ${typeConf.color}`} />}
                           <h3 className="font-semibold">{contradiction.title}</h3>
                           <Badge className={`${severityConf.bg} ${severityConf.color} border-0`}>
-                            <span className="mr-1">{severityConf.icon}</span>
+                            <severityConf.icon className="h-3 w-3 mr-1" />
                             {severityConf.label}
                           </Badge>
                           {contradiction.metadata?.crossDocument && (
@@ -438,10 +441,53 @@ export default function AuditDashboard() {
                           </div>
                         </div>
 
-                        {contradiction.suggestedFix && (
-                          <div className="mt-3">
-                            <strong className="text-green-600">Suggested Fix:</strong>
-                            <p className="text-sm">{contradiction.suggestedFix}</p>
+                        {/* Expandable Deliverable Section */}
+                        {hasDeliverable && (
+                          <div className="mt-4">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newExpanded = new Set(expandedItems);
+                                if (isExpanded) {
+                                  newExpanded.delete(contradiction.id);
+                                } else {
+                                  newExpanded.add(contradiction.id);
+                                }
+                                setExpandedItems(newExpanded);
+                              }}
+                              className="w-full justify-between"
+                              data-testid={`expand-${contradiction.id}`}
+                            >
+                              <span className="flex items-center">
+                                {contradiction.contradictionType === 'budget' && <Mail className="h-4 w-4 mr-2" />}
+                                {contradiction.contradictionType === 'deadline' && <Calendar className="h-4 w-4 mr-2" />}
+                                {contradiction.contradictionType === 'compliance' && <FileCheck className="h-4 w-4 mr-2" />}
+                                View Suggested Fix
+                              </span>
+                              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </Button>
+                            {isExpanded && contradiction.suggestedFix && (
+                              <div className="mt-3 p-4 bg-muted/50 rounded-lg border">
+                                <div className="whitespace-pre-wrap font-mono text-sm">
+                                  {contradiction.suggestedFix}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  className="mt-3"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(contradiction.suggestedFix || '');
+                                    toast({
+                                      title: "Copied to clipboard",
+                                      description: "The suggested fix has been copied to your clipboard."
+                                    });
+                                  }}
+                                  data-testid={`copy-fix-${contradiction.id}`}
+                                >
+                                  Copy to Clipboard
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         )}
 
