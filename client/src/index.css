@@ -4,64 +4,64 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(210deg 72.97% 14.51%);
-  --foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 10%, 6%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --popover: hsl(240, 10%, 6%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --primary: hsl(180, 100%, 40%);
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --card: hsl(222, 47%, 11%);
+  --card-foreground: #e2e8f0;
+  --popover: hsl(222, 47%, 11%);
+  --popover-foreground: #e2e8f0;
+  --primary: #00cccc;
   --primary-foreground: hsl(0, 0%, 0%);
   --secondary: hsl(240, 4%, 16%);
-  --secondary-foreground: hsl(0, 0%, 98%);
+  --secondary-foreground: #e2e8f0;
   --muted: hsl(240, 5%, 11%);
   --muted-foreground: hsl(240, 5%, 65%);
-  --accent: hsl(120, 100%, 35%);
+  --accent: #00cccc;
   --accent-foreground: hsl(0, 0%, 98%);
   --destructive: hsl(0, 85%, 60%);
   --destructive-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 6%, 20%);
   --input: hsl(240, 6%, 20%);
-  --ring: hsl(180, 100%, 40%);
-  --chart-1: hsl(180, 100%, 40%);
+  --ring: #00cccc;
+  --chart-1: #00cccc;
   --chart-2: hsl(159, 100%, 36%);
   --chart-3: hsl(42, 93%, 56%);
   --chart-4: hsl(147, 79%, 42%);
   --chart-5: hsl(341, 75%, 51%);
-  --sidebar: hsl(240, 10%, 6%);
-  --sidebar-foreground: hsl(0, 0%, 98%);
-  --sidebar-primary: hsl(180, 100%, 40%);
+  --sidebar: hsl(222, 47%, 11%);
+  --sidebar-foreground: #e2e8f0;
+  --sidebar-primary: #00cccc;
   --sidebar-primary-foreground: hsl(0, 0%, 0%);
   --sidebar-accent: hsl(240, 5%, 11%);
-  --sidebar-accent-foreground: hsl(180, 100%, 40%);
+  --sidebar-accent-foreground: #00cccc;
   --sidebar-border: hsl(240, 6%, 20%);
-  --sidebar-ring: hsl(180, 100%, 40%);
+  --sidebar-ring: #00cccc;
   --font-sans: Inter;
-  --font-serif: Architects Daughter;
-  --font-mono: Architects Daughter;
+  --font-serif: Inter;
+  --font-mono: 'Courier New', monospace;
   --radius: 0.5rem;
 }
 
 .dark {
-  --background: hsl(240, 10%, 4%);
-  --foreground: hsl(0, 0%, 98%);
-  --card: hsl(240, 10%, 6%);
-  --card-foreground: hsl(0, 0%, 98%);
-  --popover: hsl(240, 10%, 6%);
-  --popover-foreground: hsl(0, 0%, 98%);
-  --primary: hsl(180, 100%, 40%);
+  --background: #020617;
+  --foreground: #e2e8f0;
+  --card: hsl(222, 47%, 11%);
+  --card-foreground: #e2e8f0;
+  --popover: hsl(222, 47%, 11%);
+  --popover-foreground: #e2e8f0;
+  --primary: #00cccc;
   --primary-foreground: hsl(0, 0%, 0%);
   --secondary: hsl(240, 4%, 16%);
-  --secondary-foreground: hsl(0, 0%, 98%);
+  --secondary-foreground: #e2e8f0;
   --muted: hsl(240, 5%, 11%);
   --muted-foreground: hsl(240, 5%, 65%);
-  --accent: hsl(120, 100%, 35%);
+  --accent: #00cccc;
   --accent-foreground: hsl(0, 0%, 98%);
   --destructive: hsl(0, 85%, 60%);
   --destructive-foreground: hsl(0, 0%, 98%);
   --border: hsl(240, 6%, 20%);
   --input: hsl(240, 6%, 20%);
-  --ring: hsl(180, 100%, 40%);
+  --ring: #00cccc;
 }
 
 @layer base {
@@ -70,8 +70,30 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
+    @apply font-sans antialiased text-foreground;
     font-size: 16px; /* Base font size for mobile */
+    background: #020617;
+    position: relative;
+  }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(0, 204, 204, 0.1) 25%, rgba(0, 150, 255, 0.1) 50%, rgba(0, 204, 204, 0.1) 75%, transparent 100%);
+    background-size: 200% 200%;
+    animation: oceanFlow 15s ease infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  @keyframes oceanFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
   
   @media (min-width: 768px) {

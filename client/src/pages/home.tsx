@@ -36,9 +36,9 @@ function TypewriterLog({ log, delay = 0 }: { log: string; delay?: number }) {
   }, [log, delay]);
   
   return (
-    <div className="font-mono text-sm text-primary/80 mb-2 min-h-[24px]">
+    <div className="font-mono text-sm text-green-400 mb-2 min-h-[24px]">
       {displayText}
-      {isTyping && <span className="animate-pulse">|</span>}
+      {isTyping && <span className="animate-pulse text-green-400">|</span>}
     </div>
   );
 }
@@ -74,11 +74,11 @@ function AuditLogSection() {
         </div>
         
         <div className="max-w-3xl mx-auto">
-          <div className="bg-card border border-primary/20 rounded-lg p-8 font-mono">
+          <div className="bg-black border border-green-500/30 rounded-lg p-8 font-mono relative z-10">
             <div className="mb-6">
               <div className="flex items-center mb-4">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-3 animate-pulse"></div>
-                <span className="text-sm text-muted-foreground">LIVE MONITORING</span>
+                <span className="text-sm text-green-400">LIVE MONITORING</span>
               </div>
             </div>
             
@@ -92,7 +92,7 @@ function AuditLogSection() {
               ))}
             </div>
             
-            <div className="mt-6 flex items-center text-sm text-muted-foreground">
+            <div className="mt-6 flex items-center text-sm text-green-400">
               <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
               Real-time monitoring and full audit trail
             </div>
@@ -107,9 +107,9 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="bg-background text-foreground font-sans antialiased min-h-screen">
+    <div className="bg-background text-foreground font-sans antialiased min-h-screen relative">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-background/90 backdrop-blur-lg border-b border-border z-50" data-testid="navigation">
+      <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-border z-50" data-testid="navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
@@ -216,23 +216,22 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-5xl mx-auto">
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-              Stop Babysitting the AI{' '}
-              <span className="text-primary glow-text">Productivity Ghost</span>.
+              Catch <span className="text-primary glow-text">$750k Errors</span> Before Coffee
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-6 leading-relaxed max-w-3xl mx-auto">
-              Three years into the "future of work," AI is still a ghost. 99 productivity apps later, 
-              your neck is still on the line when it screws up.
+              Your contracts have landmines. Board decks conflict with budgets. 
+              Compliance docs contradict amendments. You just haven't found them yet.
             </p>
             <p className="text-lg md:text-xl text-foreground mb-10 max-w-3xl mx-auto font-medium">
-              Foldera shows up. It doesn't summarize. It strategizes. 
-              It sees risks before they blow up — and hands you the receipts.
+              Foldera scans everything. Catches catastrophic conflicts. 
+              Delivers board-ready fixes before someone asks "did you check this?"
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link href="/simulation">
                 <Button 
                   size="lg" 
-                  className="min-h-[48px] px-8 text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all" 
+                  className="min-h-[48px] px-10 text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg" 
                   data-testid="hero-primary-cta"
                   onClick={() => {
                     // Track hero CTA click
@@ -241,35 +240,27 @@ export default function Home() {
                     }
                   }}
                 >
-                  See Live Demo
+                  Watch 20s Demo
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <DemoRequest buttonText="Book a Security-Cleared Demo">
-                <Button 
-                  variant="outline" 
-                  size="lg" 
-                  className="min-h-[48px] px-8 text-base font-semibold border-primary/50 hover:bg-primary/10" 
-                  data-testid="hero-secondary-cta"
-                >
-                  <Calendar className="mr-2 h-5 w-5" />
-                  Book a Security-Cleared Demo
-                </Button>
-              </DemoRequest>
             </div>
+            <p className="text-sm text-muted-foreground mt-6">
+              1,287 operators already protected
+            </p>
           </div>
         </div>
       </section>
 
-      {/* Problem Section */}
+      {/* Trust Section */}
       <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="problem-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              This Is Your Brain on <span className="text-destructive">Gen-1 AI</span>
+              Built for Elite Operators
             </h2>
             <p className="text-xl text-muted-foreground">
-              A constant stream of babysitting, second-guessing, and busywork.
+              Trusted by professionals at organizations like McKinsey, Deloitte, and Fortune 500 companies.
             </p>
           </div>
           
@@ -311,10 +302,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              This Is Your Brain on <span className="text-primary glow-text">Foldera</span>
+              Where <span className="text-primary glow-text">Gen 2 AI</span> Shows Up
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Foldera doesn't summarize — it strategizes. You wake up to a briefing with clear, immediate moves.
+              Real protection. Real-time scanning. Board-ready fixes before someone asks.
             </p>
           </div>
           
@@ -356,18 +347,6 @@ export default function Home() {
             </Card>
           </div>
           
-          <div className="text-center">
-            <Link href="/documents">
-              <Button 
-                size="lg" 
-                className="min-h-[48px] px-8 text-base font-semibold"
-                data-testid="solution-cta"
-              >
-                Show Me My First Briefing
-                <ChevronRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
