@@ -70,9 +70,10 @@
   }
 
   body {
-    @apply font-sans antialiased text-foreground;
+    background-color: #020617;
+    color: #e2e8f0;
+    font-family: 'Inter', sans-serif;
     font-size: 16px; /* Base font size for mobile */
-    background: #020617;
     position: relative;
   }
   
@@ -112,16 +113,25 @@
     box-shadow: 0 0 20px rgba(0, 255, 204, 0.3), inset 0 0 20px rgba(0, 255, 204, 0.1);
   }
   
-  /* Button glow effect for cyan CTAs */
+  /* CTA Button Styling */
+  .cta-button, 
+  button.primary,
   button[class*="bg-primary"], 
   .bg-primary {
-    box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
-    transition: box-shadow 0.3s ease;
+    background-color: #00cccc;
+    color: #020617;
+    font-weight: 600;
+    padding: 1rem 2rem;
+    box-shadow: 0 0 20px rgba(0, 204, 204, 0.4);
+    transition: all 0.3s ease;
   }
   
+  .cta-button:hover,
+  button.primary:hover,
   button[class*="bg-primary"]:hover,
   .bg-primary:hover {
-    box-shadow: 0 0 30px rgba(34, 211, 238, 0.6);
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(0, 204, 204, 0.6);
   }
   
   .ghost-hover {
