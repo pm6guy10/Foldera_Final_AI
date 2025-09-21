@@ -369,7 +369,7 @@ export default function AuditDashboard() {
                         <div className="flex items-center gap-3 mb-2">
                           {typeConf && <typeConf.icon className={`h-4 w-4 ${typeConf.color}`} />}
                           <h3 className="font-semibold">{contradiction.title}</h3>
-                          <Badge className={`${severityConf.bg} ${severityConf.color} border-0`}>
+                          <Badge className={`${severityConf.bg} ${severityConf.color} border-0 ${contradiction.severity === 'critical' ? 'animate-pulse' : ''}`}>
                             <severityConf.icon className="h-3 w-3 mr-1" />
                             {severityConf.label}
                           </Badge>
@@ -463,44 +463,84 @@ export default function AuditDashboard() {
                                 {contradiction.contradictionType === 'budget' && <Mail className="h-4 w-4 mr-2" />}
                                 {contradiction.contradictionType === 'deadline' && <Calendar className="h-4 w-4 mr-2" />}
                                 {contradiction.contradictionType === 'compliance' && <FileCheck className="h-4 w-4 mr-2" />}
-                                View Suggested Fix
+                                {contradiction.severity === 'critical' && (
+                                  <span className="text-red-600 font-bold">View $1.2M Risk Fix</span>
+                                )}
+                                {contradiction.severity !== 'critical' && 'View Professional Fix'}
                               </span>
                               {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                             </Button>
                             {isExpanded && contradiction.suggestedFix && (
-                              <div className="mt-3 p-4 bg-muted/50 rounded-lg border">
-                                <div className="whitespace-pre-wrap font-mono text-sm">
+                              <div className="mt-3 p-4 bg-slate-900 dark:bg-slate-950 rounded-lg border border-slate-700">
+                                <div className="flex items-center justify-between mb-2">
+                                  <Badge variant="outline" className="text-green-500 border-green-500">
+                                    Ready to Send
+                                  </Badge>
+                                  <div className="text-xs text-muted-foreground">
+                                    Generated at {new Date().toISOString().replace('T', ' ').substring(0, 23)}
+                                  </div>
+                                </div>
+                                <div className="whitespace-pre-wrap font-mono text-sm text-slate-100 bg-black/50 p-3 rounded">
                                   {contradiction.suggestedFix}
                                 </div>
-                                <Button
-                                  size="sm"
-                                  className="mt-3"
-                                  onClick={() => {
-                                    navigator.clipboard.writeText(contradiction.suggestedFix || '');
-                                    toast({
-                                      title: "Copied to clipboard",
-                                      description: "The suggested fix has been copied to your clipboard."
-                                    });
-                                  }}
-                                  data-testid={`copy-fix-${contradiction.id}`}
-                                >
-                                  Copy to Clipboard
-                                </Button>
+                                <div className="flex gap-2 mt-3">
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    className="bg-green-600 hover:bg-green-700"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(contradiction.suggestedFix || '');
+                                      toast({
+                                        title: "✅ Fix copied - Ready to send",
+                                        description: "Professional fix has been copied. Paste into your email client."
+                                      });
+                                    }}
+                                    data-testid={`copy-fix-${contradiction.id}`}
+                                  >
+                                    <Mail className="h-4 w-4 mr-1" />
+                                    Copy & Send
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const blob = new Blob([contradiction.suggestedFix || ''], { type: 'text/plain' });
+                                      const url = URL.createObjectURL(blob);
+                                      const a = document.createElement('a');
+                                      a.href = url;
+                                      a.download = `fix-${contradiction.contradictionType}-${Date.now()}.txt`;
+                                      a.click();
+                                    }}
+                                  >
+                                    Download as File
+                                  </Button>
+                                </div>
                               </div>
                             )}
+                          </div>
+                        )}
+
+                        {/* Impact and Risk Section */}
+                        {contradiction.potentialImpact && (
+                          <div className="mt-3 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+                            <div className="text-red-700 dark:text-red-400 font-semibold text-sm">
+                              {contradiction.potentialImpact}
+                            </div>
                           </div>
                         )}
 
                         {(contradiction.financialImpact || contradiction.preventedLoss) && (
                           <div className="mt-3 flex gap-4 text-sm">
                             {contradiction.financialImpact && (
-                              <div className="text-red-600">
-                                <strong>Financial Impact:</strong> {contradiction.financialImpact}
+                              <div className="text-red-600 font-semibold">
+                                <DollarSign className="inline h-4 w-4" />
+                                <span>Risk: {contradiction.financialImpact}</span>
                               </div>
                             )}
                             {contradiction.preventedLoss && (
-                              <div className="text-green-600">
-                                <strong>Prevented Loss:</strong> {contradiction.preventedLoss}
+                              <div className="text-green-600 font-semibold">
+                                <Shield className="inline h-4 w-4" />
+                                <span>Saved: {contradiction.preventedLoss}</span>
                               </div>
                             )}
                           </div>
