@@ -62,7 +62,7 @@ function AuditLogSection() {
   }, []);
   
   return (
-    <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8" data-testid="audit-log-section">
+    <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8" data-testid="audit-log-section">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -117,13 +117,37 @@ export default function Home() {
               <span className="text-xl font-bold">Foldera</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-features">
+              <a 
+                href="#features" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer" 
+                data-testid="nav-features"
+              >
                 Features
               </a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-pricing">
+              <a 
+                href="#pricing" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer" 
+                data-testid="nav-pricing"
+              >
                 Pricing
               </a>
-              <a href="#security" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-security">
+              <a 
+                href="#security" 
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('security')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-muted-foreground hover:text-foreground transition-colors cursor-pointer" 
+                data-testid="nav-security"
+              >
                 Security
               </a>
             </div>
@@ -148,13 +172,37 @@ export default function Home() {
           {mobileMenuOpen && (
             <div className="md:hidden border-t border-border">
               <div className="px-2 pt-2 pb-3 space-y-1">
-                <a href="#features" className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground">
+                <a 
+                  href="#features" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground cursor-pointer"
+                >
                   Features
                 </a>
-                <a href="#pricing" className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground">
+                <a 
+                  href="#pricing" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground cursor-pointer"
+                >
                   Pricing
                 </a>
-                <a href="#security" className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground">
+                <a 
+                  href="#security" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    document.getElementById('security')?.scrollIntoView({ behavior: 'smooth' });
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block px-3 py-2 text-base font-medium text-muted-foreground hover:text-foreground cursor-pointer"
+                >
                   Security
                 </a>
               </div>
@@ -214,7 +262,7 @@ export default function Home() {
       </section>
 
       {/* Problem Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="problem-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="problem-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -259,7 +307,7 @@ export default function Home() {
       </section>
 
       {/* Solution Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8" id="features" data-testid="solution-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8" id="features" data-testid="solution-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -324,7 +372,7 @@ export default function Home() {
       </section>
 
       {/* Results Section - Three Landmines */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="results-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="results-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -395,7 +443,7 @@ export default function Home() {
       <AuditLogSection />
 
       {/* Why It Matters Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="why-it-matters-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="why-it-matters-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -452,7 +500,7 @@ export default function Home() {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8" id="pricing" data-testid="pricing-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8" id="pricing" data-testid="pricing-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -460,10 +508,10 @@ export default function Home() {
             </h2>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
             {/* Self-Serve Tier */}
-            <Card className="relative ghost-hover">
-              <CardHeader>
+            <Card className="relative ghost-hover flex flex-col min-h-[500px]">
+              <CardHeader className="p-6 pb-4">
                 <CardTitle className="text-2xl">Self-Serve</CardTitle>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">$99</span>
@@ -471,8 +519,8 @@ export default function Home() {
                 </div>
                 <p className="text-muted-foreground mt-2">Small teams getting started</p>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
+              <CardContent className="flex-1 flex flex-col p-6 pt-0">
+                <ul className="space-y-3 flex-1 mb-6">
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
                     <span className="text-sm">Up to 5 users</span>
@@ -491,7 +539,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Link href="/subscribe">
-                  <Button className="w-full min-h-[48px]" variant="outline">
+                  <Button className="w-full min-h-[48px] font-semibold py-3" variant="outline">
                     Start Trial
                   </Button>
                 </Link>
@@ -499,13 +547,13 @@ export default function Home() {
             </Card>
 
             {/* Pro Tier - Most Popular */}
-            <Card className="relative ghost-hover border-primary">
+            <Card className="relative ghost-hover border-primary flex flex-col min-h-[500px]">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                 <Badge className="bg-primary text-primary-foreground px-3 py-1">
                   Most Popular
                 </Badge>
               </div>
-              <CardHeader>
+              <CardHeader className="p-6 pb-4">
                 <CardTitle className="text-2xl">Pro</CardTitle>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">$399</span>
@@ -513,8 +561,8 @@ export default function Home() {
                 </div>
                 <p className="text-muted-foreground mt-2">For growing organizations</p>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
+              <CardContent className="flex-1 flex flex-col p-6 pt-0">
+                <ul className="space-y-3 flex-1 mb-6">
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
                     <span className="text-sm">Up to 50 users</span>
@@ -533,7 +581,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <Link href="/subscribe">
-                  <Button className="w-full min-h-[48px] bg-primary text-primary-foreground hover:bg-primary/90">
+                  <Button className="w-full min-h-[48px] font-semibold py-3 bg-primary text-primary-foreground hover:bg-primary/90">
                     Start Trial
                   </Button>
                 </Link>
@@ -541,16 +589,16 @@ export default function Home() {
             </Card>
 
             {/* Enterprise Tier */}
-            <Card className="relative ghost-hover">
-              <CardHeader>
+            <Card className="relative ghost-hover flex flex-col min-h-[500px]">
+              <CardHeader className="p-6 pb-4">
                 <CardTitle className="text-2xl">Enterprise Pilot</CardTitle>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">Contact Sales</span>
                 </div>
                 <p className="text-muted-foreground mt-2">Critical operations</p>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <ul className="space-y-3">
+              <CardContent className="flex-1 flex flex-col p-6 pt-0">
+                <ul className="space-y-3 flex-1 mb-6">
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
                     <span className="text-sm">Unlimited users</span>
@@ -569,7 +617,7 @@ export default function Home() {
                   </li>
                 </ul>
                 <DemoRequest buttonText="Book Enterprise Demo">
-                  <Button className="w-full min-h-[48px]" variant="outline">
+                  <Button className="w-full min-h-[48px] font-semibold py-3" variant="outline">
                     Book Enterprise Demo
                   </Button>
                 </DemoRequest>
@@ -580,7 +628,7 @@ export default function Home() {
       </section>
 
       {/* Security Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8 bg-card/50" id="security" data-testid="security-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" id="security" data-testid="security-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -679,7 +727,7 @@ export default function Home() {
       </section>
 
       {/* Footer CTA Section */}
-      <section className="py-16 md:py-24 px-4 sm:px-6 lg:px-8" data-testid="footer-cta-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8" data-testid="footer-cta-section">
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-black mb-6">
             Never Get Ghosted Again
