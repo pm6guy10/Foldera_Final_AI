@@ -218,13 +218,8 @@ export default function Home() {
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
               Catch <span className="text-primary glow-text">$750k Errors</span> Before Coffee
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-6 leading-relaxed max-w-3xl mx-auto">
-              Your contracts have landmines. Board decks conflict with budgets. 
-              Compliance docs contradict amendments. You just haven't found them yet.
-            </p>
-            <p className="text-lg md:text-xl text-foreground mb-10 max-w-3xl mx-auto font-medium">
-              Foldera scans everything. Catches catastrophic conflicts. 
-              Delivers board-ready fixes before someone asks "did you check this?"
+            <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-3xl mx-auto">
+              Your contracts have landmines. Foldera finds them before they explode.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -260,7 +255,7 @@ export default function Home() {
               Built for Elite Operators
             </h2>
             <p className="text-xl text-muted-foreground">
-              Trusted by professionals at organizations like McKinsey, Deloitte, and Fortune 500 companies.
+              Built for operators at organizations like McKinsey and Deloitte
             </p>
           </div>
           
