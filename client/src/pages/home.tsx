@@ -235,7 +235,7 @@ export default function Home() {
                     }
                   }}
                 >
-                  Watch 20s Demo
+                  See Live Demo
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
