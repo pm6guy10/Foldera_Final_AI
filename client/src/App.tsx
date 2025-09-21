@@ -11,6 +11,7 @@ import DocumentViewer from "./pages/document-viewer";
 import CheckoutSuccess from "./pages/checkout-success";
 import CheckoutCancel from "./pages/checkout-cancel";
 import Simulation from "./pages/simulation";
+import Demo from "./pages/demo";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -20,6 +21,7 @@ function Router() {
       <Route path="/documents" component={Documents} />
       <Route path="/document/:id" component={DocumentViewer} />
       <Route path="/simulation" component={Simulation} />
+      <Route path="/demo" component={Demo} />
       <Route path="/subscribe" component={Subscribe} />
       <Route path="/checkout/success" component={CheckoutSuccess} />
       <Route path="/checkout/cancel" component={CheckoutCancel} />
