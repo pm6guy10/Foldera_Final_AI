@@ -112,6 +112,18 @@
     box-shadow: 0 0 20px rgba(0, 255, 204, 0.3), inset 0 0 20px rgba(0, 255, 204, 0.1);
   }
   
+  /* Button glow effect for cyan CTAs */
+  button[class*="bg-primary"], 
+  .bg-primary {
+    box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+    transition: box-shadow 0.3s ease;
+  }
+  
+  button[class*="bg-primary"]:hover,
+  .bg-primary:hover {
+    box-shadow: 0 0 30px rgba(34, 211, 238, 0.6);
+  }
+  
   .ghost-hover {
     transition: all 0.3s ease;
   }
