@@ -717,7 +717,7 @@ export default function Home() {
                 className="min-h-[48px] px-10 text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90"
                 data-testid="footer-primary-cta"
               >
-                Watch 20s Demo
+                See Live Demo
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
