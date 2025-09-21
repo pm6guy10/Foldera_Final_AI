@@ -341,12 +341,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/contradictions", async (req, res) => {
     try {
       const userId = req.query.userId || 'demo-user'; // TODO: Replace with actual user auth
+      const isSimulation = req.query.simulation === 'true' || req.headers.referer?.includes('/simulation');
+      
       const filters = {
         severity: req.query.severity as string,
         status: req.query.status as string,
         contradictionType: req.query.type as string,
         limit: req.query.limit ? parseInt(req.query.limit as string) : 50,
-        offset: req.query.offset ? parseInt(req.query.offset as string) : 0
+        offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
+        isSimulation: isSimulation // Pass simulation flag to storage
       };
 
       const contradictions = await storage.getUserContradictions(userId as string, filters);

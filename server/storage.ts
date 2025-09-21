@@ -979,6 +979,7 @@ export class DrizzleStorage implements IStorage {
     contradictionType?: string;
     limit?: number;
     offset?: number;
+    isSimulation?: boolean; // Added flag for simulation mode
   }): Promise<ContradictionFinding[]> {
     let query = db
       .select()
@@ -1008,24 +1009,24 @@ export class DrizzleStorage implements IStorage {
     const result = await query;
     let findings = result.map((r: any) => r.contradiction_findings);
 
-    // CRITICAL: Always return 2-3 meaningful contradictions for demonstration
-    if (findings.length < 2) {
+    // ONLY fabricate for /simulation endpoint, not for real document analysis
+    if (filters?.isSimulation && findings.length < 2) {
       const now = new Date().toISOString();
       const timestamp = new Date().toISOString().replace('T', ' ').replace('Z', '');
       const millis = Date.now() % 1000;
-      console.log(`[${timestamp}.${millis.toString().padStart(3, '0')}] FOLDERA_BRAIN >> GENERATING_INTELLIGENT_CONTRADICTIONS`);
+      console.log(`[${timestamp}.${millis.toString().padStart(3, '0')}] SIMULATION_MODE >> GENERATING_DEMO_CONTRADICTIONS`);
       
-      const demoDocId = findings[0]?.documentId || 'doc-' + Math.random().toString(36).substr(2, 9);
-      const demoAnalysisId = findings[0]?.analysisId || 'analysis-' + Math.random().toString(36).substr(2, 9);
+      const demoDocId = findings[0]?.documentId || 'sim-doc-' + Math.random().toString(36).substr(2, 9);
+      const demoAnalysisId = findings[0]?.analysisId || 'sim-analysis-' + Math.random().toString(36).substr(2, 9);
       
-      const intelligentContradictions: ContradictionFinding[] = [
+      const simulationContradictions: ContradictionFinding[] = [
         {
-          id: 'ai-critical-' + Date.now(),
+          id: 'sim-critical-' + Date.now(),
           documentId: demoDocId,
           analysisId: demoAnalysisId,
           contradictionType: 'budget',
           severity: 'critical',
-          title: '$2.3M Budget Overrun Detected',
+          title: '⚠ $2.3M Budget Overrun → $1.2M Penalty Exposure',
           description: 'Q4 projections show $8.2M spend vs $5.9M approved budget',
           textSnippet: 'Total Q4 expenditure: $8,237,450... Approved budget: $5,900,000',
           potentialImpact: 'Contract penalties of $450K, board approval required',
@@ -1037,12 +1038,12 @@ export class DrizzleStorage implements IStorage {
           createdAt: new Date()
         },
         {
-          id: 'ai-high-' + Date.now() + 1,
+          id: 'sim-high-' + Date.now() + 1,
           documentId: demoDocId,
           analysisId: demoAnalysisId,
           contradictionType: 'deadline',
           severity: 'high',
-          title: 'FDA Filing Deadline Conflict',
+          title: '⚠ FDA Filing Conflict → $3.2M Revenue Delay',
           description: 'March 31 submission conflicts with Q1 audit schedule',
           textSnippet: 'FDA 510(k) deadline: March 31... Q1 audit: March 28-April 5',
           potentialImpact: 'Product launch delayed Q2→Q3, $3.2M revenue impact',
@@ -1054,12 +1055,12 @@ export class DrizzleStorage implements IStorage {
           createdAt: new Date()
         },
         {
-          id: 'ai-high-' + Date.now() + 2,
+          id: 'sim-high-' + Date.now() + 2,
           documentId: demoDocId,
           analysisId: demoAnalysisId,
           contradictionType: 'compliance',
           severity: 'high',
-          title: 'SOC 2 Attestation Missing - Accenture',
+          title: '⚠ SOC 2 Missing - Accenture → $125K Fine Risk',
           description: 'Critical vendor attestation expired 47 days ago',
           textSnippet: 'Vendor: Accenture... SOC 2 expires: Nov 15, 2023',
           potentialImpact: '$125K regulatory fine risk',
@@ -1072,10 +1073,15 @@ export class DrizzleStorage implements IStorage {
         }
       ];
 
-      // Add only missing contradictions to reach 2-3 total
-      const toAdd = intelligentContradictions.slice(0, Math.max(0, 3 - findings.length));
+      // Add simulation contradictions
+      const toAdd = simulationContradictions.slice(0, Math.max(0, 3 - findings.length));
       findings = [...findings, ...toAdd].slice(0, 3);
-      console.log(`[${timestamp}.${millis.toString().padStart(3, '0')}] CRITICAL: ${findings.length} contradictions flagged`);
+      console.log(`[${timestamp}.${millis.toString().padStart(3, '0')}] SIMULATION: ${findings.length} demo contradictions generated`);
+    } else if (!filters?.isSimulation && findings.length > 0) {
+      // For real documents, log actual detections with millisecond precision
+      const timestamp = new Date().toISOString().replace('T', ' ').replace('Z', '');
+      const millis = Date.now() % 1000;
+      console.log(`[${timestamp}.${millis.toString().padStart(3, '0')}] CRITICAL: ${findings.length} real contradictions detected → Drafts generated`);
     }
 
     return findings;
