@@ -710,28 +710,17 @@ export default function Home() {
             Join teams who trust Foldera to protect their most critical moments.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/documents">
+          <div className="flex justify-center">
+            <Link href="/simulation">
               <Button 
                 size="lg" 
-                className="min-h-[48px] px-8 text-base font-semibold"
+                className="min-h-[48px] px-10 text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90"
                 data-testid="footer-primary-cta"
               >
-                Show Me My First Briefing
+                Watch 20s Demo
                 <ChevronRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <DemoRequest buttonText="Book a Security-Cleared Demo">
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="min-h-[48px] px-8 text-base font-semibold border-primary/50 hover:bg-primary/10"
-                data-testid="footer-secondary-cta"
-              >
-                <Calendar className="mr-2 h-5 w-5" />
-                Book a Security-Cleared Demo
-              </Button>
-            </DemoRequest>
           </div>
         </div>
       </section>
