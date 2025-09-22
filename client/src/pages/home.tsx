@@ -481,98 +481,24 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              Pricing — Choose Your Guardian
+              Simple Pricing
             </h2>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {/* Self-Serve Tier */}
-            <Card className="relative ghost-hover flex flex-col min-h-[500px]">
-              <CardHeader className="p-6 pb-4">
-                <CardTitle className="text-2xl">Self-Serve</CardTitle>
+          <div className="flex justify-center">
+            <Card className="relative ghost-hover border-primary flex flex-col min-h-[500px] max-w-md w-full">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <Badge className="bg-primary text-primary-foreground px-3 py-1">
+                  Launch Special
+                </Badge>
+              </div>
+              <CardHeader className="p-6 pb-4 text-center">
+                <CardTitle className="text-2xl">Foldera Pro</CardTitle>
                 <div className="mt-4">
                   <span className="text-4xl font-bold">$99</span>
                   <span className="text-muted-foreground">/month</span>
                 </div>
-                <p className="text-muted-foreground mt-2">Small teams getting started</p>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col p-6 pt-0">
-                <ul className="space-y-3 flex-1 mb-6">
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">Up to 5 users</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">Conflict detection</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">Basic audit logging</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">Standard security</span>
-                  </li>
-                </ul>
-                <Link href="/subscribe">
-                  <Button className="w-full min-h-[48px] font-semibold py-3" variant="outline">
-                    Start Trial
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Pro Tier - Most Popular */}
-            <Card className="relative ghost-hover border-primary flex flex-col min-h-[500px]">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <Badge className="bg-primary text-primary-foreground px-3 py-1">
-                  Most Popular
-                </Badge>
-              </div>
-              <CardHeader className="p-6 pb-4">
-                <CardTitle className="text-2xl">Pro</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">$399</span>
-                  <span className="text-muted-foreground">/month</span>
-                </div>
-                <p className="text-muted-foreground mt-2">For growing organizations</p>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col p-6 pt-0">
-                <ul className="space-y-3 flex-1 mb-6">
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">Up to 50 users</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">Advanced scanning and alerts</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">SOC 2 security</span>
-                  </li>
-                  <li className="flex items-start">
-                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">Priority support</span>
-                  </li>
-                </ul>
-                <Link href="/subscribe">
-                  <Button className="w-full min-h-[48px] font-semibold py-3 bg-primary text-primary-foreground hover:bg-primary/90">
-                    Start Trial
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            {/* Enterprise Tier */}
-            <Card className="relative ghost-hover flex flex-col min-h-[500px]">
-              <CardHeader className="p-6 pb-4">
-                <CardTitle className="text-2xl">Enterprise Pilot</CardTitle>
-                <div className="mt-4">
-                  <span className="text-4xl font-bold">Contact Sales</span>
-                </div>
-                <p className="text-muted-foreground mt-2">Critical operations</p>
+                <p className="text-muted-foreground mt-2">Everything you need to protect your deals</p>
               </CardHeader>
               <CardContent className="flex-1 flex flex-col p-6 pt-0">
                 <ul className="space-y-3 flex-1 mb-6">
@@ -582,22 +508,30 @@ export default function Home() {
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">Custom AI training</span>
+                    <span className="text-sm">Real-time conflict detection</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">Full compliance suite</span>
+                    <span className="text-sm">Cross-document analysis</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
-                    <span className="text-sm">24/7 support</span>
+                    <span className="text-sm">Guaranteed 3+ critical findings per scan</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span className="text-sm">Bank-level security</span>
+                  </li>
+                  <li className="flex items-start">
+                    <CheckCircle className="h-5 w-5 text-primary mr-2 mt-0.5" />
+                    <span className="text-sm">Priority support</span>
                   </li>
                 </ul>
-                <DemoRequest buttonText="Book Enterprise Demo">
-                  <Button className="w-full min-h-[48px] font-semibold py-3" variant="outline">
-                    Book Enterprise Demo
+                <Link href="/subscribe">
+                  <Button className="w-full min-h-[48px] font-semibold py-3 bg-primary text-primary-foreground hover:bg-primary/90">
+                    Start Free Trial
                   </Button>
-                </DemoRequest>
+                </Link>
               </CardContent>
             </Card>
           </div>
