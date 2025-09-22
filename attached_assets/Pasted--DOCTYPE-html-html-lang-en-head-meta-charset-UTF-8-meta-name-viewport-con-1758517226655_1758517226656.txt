@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foldera | Stop Babysitting. Start Winning.</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/countup.js@2.8.0/dist/countUp.umd.js"></script>
+
+    <!-- Chosen Palette: Dark Theme with Cyan and Green Accents -->
+    <!-- Application Structure Plan: This is architected as a classic "hero" landing page, designed for conversion. The structure follows a narrative flow: Hook (Hero), Social Proof, Problem (Pain Points), Solution (How it Works), Proof (Money Shot & Animated Audit Log), Differentiator (Quadrant), Credibility (Why Trust Us), and a final, urgent Call to Action. This linear, persuasive structure is optimized for maximum conversion. -->
+    <!-- Visualization & Content Choices: 
+        - Hero Section: Goal=Hook. Method=Savage, high-impact static typography and a pulsing CTA button.
+        - Social Proof: Goal=Establish immediate credibility. Method=A monochrome logo bar of aspirational companies.
+        - Problem Section: Goal=Relate. Method=Stat cards combined with real user frustrations ("rage fuel") to make the pain visceral, now with animated counters.
+        - Solution Section: Goal=Explain. Method=A three-step layout using punchier, more strategic language.
+        - Proof Section: Goal=Demonstrate. Method=A new 3-card grid of high-stakes "catastrophe averted" scenarios, followed by a JavaScript-animated "typing" audit log to make the glass-box concept come alive.
+        - Differentiator (Quadrant): Goal=Compare. Method=A CSS Grid-based quadrant, demonstrating market position.
+        - Credibility Section: Goal=Build Trust. Method=Cards for Founder, Advisors, and Beta Users with hardened copy, now featuring a testimonial carousel.
+        - Call to Action: Goal=Convert. Method=An enhanced sign-up form with authentic urgency.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617; /* slate-950 */
+            color: #e2e8f0; /* slate-200 */
+            position: relative;
+        }
+        #background-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+        .hero-gradient-text {
+            background: linear-gradient(to right, #ffffff, #67e8f9); /* white to cyan */
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glow-btn {
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+            animation: pulse-glow 3s infinite ease-in-out;
+        }
+        .glow-btn:hover {
+            box-shadow: 0 0 35px rgba(34, 211, 238, 0.7);
+            transform: scale(1.03);
+            transition: all .2s;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(34, 211, 238, 0.4); }
+            50% { box-shadow: 0 0 30px rgba(34, 211, 238, 0.6); }
+        }
+        .typing-effect {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .typing-effect .cursor {
+            border-right: 2px solid #22d3ee;
+            animation: blink .7s infinite;
+        }
+        @keyframes blink {
+            50% { border-color: transparent; }
+        }
+        .testimonial-carousel {
+            position: relative;
+            overflow: hidden;
+        }
+        .testimonial-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+        .testimonial-item {
+            min-width: 100%;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <canvas id="background-canvas"></canvas>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-slate-950/70 backdrop-blur-lg border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center space-x-3">
+                    <span class="text-2xl">📁</span>
+                    <h1 class="text-2xl font-bold text-white">Foldera</h1>
+                </div>
+                <nav class="flex items-center space-x-4">
+                    <a href="#pricing" class="text-sm font-medium text-slate-400 hover:text-white transition-colors">Pricing</a>
+                    <a href="#" class="text-sm font-medium bg-white text-slate-900 px-4 py-2 rounded-lg hover:bg-slate-200 transition-colors">Sign In</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Hero Section -->
+        <section class="py-24 md:py-32 text-center relative z-10">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+                <h1 class="text-5xl md:text-7xl font-extrabold tracking-tighter hero-gradient-text">Stop Working For Your Folders.<br>Make Them Work For You.</h1>
+                <p class="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-slate-400">Gen-1 AI just summarizes. Foldera strategizes. It's the battle-hardened wingman with a persistent memory that connects dots, spots risks, and drafts your winning move while you sleep.</p>
+                <div class="mt-8 flex justify-center">
+                    <a href="#pricing" class="bg-cyan-600 text-white font-semibold px-8 py-3 rounded-lg text-lg glow-btn">Get My Wingman →</a>
+                </div>
+                <p class="mt-4 text-slate-500 text-sm">🔥 <span id="waitlist-counter">1287</span> professionals have already joined the beta cohort.</p>
+            </div>
+        </section>
+
+        <!-- Social Proof Section -->
+        <section class="py-12 relative z-10">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <p class="text-center text-sm font-semibold text-slate-500 uppercase tracking-wider">Trusted by professionals at</p>
+                <div class="mt-6 flex justify-center items-center space-x-8 sm:space-x-12 grayscale">
+                    <span class="text-2xl font-bold opacity-60 hover:opacity-100 transition-opacity">McKinsey</span>
+                    <span class="text-2xl font-bold opacity-60 hover:opacity-100 transition-opacity">Notion</span>
+                    <span class="text-2xl font-bold opacity-60 hover:opacity-100 transition-opacity">PwC</span>
+                    <span class="text-2xl font-bold opacity-60 hover:opacity-100 transition-opacity">Accenture</span>
+                    <span class="text-2xl font-bold hidden sm:inline opacity-60 hover:opacity-100 transition-opacity">Deloitte</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Problem Section -->
+        <section class="py-20 md:py-28 relative z-10">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-white">Summaries Are Just Expensive Sticky Notes.</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-400">You were promised a partner. You got a parrot with amnesia. Gen-1 AI dumps the thinking back on your plate.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                        <p class="text-lg font-medium text-cyan-500">“I spend more time reminding my AI than using it.”</p>
+                        <p class="mt-3 text-slate-400">AI today has no persistent memory. It forgets everything, forcing you to babysit every single query.</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                         <p class="text-lg font-medium text-cyan-500">“Summaries are worthless. I need decisions.”</p>
+                        <p class="mt-3 text-slate-400">The "So What?" Gap is real. AI gives you facts, but you still do all the strategic work of connecting them.</p>
+                    </div>
+                    <div class="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                        <p class="text-lg font-medium text-cyan-500">“It’s like talking to a goldfish.”</p>
+                        <p class="mt-3 text-slate-400"><span id="hours-wasted" class="text-white font-bold text-xl">9.3</span> hours a week are lost just trying to keep the plot straight. A full workday gone, every week.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Solution Section -->
+        <section class="py-20 md:py-28 relative z-10">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-white">From Chaos to Counter-Moves.</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-400">Foldera doesn't summarize. It strategizes. Every day you wake up to a briefing that cuts through the noise and tees up your next move.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div class="border-t-2 border-cyan-500 pt-6">
+                        <h3 class="text-xl font-bold text-white">1. It Sees Everything</h3>
+                        <p class="mt-2 text-slate-400">Foldera ingests your chaos. Every edit, transcript, and email is cross-checked automatically by its persistent memory.</p>
+                    </div>
+                    <div class="border-t-2 border-cyan-500 pt-6">
+                        <h3 class="text-xl font-bold text-white">2. It Connects Dots</h3>
+                        <p class="mt-2 text-slate-400">It finds the signal. Contradictions, risks, and hidden opportunities no human would catch.</p>
+                    </div>
+                    <div class="border-t-2 border-cyan-500 pt-6">
+                        <h3 class="text-xl font-bold text-white">3. It Makes Moves</h3>
+                        <p class="mt-2 text-slate-400">It drafts your counter-offer, your email, your game plan. You just click approve. That's real delegation.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- The "Money Shot" / Proof Section -->
+        <section class="py-20 md:py-28 relative z-10 bg-slate-950/30">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-white">Three Career-Ending Mistakes. All Caught This Week.</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-400">Foldera isn't a toy. It's oxygen on Everest. Here’s what it stopped cold.</p>
+                </div>
+                <div class="grid gap-6 md:grid-cols-3">
+                    <div class="bg-slate-900 border border-slate-800 rounded-lg p-6 flex flex-col">
+                        <div class="flex items-center mb-3"><span class="text-amber-400 text-xl mr-2">💥</span><h3 class="text-white font-semibold">Budget Bomb</h3></div>
+                        <p class="text-slate-400 text-sm flex-1">Proposal assumed <span class="text-white font-bold">$180K upfront</span>. Slack message revealed client was “cash-strapped until Q2.” Without Foldera → deal dead. With Foldera → staged payment plan ready before you blink.</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-lg p-6 flex flex-col">
+                        <div class="flex items-center mb-3"><span class="text-rose-500 text-xl mr-2">🔥</span><h3 class="text-white font-semibold">Version Grenade</h3></div>
+                        <p class="text-slate-400 text-sm flex-1">Investor deck was about to ship with an <span class="text-white font-bold">outdated forecast</span>. Foldera caught mismatch with latest P&L. Without Foldera → credibility nuked. With Foldera → corrected deck shipped, raise intact.</p>
+                    </div>
+                    <div class="bg-slate-900 border border-slate-800 rounded-lg p-6 flex flex-col">
+                        <div class="flex items-center mb-3"><span class="text-cyan-400 text-xl mr-2">⏰</span><h3 class="text-white font-semibold">Deadline Landmine</h3></div>
+                        <p class="text-slate-400 text-sm flex-1">Regulatory filing buried in a chain of 200 emails. Without Foldera → <span class="text-white font-bold">$50K penalty</span> + reputational hit. With Foldera → flagged 3 days early, submitted on time.</p>
+                    </div>
+                </div>
+                <div class="mt-8 max-w-3xl mx-auto bg-slate-900/50 border border-slate-700 rounded-lg p-6">
+                    <div id="audit-log" class="typing-effect text-sm text-green-400"><span class="cursor"></span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Differentiator Section -->
+        <section class="py-20 md:py-28 relative z-10">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                 <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold tracking-tight text-white">Every Other AI is a Black Box.</h2>
+                    <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-400">Foldera is proactive, transparent, and battle-tested. Every insight is backed by receipts.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-8 items-center max-w-5xl mx-auto">
+                    <div class="bg-slate-900/50 p-6 rounded-xl border border-slate-800">
+                        <div class="relative grid grid-cols-2 grid-rows-2 gap-px bg-slate-800">
+                            <span class="absolute -left-20 top-1/4 -translate-y-1/2 text-sm font-medium text-slate-400">Black-Box</span>
+                            <span class="absolute -left-20 bottom-1/4 -translate-y-1/2 text-sm font-medium text-slate-400">Transparent</span>
+                            <span class="absolute -bottom-8 left-1/4 -translate-x-1/2 text-sm font-medium text-slate-400">Reactive</span>
+                            <span class="absolute -bottom-8 right-1/4 translate-x-1/2 text-sm font-medium text-slate-400">Proactive</span>
+                            <div class="bg-slate-900 p-4 min-h-[120px] flex items-start justify-start"><p class="text-slate-500 text-sm">Glean, Notion AI,<br>MS Copilot</p></div>
+                            <div class="bg-slate-900 p-4 min-h-[120px] flex items-end justify-end"><div class="bg-cyan-600 text-white font-bold text-sm px-3 py-1 rounded-lg">Foldera</div></div>
+                            <div class="bg-slate-900 p-4 min-h-[120px]"></div>
+                            <div class="bg-slate-900 p-4 min-h-[120px]"></div>
+                        </div>
+                    </div>
+                     <div class="text-left text-slate-400">
+                        <h4 class="text-xl font-bold text-white">Others Summarize. We Strategize.</h4>
+                        <p class="mt-2">Competitors give you a search bar. Foldera gives you a battlefield commander. We're the only tool with a "glass-box" audit log, so you can trust every move it makes.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Credibility Section -->
+        <section class="py-20 md:py-28 relative z-10">
+            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+              <h2 class="text-3xl md:text-4xl font-bold text-white">Why Trust Foldera?</h2>
+                <div class="testimonial-carousel mt-8">
+                    <div class="testimonial-track">
+                        <div class="testimonial-item px-8">
+                            <div class="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                                <p class="text-lg font-semibold text-cyan-500">Battle-Hardened</p>
+                                <p class="mt-2 text-slate-400">Forged in high-stakes environments where a single missed detail means millions lost.</p>
+                            </div>
+                        </div>
+                         <div class="testimonial-item px-8">
+                            <div class="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                                <p class="text-lg font-semibold text-cyan-500">“AI search feels like a goldfish. Foldera feels like a general.”</p>
+                                <p class="mt-2 text-slate-400">- Early Beta Tester</p>
+                            </div>
+                        </div>
+                        <div class="testimonial-item px-8">
+                            <div class="bg-slate-900 p-6 rounded-xl border border-slate-800">
+                                <p class="text-lg font-semibold text-cyan-500">Glass-Box Trust</p>
+                                <p class="mt-2 text-slate-400">Every insight is logged with its sources. No black boxes. No hallucinations. No surprises.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section id="pricing" class="py-20 md:py-32 relative z-10 cta-glow">
+            <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 class="text-4xl font-bold text-white">The Next Beta Cohort Is Filling Fast.</h2>
+                <p class="mt-4 text-lg text-slate-400">Every minute you wait, you're working FOR your folders. Once the cohort is full, you'll wait months. Stop babysitting. Start winning.</p>
+                <div class="mt-8">
+                    <form class="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                        <input type="email" placeholder="Enter your email" class="flex-grow bg-slate-800 border border-slate-700 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500" required />
+                        <button type="submit" class="bg-green-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-green-700 glow-btn">Join Waitlist</button>
+                    </form>
+                    <p class="mt-4 text-slate-500 text-sm">Join now → Get on the list → Receive your first Executive Briefing.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 relative z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex justify-between items-center">
+                <p class="text-sm text-slate-500">&copy; 2025 Foldera, Inc. All rights reserved.</p>
+                <div class="flex space-x-6">
+                    <a href="#" class="text-sm text-slate-500 hover:text-white transition-colors">Twitter</a>
+                    <a href="#" class="text-sm text-slate-500 hover:text-white transition-colors">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animated Background
+            const canvas = document.getElementById('background-canvas');
+            const ctx = canvas.getContext('2d');
+            let time = 0;
+
+            function noise(x, y, z) {
+                let n = x * 57 + y * 239 + z * 113;
+                n = (n << 13) ^ n;
+                return (1.0 - ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0);
+            }
+
+            function drawBackground() {
+                const width = canvas.width = window.innerWidth;
+                const height = canvas.height = window.innerHeight;
+                
+                if (width > 0 && height > 0) {
+                    const imageData = ctx.createImageData(width, height);
+                    const data = imageData.data;
+                    time += 0.002;
+
+                    for (let x = 0; x < width; x++) {
+                        for (let y = 0; y < height; y++) {
+                            const i = (x + y * width) * 4;
+                            const value = Math.abs(noise(x / 400, y / 400, time)) * 30; // Reduced intensity
+                            const blue = value * 1.5;
+                            data[i] = 0;
+                            data[i + 1] = value;
+                            data[i + 2] = blue;
+                            data[i + 3] = 255;
+                        }
+                    }
+                    ctx.putImageData(imageData, 0, 0);
+                }
+                
+                requestAnimationFrame(drawBackground);
+            }
+            
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+
+            drawBackground();
+
+            // Live Waitlist Counter
+            const waitlistCounter = new countUp.CountUp('waitlist-counter', 1350, { startVal: 1287, duration: 5 });
+            setInterval(() => {
+                let currentVal = parseInt(document.getElementById('waitlist-counter').innerText.replace(/,/g, ''));
+                const increment = Math.floor(Math.random() * 3) + 1;
+                const newCount = currentVal + increment;
+                const counter = new countUp.CountUp('waitlist-counter', newCount, { startVal: currentVal });
+                if (!counter.error) {
+                    counter.start();
+                }
+            }, 3000);
+            
+            // Animated Stat Counter
+            const hoursCounterEl = document.getElementById('hours-wasted');
+            const hoursCounter = new countUp.CountUp(hoursCounterEl, 9.3, { decimalPlaces: 1, duration: 2 });
+            const statObserver = new IntersectionObserver((entries) => {
+                if(entries[0].isIntersecting) {
+                    hoursCounter.start();
+                    statObserver.disconnect();
+                }
+            }, { threshold: 0.8 });
+            statObserver.observe(hoursCounterEl);
+
+            // Typing Audit Log
+            const logLines = [
+              "[09:14:12] Scanning 'client_contract_draft.docx'...",
+              "[09:14:18] Cross-referencing with 'cash_flow_forecast.xlsx'...",
+              "[09:14:19] 🚨 CATASTROPHE AVERTED: Hidden contradiction detected.",
+              "[09:14:20] - Forecast shows negative cash flow in Q3.",
+              "[09:14:21] - Contract commits to a Q3 project start, risking default.",
+              "[09:14:24] ✅ STRATEGY GENERATED: Revise contract timeline & notify finance."
+            ];
+
+            const logElement = document.getElementById('audit-log');
+            let typeObserver;
+
+            function typeLog(logText, element, onComplete) {
+                let i = 0;
+                element.innerHTML = ''; // Clear previous text
+                const cursor = document.createElement('span');
+                cursor.className = 'cursor';
+                element.appendChild(cursor);
+                
+                function typing() {
+                    if (i < logText.length) {
+                        const char = logText.charAt(i);
+                        if(char === '\\n') {
+                           element.insertBefore(document.createElement('br'), cursor);
+                        } else {
+                           element.insertBefore(document.createTextNode(char), cursor);
+                        }
+                        i++;
+                        setTimeout(typing, 25);
+                    } else {
+                        if(onComplete) onComplete();
+                    }
+                }
+                typing();
+            }
+
+            function startTypingEffect() {
+                const fullLogText = logLines.join('\\n');
+                typeLog(fullLogText, logElement);
+            }
+            
+            typeObserver = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    startTypingEffect();
+                    typeObserver.disconnect();
+                }
+            }, { threshold: 0.5 });
+
+            typeObserver.observe(logElement);
+
+            // Testimonial Carousel
+            const track = document.querySelector('.testimonial-track');
+            const items = Array.from(track.children);
+            let currentIndex = 0;
+
+            setInterval(() => {
+                currentIndex = (currentIndex + 1) % items.length;
+                track.style.transform = `translateX(-${currentIndex * 100}%)`;
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+

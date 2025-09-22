@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DemoRequest } from "../components/demo-request";
 import { Badge } from "@/components/ui/badge";
+import WaveBackground from "@/components/wave-background";
 
 // Typewriter animation component for audit logs
 function TypewriterLog({ log, delay = 0 }: { log: string; delay?: number }) {
@@ -108,6 +109,7 @@ export default function Home() {
 
   return (
     <div className="text-foreground font-sans antialiased min-h-screen relative">
+      <WaveBackground />
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-border z-50" data-testid="navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -219,7 +221,7 @@ export default function Home() {
               <p className="text-primary font-bold text-lg">🔥 First 100 founders get LIFETIME access - share with 3 friends</p>
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
-              Catch <span className="text-primary glow-text">$750k Errors</span> Before Coffee
+              <span className="hero-gradient-text">Catch $750k Errors Before Coffee</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed max-w-3xl mx-auto">
               Your contracts have landmines. Foldera finds them before they explode.
@@ -229,7 +231,7 @@ export default function Home() {
               <Link href="/simulation">
                 <Button 
                   size="lg" 
-                  className="min-h-[48px] px-10 text-lg font-bold bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-lg" 
+                  className="min-h-[48px] px-10 text-lg font-bold bg-primary text-primary-foreground btn-glow hover:bg-primary/90 transition-all shadow-lg" 
                   data-testid="hero-primary-cta"
                   onClick={() => {
                     // Track hero CTA click
@@ -255,7 +257,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
-              Built for Elite Operators
+              <span className="hero-gradient-text">Built for Elite Operators</span>
             </h2>
             <p className="text-xl text-muted-foreground">
               Built for operators at organizations like McKinsey and Deloitte

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { AlertTriangle, FileText, Eye, CheckCircle, Clock, DollarSign, Shield, TrendingUp, Filter, Search, Zap, ChevronDown, ChevronUp, Mail, Calendar, FileCheck } from 'lucide-react';
+import { AlertTriangle, FileText, Eye, CheckCircle, Clock, DollarSign, Shield, TrendingUp, Filter, Search, Zap, ChevronDown, ChevronUp, Mail, Calendar, FileCheck, Upload, BarChart3, ArrowUpRight } from 'lucide-react';
+import WaveBackground from './wave-background';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -65,6 +66,25 @@ const contradictionTypeConfig = {
   data: { icon: TrendingUp, color: 'text-indigo-500', bg: 'bg-indigo-500/10', label: 'Data Issue' }
 };
 
+// Helper function for personalized greeting
+function getPersonalizedGreeting() {
+  const hour = new Date().getHours();
+  const name = "Brandon"; // In real app, get from user context
+  
+  if (hour < 12) return `Good Morning, ${name}`;
+  if (hour < 17) return `Good Afternoon, ${name}`;
+  return `Good Evening, ${name}`;
+}
+
+// Helper function for date format
+function getCurrentDate() {
+  return new Date().toLocaleDateString('en-US', { 
+    weekday: 'long', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+}
+
 export default function AuditDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [severityFilter, setSeverityFilter] = useState('all');
@@ -72,6 +92,7 @@ export default function AuditDashboard() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedContradiction, setSelectedContradiction] = useState<ContradictionFinding | null>(null);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [welcomeCardDismissed, setWelcomeCardDismissed] = useState(false);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -170,83 +191,135 @@ export default function AuditDashboard() {
   };
 
   return (
-    <div className="space-y-6" data-testid="audit-dashboard">
-      {/* Dashboard Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Audit Dashboard</h1>
-          <p className="text-muted-foreground">Real-time document contradiction analysis and compliance monitoring</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="outline" className="bg-green-500/10 text-green-500">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Live Monitoring
-          </Badge>
+    <div className="space-y-6 relative" data-testid="audit-dashboard">
+      <WaveBackground />
+      
+      {/* Sexy Dashboard Header - Personalized Greeting */}
+      <div className="relative z-10 text-center max-w-4xl mx-auto py-8">
+        <h1 className="text-4xl md:text-5xl font-black mb-2">
+          <span className="hero-gradient-text">{getPersonalizedGreeting()}</span>
+        </h1>
+        <p className="text-lg text-muted-foreground">{getCurrentDate()}</p>
+        
+        {/* Quick Actions */}
+        <div className="flex justify-center gap-4 mt-6">
+          <Button className="btn-glow" size="sm">
+            <Upload className="h-4 w-4 mr-2" />
+            Upload Documents
+          </Button>
+          <Button variant="outline" size="sm" className="card-hover-lift">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            View Reports
+          </Button>
         </div>
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Issues</p>
-                <p className="text-2xl font-bold">{stats.total}</p>
+      {/* Sexy Glassmorphic Metrics Cards */}
+      <div className="relative z-10 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          {/* INBOX */}
+          <Card className="metrics-card card-hover-lift">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="text-cyan-400 mb-2">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide">INBOX</p>
+                <p className="text-3xl font-bold text-cyan-400">{stats.total}</p>
+                <div className="flex items-center mt-2 text-xs text-green-400">
+                  <ArrowUpRight className="h-3 w-3 mr-1" />
+                  +2 today
+                </div>
               </div>
-              <AlertTriangle className="h-8 w-8 text-gray-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Critical</p>
-                <p className="text-2xl font-bold text-red-500">{stats.critical}</p>
+          {/* CONFLICTS */}
+          <Card className="metrics-card card-hover-lift">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="text-yellow-400 mb-2">
+                  <AlertTriangle className="h-6 w-6" />
+                </div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide">CONFLICTS</p>
+                <p className="text-3xl font-bold text-yellow-400">{stats.critical + stats.high}</p>
+                <div className="flex items-center mt-2 text-xs text-yellow-400">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Requires review
+                </div>
               </div>
-              <span className="text-2xl">🔴</span>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">High Risk</p>
-                <p className="text-2xl font-bold text-orange-500">{stats.high}</p>
+          {/* OPPORTUNITIES */}
+          <Card className="metrics-card card-hover-lift">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="text-green-400 mb-2">
+                  <TrendingUp className="h-6 w-6" />
+                </div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide">OPPORTUNITIES</p>
+                <p className="text-3xl font-bold text-green-400">1</p>
+                <div className="flex items-center mt-2 text-xs text-green-400">
+                  <DollarSign className="h-3 w-3 mr-1" />
+                  $750k saved
+                </div>
               </div>
-              <span className="text-2xl">🟠</span>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active</p>
-                <p className="text-2xl font-bold text-blue-500">{stats.active}</p>
+          {/* APPROVED */}
+          <Card className="metrics-card card-hover-lift">
+            <CardContent className="p-6">
+              <div className="flex flex-col items-center text-center">
+                <div className="text-blue-400 mb-2">
+                  <CheckCircle className="h-6 w-6" />
+                </div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide">APPROVED</p>
+                <p className="text-3xl font-bold text-blue-400">{stats.resolved}</p>
+                <div className="flex items-center mt-2 text-xs text-blue-400">
+                  <Shield className="h-3 w-3 mr-1" />
+                  All clear
+                </div>
               </div>
-              <Eye className="h-8 w-8 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Resolved</p>
-                <p className="text-2xl font-bold text-green-500">{stats.resolved}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      {/* Welcome Message Card */}
+      {!welcomeCardDismissed && (
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <Card className="card-glass border-cyan-400/30">
+          <CardContent className="p-6">
+            <div className="flex items-start">
+              <div className="text-cyan-400 mr-4 mt-1">
+                <Zap className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-2">Welcome to Foldera, Brandon.</h3>
+                <p className="text-muted-foreground">
+                  This is your Executive Briefing. As you add documents, Foldera will proactively surface conflicts, opportunities, and draft your next move. Drop a file below to begin.
+                </p>
+                <div className="mt-3 flex items-center text-sm text-cyan-400">
+                  <span className="bg-cyan-400/20 px-2 py-1 rounded text-xs mr-3">Sources:</span>
+                  <span className="bg-blue-500/20 px-2 py-1 rounded text-xs">Onboarding Guide</span>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="ml-auto text-xs" 
+                    onClick={() => setWelcomeCardDismissed(true)}
+                    data-testid="dismiss-welcome"
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Filters */}
       <Card>
