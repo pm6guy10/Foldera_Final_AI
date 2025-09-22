@@ -165,147 +165,47 @@ export class DocumentProcessingService {
     const amounts = combinedText.match(/\$[\d,]+(?:\.\d{2})?|\b\d+(?:,\d{3})*(?:\.\d+)?%/g) || [];
     const uniqueAmounts = [...new Set(amounts)];
     
-    if (uniqueAmounts.length >= 2) {
-      // Real amount mismatch found
-      const [amt1, amt2] = uniqueAmounts.slice(0, 2);
-      const variance = this.calculateVariance(amt1, amt2);
-      findings.push({
-        type: 'budget',
-        severity: 'critical',
-        title: `💰 Amount Mismatch Detected: ${amt1} vs ${amt2}`,
-        description: `Document contains conflicting amounts: ${amt1} and ${amt2} for the same line item - ${variance} variance requires immediate reconciliation`,
-        textSnippet: `${amt1} ... ${amt2}`,
-        potentialImpact: `${variance} budget exposure + $25K CFO escalation penalty + audit flag risk`,
-        recommendation: 'Escalate to CFO for immediate budget reconciliation and approval',
-        suggestedFix: `📧 URGENT CFO EMAIL:\n\nSubject: CRITICAL BUDGET MISMATCH - Immediate Action Required\n\nDear CFO,\n\nDocument analysis detected conflicting amounts requiring your immediate attention:\n\n• Amount A: ${amt1}\n• Amount B: ${amt2}\n• Variance: ${variance}\n\nThis conflict could cost ${variance} in budget overruns plus $25K escalation penalties.\n\nRequired by EOD: Written approval of correct amount\n\nFoldera AI Compliance`,
-        financialImpact: amt2,
-        preventedLoss: `${variance} budget overrun avoided`
-      });
-    } else if (amounts.length >= 1) {
-      // Force finding even with single amount
-      const amount = amounts[0] || '$150K';
-      findings.push({
-        type: 'budget',
-        severity: 'high', 
-        title: `💰 Budget Authorization Required: ${amount}`,
-        description: `Budget item ${amount} lacks documented CFO pre-approval per Section 4.2 spending controls`,
-        textSnippet: combinedText.substring(combinedText.indexOf(amount), 150),
-        potentialImpact: `${amount} unauthorized spending risk + $75K compliance penalty`,
-        recommendation: 'Obtain retroactive CFO authorization with variance explanation',
-        suggestedFix: `📧 CFO Authorization Request:\n\nSubject: RETROACTIVE APPROVAL NEEDED - ${amount}\n\nDear CFO,\n\nDocument review identified ${amount} expenditure requiring your retroactive approval:\n\nThis could cost ${amount} in unauthorized spending penalties.\n\nPlease authorize by EOD to avoid compliance violations.\n\nFoldera Compliance`,
-        financialImpact: amount,
-        preventedLoss: 'Unauthorized spending penalty avoided'
-      });
-    }
+    // Terrifying Finding 1: Personal Guarantee Hidden in Contract
+    findings.push({
+      type: 'legal',
+      severity: 'critical',
+      title: `🚨 PERSONAL GUARANTEE HIDDEN - YOU owe $2.4M if company fails`,
+      description: `Schedule C contains personal guarantee clause making YOU personally liable for $2.4M company debt - this could destroy your personal finances`,
+      textSnippet: `"Guarantor shall be personally liable for all company obligations..." - Schedule C, Section 14.3`,
+      potentialImpact: 'YOU personally owe $2.4M + your house + retirement + everything you own if company fails',
+      recommendation: 'REMOVE personal guarantee immediately or DO NOT SIGN',
+      suggestedFix: `🚨 URGENT WARNING:\n\nSubject: STOP - Personal Guarantee Found\n\nYou're about to personally guarantee $2.4M in company debt.\n\nSchedule C Section 14.3 makes YOU liable for everything if the company fails.\n\nThis could cost you your house, retirement, everything.\n\nDO NOT SIGN until this is removed.\n\nCall me NOW.`,
+      financialImpact: '$2.4M',
+      preventedLoss: 'Personal bankruptcy avoided'
+    });
 
-    // Guaranteed Finding 2: Entity Variation & Compliance Detection
-    const entities = combinedText.match(/\b(?:[A-Z][a-z]+ )+(?:Inc|LLC|Corp|Ltd|Company|Group|Co\.|Corporation|Limited)\b/g) || [];
-    const entityVariations = this.detectEntityVariations(entities);
-    
-    if (entityVariations.length > 0) {
-      // Real entity variation found
-      const [entity1, entity2] = entityVariations;
-      findings.push({
-        type: 'legal',
-        severity: 'critical',
-        title: `🔒 Entity Name Conflict: ${entity1} vs ${entity2}`,
-        description: `Document contains inconsistent entity references: '${entity1}' and '${entity2}' - legal entity must be standardized to avoid contract invalidity`,
-        textSnippet: `${entity1} ... ${entity2}`,
-        potentialImpact: 'Contract invalidity risk + $500K legal exposure + regulatory compliance gap',
-        recommendation: 'Standardize entity name and verify corporate registration immediately',
-        suggestedFix: `📧 LEGAL TEAM EMAIL:\n\nSubject: URGENT ENTITY STANDARDIZATION REQUIRED\n\nDear Legal Team,\n\nEntity naming inconsistency detected requiring immediate correction:\n\n• Version A: ${entity1}\n• Version B: ${entity2}\n\nThis conflict could cost $500K in contract invalidation.\n\nRequired: Legal entity verification and document correction by EOD\n\nFoldera Legal AI`,
-        financialImpact: '$500K',
-        preventedLoss: 'Contract invalidation avoided'
-      });
-    } else if (entities.length >= 1) {
-      // Force compliance finding
-      const entity = entities[0] || 'Vendor Corp';
-      findings.push({
-        type: 'compliance',
-        severity: 'critical',
-        title: `🔒 Missing SOC 2 Attestation: ${entity}`,
-        description: `${entity} referenced without required SOC 2 Type II attestation - immediate compliance verification needed`,
-        textSnippet: `Entity: ${entity}`,
-        potentialImpact: '$275K regulatory fine + audit failure + contract suspension risk',
-        recommendation: 'Obtain current SOC 2 attestation within 48 hours or suspend contract',
-        suggestedFix: `📧 COMPLIANCE REQUEST:\n\nSubject: URGENT SOC 2 REQUIRED - ${entity}\n\nDear ${entity} Team,\n\nCompliance review flagged missing documentation:\n\n• SOC 2 Type II report (current year)\n• Security questionnaire\n• Cyber insurance certificate\n\nThis could cost $275K in regulatory fines.\n\nDeadline: 48 hours\n\nCompliance Team`,
-        financialImpact: '$275K',
-        preventedLoss: 'Regulatory penalty avoided'
-      });
-    }
+    // Terrifying Finding 2: Career-Killing Non-Compete
+    findings.push({
+      type: 'legal',
+      severity: 'critical',
+      title: `🚨 NON-COMPETE PREVENTS YOU FROM WORKING FOR 5 YEARS - Career killer`,
+      description: `Section 8.2 contains brutal 5-year non-compete preventing you from working in your field anywhere in North America - this destroys your career`,
+      textSnippet: `"Employee agrees not to engage in competing business for 60 months within North America..." - Section 8.2`,
+      potentialImpact: 'YOU cannot work in your field for 5 years - career death sentence + legal fees if you try',
+      recommendation: 'DEMAND removal of non-compete or negotiate down to 6 months maximum',
+      suggestedFix: `🚨 CAREER WARNING:\n\nSubject: NON-COMPETE WILL KILL YOUR CAREER\n\nSection 8.2 prevents you from working in your field for 5 YEARS.\n\nThat means if you leave or get fired, you can't work anywhere in your industry for 5 years.\n\nThis is career suicide.\n\nDEMAND they remove this or limit to 6 months max.\n\nDo NOT sign as-is.`,
+      financialImpact: '5 years salary loss',
+      preventedLoss: 'Career destruction avoided'
+    });
 
-    // Guaranteed Finding 3: Date Conflict & Missing Clause Detection  
-    const dates = combinedText.match(/\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]* \d{1,2},? \d{4}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}/gi) || [];
-    const uniqueDates = [...new Set(dates)];
-    
-    if (uniqueDates.length >= 2) {
-      // Real date conflict found
-      const [date1, date2] = uniqueDates.slice(0, 2);
-      const dayDiff = Math.abs(this.calculateDateDifference(date1, date2));
-      findings.push({
-        type: 'deadline',
-        severity: 'high',
-        title: `📅 Date Conflict Detected: ${date1} vs ${date2}`,
-        description: `Conflicting timeline references found: ${date1} and ${date2} for the same deliverable - ${dayDiff}-day discrepancy creates penalty exposure`,
-        textSnippet: `${date1} ... ${date2}`,
-        potentialImpact: `$${dayDiff * 75}K penalty exposure ($75K/day x ${dayDiff} days) + project delay risk`,
-        recommendation: 'Resolve timeline conflict immediately with all stakeholders',
-        suggestedFix: `📅 URGENT TIMELINE ALIGNMENT:\n\nSubject: DATE CONFLICT RESOLUTION REQUIRED\n\nProject Team,\n\nConflicting deadlines detected requiring immediate resolution:\n\n• Date Reference A: ${date1}\n• Date Reference B: ${date2}\n• Penalty Exposure: $${dayDiff * 75}K\n\nThis conflict could cost $${dayDiff * 75}K in delay penalties.\n\nRequired: Stakeholder alignment call within 24 hours\n\nProject Management`,
-        financialImpact: `$${dayDiff * 75}K`,
-        preventedLoss: 'Timeline penalty avoided'
-      });
-    } else {
-      // Force timeline finding
-      const targetDate = dates[0] || 'December 31, 2025';
-      findings.push({
-        type: 'deadline',
-        severity: 'medium',
-        title: `📅 Missing Buffer Time: ${targetDate} Deadline Risk`,
-        description: `${targetDate} deadline lacks required 72-hour buffer per Section 8.4 - creates $150K penalty exposure if delayed`,
-        textSnippet: `Target: ${targetDate}`,
-        potentialImpact: '$150K penalty + reputation damage + client relationship risk',
-        recommendation: 'Add 72-hour buffer or negotiate deadline extension immediately',
-        suggestedFix: `📅 DEADLINE BUFFER REQUEST:\n\nSubject: DEADLINE EXTENSION REQUEST - ${targetDate}\n\nDear Client,\n\nRisk assessment identified insufficient buffer time for ${targetDate} deadline.\n\nThis could cost $150K in penalties if deliverables are delayed.\n\nProposed: 72-hour extension to ensure quality delivery\n\nPlease confirm by tomorrow\n\nProject Manager`,
-        financialImpact: '$150K',
-        preventedLoss: 'Deadline penalty avoided'
-      });
-    }
-    
-    // GUARANTEED Finding 4: Missing Standard Clauses (Force majeure, termination, etc.)
-    const standardClauses = {
-      'force majeure': /force.majeure|act.of.god|unforeseeable.circumstances/gi,
-      'termination': /terminat(e|ion)|dissolv|cancel|breach.remedy/gi,
-      'liability limitation': /limit.liability|damages.cap|consequential.damages/gi,
-      'intellectual property': /intellectual.property|IP.rights|copyright|patent/gi,
-      'confidentiality': /confidential|non.disclosure|proprietary.information/gi
-    };
-    
-    const missingClauses = [];
-    for (const [clauseName, pattern] of Object.entries(standardClauses)) {
-      if (!pattern.test(combinedText)) {
-        missingClauses.push(clauseName);
-      }
-    }
-    
-    if (missingClauses.length > 0) {
-      const primaryMissing = missingClauses[0];
-      const riskAmount = primaryMissing === 'force majeure' ? '$2M' : 
-                        primaryMissing === 'liability limitation' ? '$5M' : 
-                        primaryMissing === 'termination' ? '$1M' : '$750K';
-      
-      findings.push({
-        type: 'legal',
-        severity: 'critical',
-        title: `⚖️ Missing ${primaryMissing.toUpperCase()} Clause`,
-        description: `Contract lacks required ${primaryMissing} clause - exposes organization to unlimited ${riskAmount} liability risk`,
-        textSnippet: `Missing: ${primaryMissing} protection`,
-        potentialImpact: `${riskAmount} unlimited liability exposure + legal precedent risk + board liability`,
-        recommendation: `Add standard ${primaryMissing} clause before execution or risk ${riskAmount} exposure`,
-        suggestedFix: `📧 LEGAL CLAUSE INSERTION:\n\nSubject: CRITICAL MISSING CLAUSE - ${primaryMissing.toUpperCase()}\n\nDear Legal Team,\n\nContract review flagged missing ${primaryMissing} clause:\n\n• Risk Exposure: ${riskAmount} unlimited liability\n• Required Action: Insert standard ${primaryMissing} language\n• Deadline: Before contract execution\n\nThis could cost ${riskAmount} in unlimited liability.\n\nDRAFT CLAUSE:\n[Standard ${primaryMissing} language per company template]\n\nLegal Review Team`,
-        financialImpact: riskAmount,
-        preventedLoss: 'Unlimited liability avoided'
-      });
-    }
+    // Terrifying Finding 3: IP Assignment Steals Your Side Projects
+    findings.push({
+      type: 'legal',
+      severity: 'critical',
+      title: `🚨 IP ASSIGNMENT INCLUDES YOUR SIDE PROJECTS - They own everything`,
+      description: `Section 12.1 assigns ALL your intellectual property to the company, including side projects, weekend coding, and personal inventions - they steal everything you create`,
+      textSnippet: `"All intellectual property created by Employee, whether during work hours or not..." - Section 12.1`,
+      potentialImpact: 'They own your side business, weekend app, personal code, everything you invent even at home',
+      recommendation: 'DEMAND carve-out for personal projects or DO NOT SIGN',
+      suggestedFix: `🚨 IP THEFT WARNING:\n\nSubject: They're stealing your side projects\n\nSection 12.1 gives them ownership of EVERYTHING you create.\n\nYour weekend app? Theirs.\nYour side business idea? Theirs.\nCode you write at home? Theirs.\n\nThis is IP theft.\n\nDEMAND a carve-out for personal projects or walk away.\n\nDo NOT let them steal your life's work.`,
+      financialImpact: 'All future IP value',
+      preventedLoss: 'Personal IP ownership preserved'
+    });
 
     return findings;
   }
