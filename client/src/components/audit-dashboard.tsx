@@ -217,70 +217,42 @@ export default function AuditDashboard() {
       {/* Sexy Glassmorphic Metrics Cards */}
       <div className="relative z-10 max-w-6xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {/* INBOX */}
+          {/* ACTIVE */}
           <Card className="metrics-card card-hover-lift">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
-                <div className="text-cyan-400 mb-2">
-                  <FileText className="h-6 w-6" />
-                </div>
-                <p className="text-sm text-muted-foreground uppercase tracking-wide">INBOX</p>
-                <p className="text-3xl font-bold text-cyan-400">{stats.total}</p>
-                <div className="flex items-center mt-2 text-xs text-green-400">
-                  <ArrowUpRight className="h-3 w-3 mr-1" />
-                  +2 today
-                </div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide">ACTIVE</p>
+                <p className="text-3xl font-bold text-white">7</p>
               </div>
             </CardContent>
           </Card>
 
-          {/* CONFLICTS */}
+          {/* VALUE AT RISK */}
           <Card className="metrics-card card-hover-lift">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
-                <div className="text-yellow-400 mb-2">
-                  <AlertTriangle className="h-6 w-6" />
-                </div>
-                <p className="text-sm text-muted-foreground uppercase tracking-wide">CONFLICTS</p>
-                <p className="text-3xl font-bold text-yellow-400">{stats.critical + stats.high}</p>
-                <div className="flex items-center mt-2 text-xs text-yellow-400">
-                  <Clock className="h-3 w-3 mr-1" />
-                  Requires review
-                </div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide">VALUE AT RISK</p>
+                <p className="text-3xl font-bold text-orange-400">$215,000</p>
               </div>
             </CardContent>
           </Card>
 
-          {/* OPPORTUNITIES */}
+          {/* ACTION ITEMS */}
           <Card className="metrics-card card-hover-lift">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
-                <div className="text-green-400 mb-2">
-                  <TrendingUp className="h-6 w-6" />
-                </div>
-                <p className="text-sm text-muted-foreground uppercase tracking-wide">OPPORTUNITIES</p>
-                <p className="text-3xl font-bold text-green-400">1</p>
-                <div className="flex items-center mt-2 text-xs text-green-400">
-                  <DollarSign className="h-3 w-3 mr-1" />
-                  $750k saved
-                </div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide">ACTION ITEMS</p>
+                <p className="text-3xl font-bold text-white">3</p>
               </div>
             </CardContent>
           </Card>
 
-          {/* APPROVED */}
+          {/* RECENT ACTIVITY */}
           <Card className="metrics-card card-hover-lift">
             <CardContent className="p-6">
               <div className="flex flex-col items-center text-center">
-                <div className="text-blue-400 mb-2">
-                  <CheckCircle className="h-6 w-6" />
-                </div>
-                <p className="text-sm text-muted-foreground uppercase tracking-wide">APPROVED</p>
-                <p className="text-3xl font-bold text-blue-400">{stats.resolved}</p>
-                <div className="flex items-center mt-2 text-xs text-blue-400">
-                  <Shield className="h-3 w-3 mr-1" />
-                  All clear
-                </div>
+                <p className="text-sm text-muted-foreground uppercase tracking-wide">RECENT ACTIVITY</p>
+                <p className="text-3xl font-bold text-white">2</p>
               </div>
             </CardContent>
           </Card>
@@ -321,66 +293,97 @@ export default function AuditDashboard() {
         </div>
       )}
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Filter className="h-5 w-5 mr-2" />
-            Filters & Search
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search contradictions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full"
-                data-testid="search-input"
-              />
-            </div>
-            <Select value={severityFilter} onValueChange={setSeverityFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Severity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Severities</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="high">High</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="budget">Budget</SelectItem>
-                <SelectItem value="legal">Legal</SelectItem>
-                <SelectItem value="compliance">Compliance</SelectItem>
-                <SelectItem value="version">Version</SelectItem>
-                <SelectItem value="deadline">Deadline</SelectItem>
-                <SelectItem value="data">Data</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="Status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="detected">Detected</SelectItem>
-                <SelectItem value="reviewing">Reviewing</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="ignored">Ignored</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Executive Briefing Sections */}
+      <div className="relative z-10 max-w-6xl mx-auto space-y-8">
+        
+        {/* LEGAL EXECUTIVE BRIEFING */}
+        <div className="space-y-4">
+          <div className="border-b border-cyan-400/30 pb-2">
+            <h2 className="text-cyan-400 text-sm font-semibold uppercase tracking-wide">LEGAL EXECUTIVE BRIEFING</h2>
+            <p className="text-muted-foreground text-sm mt-1">3 urgent items — PRA idle 455d, 9th Circuit on track</p>
           </div>
-        </CardContent>
-      </Card>
+          
+          <div className="space-y-2">
+            <p className="text-cyan-400 text-xs uppercase tracking-wide">ACTIVE ITEMS</p>
+            
+            <div className="card-glass p-4 flex justify-between items-center">
+              <span className="text-white">King County PRA</span>
+              <span className="text-orange-400 text-sm">$6,500 exposure</span>
+            </div>
+            
+            <div className="card-glass p-4 flex justify-between items-center">
+              <span className="text-white">9th Circuit Appeal</span>
+              <span className="text-green-400 text-sm">On track</span>
+            </div>
+          </div>
+        </div>
+
+        {/* GRANTS EXECUTIVE BRIEFING */}
+        <div className="space-y-4">
+          <div className="border-b border-cyan-400/30 pb-2">
+            <h2 className="text-cyan-400 text-sm font-semibold uppercase tracking-wide">GRANTS EXECUTIVE BRIEFING</h2>
+            <p className="text-muted-foreground text-sm mt-1">Grant 'STEM Lab' missing budget, timeline slip flagged</p>
+          </div>
+          
+          <div className="space-y-2">
+            <p className="text-cyan-400 text-xs uppercase tracking-wide">ACTIVE ITEMS</p>
+            
+            <div className="card-glass p-4 flex justify-between items-center">
+              <span className="text-white">Grant: STEM Lab</span>
+              <span className="text-yellow-400 text-sm">Missing budget section</span>
+            </div>
+            
+            <div className="card-glass p-4 flex justify-between items-center">
+              <span className="text-white">Education Initiative</span>
+              <span className="text-muted-foreground text-sm">Review pending</span>
+            </div>
+          </div>
+        </div>
+
+        {/* SALES EXECUTIVE BRIEFING */}
+        <div className="space-y-4">
+          <div className="border-b border-cyan-400/30 pb-2">
+            <h2 className="text-cyan-400 text-sm font-semibold uppercase tracking-wide">SALES EXECUTIVE BRIEFING</h2>
+            <p className="text-muted-foreground text-sm mt-1">Acme renewal stalled 18d, $150k pipeline at risk</p>
+          </div>
+          
+          <div className="space-y-2">
+            <p className="text-cyan-400 text-xs uppercase tracking-wide">ACTIVE ITEMS</p>
+            
+            <div className="card-glass p-4 flex justify-between items-center">
+              <span className="text-white">Acme Renewal</span>
+              <span className="text-orange-400 text-sm">$150,000 pipeline</span>
+            </div>
+            
+            <div className="card-glass p-4 flex justify-between items-center">
+              <span className="text-white">TechCorp Partnership</span>
+              <span className="text-green-400 text-sm">Contract signed</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ADOPTION EXECUTIVE BRIEFING */}
+        <div className="space-y-4">
+          <div className="border-b border-cyan-400/30 pb-2">
+            <h2 className="text-cyan-400 text-sm font-semibold uppercase tracking-wide">ADOPTION EXECUTIVE BRIEFING</h2>
+            <p className="text-muted-foreground text-sm mt-1">Rivera Family eligibility docs pending review</p>
+          </div>
+          
+          <div className="space-y-2">
+            <p className="text-cyan-400 text-xs uppercase tracking-wide">ACTIVE ITEMS</p>
+            
+            <div className="card-glass p-4 flex justify-between items-center">
+              <span className="text-white">Adoption: Rivera Family</span>
+              <span className="text-muted-foreground text-sm">Eligibility docs pending</span>
+            </div>
+            
+            <div className="card-glass p-4 flex justify-between items-center">
+              <span className="text-white">Johnson Family</span>
+              <span className="text-green-400 text-sm">Home study completed</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Contradictions List */}
       <Card>
