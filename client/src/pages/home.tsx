@@ -215,6 +215,9 @@ export default function Home() {
       <section className="pt-32 pb-16 md:pb-24 px-4 sm:px-6 lg:px-8" data-testid="hero-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-5xl mx-auto">
+            <div className="bg-primary/20 border border-primary/50 rounded-lg p-4 mb-8 mx-auto max-w-2xl">
+              <p className="text-primary font-bold text-lg">🔥 First 100 founders get LIFETIME access - share with 3 friends</p>
+            </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 leading-tight">
               Catch <span className="text-primary glow-text">$750k Errors</span> Before Coffee
             </h1>
