@@ -605,6 +605,9 @@ export default function Home() {
       <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" id="security" data-testid="security-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
+            <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 mb-6 mx-auto max-w-md">
+              <p className="text-yellow-300 font-semibold">Beta - upload non-sensitive documents only</p>
+            </div>
             <h2 className="text-4xl md:text-5xl font-black mb-6">
               Enterprise-Grade Security
             </h2>
@@ -617,9 +620,9 @@ export default function Home() {
                   <div className="flex items-start">
                     <Shield className="h-6 w-6 text-primary mr-3 mt-0.5" />
                     <div>
-                      <h3 className="font-semibold mb-2">SOC 2 Type II certified</h3>
+                      <h3 className="font-semibold mb-2">Bank-level encryption</h3>
                       <p className="text-sm text-muted-foreground">
-                        Independently audited security controls
+                        Industry-standard AES-256 encryption
                       </p>
                     </div>
                   </div>
@@ -631,9 +634,9 @@ export default function Home() {
                   <div className="flex items-start">
                     <Lock className="h-6 w-6 text-primary mr-3 mt-0.5" />
                     <div>
-                      <h3 className="font-semibold mb-2">GDPR and HIPAA ready</h3>
+                      <h3 className="font-semibold mb-2">Your data deleted after 30 days</h3>
                       <p className="text-sm text-muted-foreground">
-                        Compliant with global privacy regulations
+                        Automatic data purging for privacy protection
                       </p>
                     </div>
                   </div>
