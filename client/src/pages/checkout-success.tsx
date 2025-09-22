@@ -31,7 +31,7 @@ export default function CheckoutSuccess() {
   const tierDetails = getTierDetails(tier);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="max-w-2xl w-full text-center" data-testid="checkout-success">
         <CardHeader className="pb-4">
           <div className="mx-auto mb-4">
@@ -43,7 +43,7 @@ export default function CheckoutSuccess() {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <div className="bg-card/50 rounded-lg p-6 border">
+          <div className="bg-card/30 rounded-lg p-6 border">
             <h3 className="text-xl font-semibold mb-2">Subscription Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
               <div>

@@ -211,7 +211,7 @@ export default function SimulationPage() {
   }, [visibleLogs]);
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
@@ -228,7 +228,7 @@ export default function SimulationPage() {
 
         {/* Progress Section */}
         {stage !== 'idle' && (
-          <Card className="mb-6 border-slate-700 bg-slate-900">
+          <Card className="mb-6 border-slate-700 bg-slate-900/50">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm text-muted-foreground">
@@ -276,7 +276,7 @@ export default function SimulationPage() {
             {visibleFindings.map((finding, index) => (
               <Card 
                 key={finding.id} 
-                className={`border-slate-700 bg-slate-900 animate-slide-in`}
+                className={`border-slate-700 bg-slate-900/50 animate-slide-in`}
                 style={{ animationDelay: `${index * 0.2}s` }}
               >
                 <CardContent className="pt-6">
@@ -317,7 +317,7 @@ export default function SimulationPage() {
                   </Button>
 
                   {expandedFix === finding.id && (
-                    <div className="mt-4 p-4 bg-slate-950 rounded-lg border border-slate-700">
+                    <div className="mt-4 p-4 bg-slate-950/50 rounded-lg border border-slate-700">
                       <div className="flex items-center justify-between mb-2">
                         <Badge variant="outline" className="text-green-500 border-green-500">
                           Ready to Send
@@ -379,7 +379,7 @@ export default function SimulationPage() {
 
         {/* Email Capture Overlay */}
         {showEmailCapture && !emailSubmitted && (
-          <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
             <Card className="max-w-md w-full border-cyan-500">
               <CardContent className="pt-6">
                 <h2 className="text-2xl font-bold mb-4">Get Your Free Analysis</h2>
@@ -411,7 +411,7 @@ export default function SimulationPage() {
 
         {/* Success State */}
         {emailSubmitted && (
-          <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
             <Card className="max-w-md w-full">
               <CardContent className="pt-6 text-center">
                 <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">

@@ -107,7 +107,7 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="bg-background text-foreground font-sans antialiased min-h-screen relative">
+    <div className="text-foreground font-sans antialiased min-h-screen relative">
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-black/80 backdrop-blur-lg border-b border-border z-50" data-testid="navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -251,7 +251,7 @@ export default function Home() {
       </section>
 
       {/* Trust Section */}
-      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="problem-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/30" data-testid="problem-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -263,7 +263,7 @@ export default function Home() {
           </div>
           
           <div className="max-w-3xl mx-auto">
-            <div className="bg-background/50 border border-border rounded-lg p-8">
+            <div className="bg-background/20 border border-border rounded-lg p-8">
               <ul className="space-y-4 text-lg">
                 <li className="flex items-start">
                   <span className="text-destructive mr-3 mt-1">•</span>
@@ -349,7 +349,7 @@ export default function Home() {
       </section>
 
       {/* Results Section - Three Landmines */}
-      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="results-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/30" data-testid="results-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -420,7 +420,7 @@ export default function Home() {
       <AuditLogSection />
 
       {/* Why It Matters Section */}
-      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" data-testid="why-it-matters-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/30" data-testid="why-it-matters-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl md:text-5xl font-black mb-6">
@@ -539,7 +539,7 @@ export default function Home() {
       </section>
 
       {/* Security Section */}
-      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/50" id="security" data-testid="security-section">
+      <section className="py-24 md:py-32 px-4 sm:px-6 lg:px-8 bg-card/30" id="security" data-testid="security-section">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <div className="bg-yellow-500/20 border border-yellow-500/50 rounded-lg p-4 mb-6 mx-auto max-w-md">

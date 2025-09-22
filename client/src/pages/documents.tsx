@@ -8,7 +8,7 @@ export default function DocumentsPage() {
   const [activeTab, setActiveTab] = useState('upload');
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="mb-8">

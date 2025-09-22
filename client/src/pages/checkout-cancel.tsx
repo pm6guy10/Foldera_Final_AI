@@ -29,7 +29,7 @@ export default function CheckoutCancel() {
   const tierDetails = getTierDetails(tier);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="max-w-2xl w-full text-center" data-testid="checkout-cancel">
         <CardHeader className="pb-4">
           <div className="mx-auto mb-4">
@@ -41,7 +41,7 @@ export default function CheckoutCancel() {
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <div className="bg-card/50 rounded-lg p-6 border">
+          <div className="bg-card/30 rounded-lg p-6 border">
             <h3 className="text-xl font-semibold mb-2">No charges were made</h3>
             <p className="text-muted-foreground">
               Your payment for <strong>{tierDetails.name}</strong> ({tierDetails.price}/month) was cancelled. 

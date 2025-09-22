@@ -170,7 +170,7 @@ export default function Subscribe() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <Card className="max-w-md mx-auto">
           <CardContent className="p-8 text-center">
             <h3 className="text-lg font-semibold mb-2 text-destructive">Error</h3>
@@ -186,7 +186,7 @@ export default function Subscribe() {
 
   if (!clientSecret || !pricingTier) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
           <p className="text-muted-foreground">
@@ -198,7 +198,7 @@ export default function Subscribe() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-20 px-4">
+    <div className="min-h-screen py-20 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <Link href="/" className="inline-flex items-center text-muted-foreground hover:text-foreground transition-colors">

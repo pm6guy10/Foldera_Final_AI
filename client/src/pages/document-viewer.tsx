@@ -129,7 +129,7 @@ export default function DocumentViewer() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen p-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center justify-center py-20">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -142,7 +142,7 @@ export default function DocumentViewer() {
 
   if (error || !document) {
     return (
-      <div className="min-h-screen bg-background p-6">
+      <div className="min-h-screen p-6">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center mb-6">
             <Link href="/documents">
@@ -170,7 +170,7 @@ export default function DocumentViewer() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <div className="min-h-screen p-6">
       <div className="max-w-5xl mx-auto">
         {/* Header with back button */}
         <div className="flex items-center justify-between mb-6">

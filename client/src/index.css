@@ -70,25 +70,28 @@
   }
 
   body {
-    background: linear-gradient(135deg, #0a2540 0%, #001e3c 100%);
+    background: linear-gradient(180deg, #020617 0%, #0c4a6e 35%, #0369a1 70%, #0c4a6e 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
     color: #e2e8f0;
     font-family: 'Inter', sans-serif;
     font-size: 16px; /* Base font size for mobile */
     position: relative;
   }
   
-  .ocean-overlay {
+  body::before {
+    content: '';
     position: fixed;
     inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(0,204,204,0.1), transparent);
-    animation: wave 15s infinite;
+    background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.1), transparent);
+    animation: wave 20s ease-in-out infinite;
     pointer-events: none;
     z-index: 0;
   }
   
   @keyframes wave {
-    0%, 100% { transform: translateX(-100%); }
-    50% { transform: translateX(100%); }
+    0%, 100% { transform: translateX(-100%); opacity: 0.5; }
+    50% { transform: translateX(100%); opacity: 0.8; }
   }
   
   @media (min-width: 768px) {
