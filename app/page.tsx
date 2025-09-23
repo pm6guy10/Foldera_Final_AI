@@ -1,441 +1,475 @@
-import Link from "next/link";
-import { Shield, Eye, TriangleAlert, Settings, CheckCircle, Calendar, Rocket, Gavel, DollarSign, IdCard, Lock, Key, History } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import AuditLogVisualization from "@/components/audit-log-visualization";
-import DemoForm from "@/components/demo-form";
+'use client';
+import React, { useState, useEffect, useReducer, useRef, useCallback, createContext, useContext } from 'react';
+import { ChevronRight, AlertTriangle, TrendingUp, Clock, FileText, DollarSign, Shield, Zap, CircleDashed, ArrowRight, Brain, Sparkles, AlertCircle, CheckCircle, X, Activity, Bell, BarChart3, Target } from 'lucide-react';
 
-export default function Home() {
+// ===================================================================================
+// --- /lib/constants.js ---
+// Separating data from your UI makes updates and testing much easier.
+// ===================================================================================
+const PRICING_PLANS = [
+  {
+    title: "Pro Plan",
+    price: "$79",
+    features: [
+      "Unlimited document analysis",
+      "Daily Executive Briefings",
+      "Real-time conflict alerts",
+      "Standard email support"
+    ],
+    highlighted: false,
+  },
+  {
+    title: "Team Plan",
+    price: "$149",
+    features: [
+      "Everything in Pro",
+      "Up to 5 team seats",
+      "Shared playbooks & workflows",
+      "Priority support & onboarding",
+      "Custom integrations"
+    ],
+    highlighted: true,
+  },
+  {
+    title: "Enterprise",
+    price: "Custom",
+    features: [
+      "Unlimited seats",
+      "Dedicated account management",
+      "Custom compliance playbooks",
+      "On-premise deployment option",
+      "API & white-label options"
+    ],
+    highlighted: false,
+  }
+];
+
+// ===================================================================================
+// --- /hooks/useInterval.js ---
+// A declarative custom hook for managing setInterval.
+// ===================================================================================
+function useInterval(callback, delay) {
+  const savedCallback = useRef();
+
+  useEffect(() => {
+    savedCallback.current = callback;
+  }, [callback]);
+
+  useEffect(() => {
+    function tick() {
+      savedCallback.current();
+    }
+    if (delay !== null) {
+      let id = setInterval(tick, delay);
+      return () => clearInterval(id);
+    }
+  }, [delay]);
+}
+
+// ===================================================================================
+// --- /context/AppContext.jsx ---
+// This context provides global state and actions to the entire application.
+// ===================================================================================
+const AppContext = createContext(null);
+
+const initialState = {
+  stats: { liveCounter: 1287 },
+  loading: false,
+  demoHasRun: false,
+  showAuthModal: false,
+  email: '',
+  notifications: [],
+};
+
+function appReducer(state, action) {
+  switch (action.type) {
+    case 'START_DEMO':
+      return { ...state, loading: true, demoHasRun: false };
+    case 'SHOW_DEMO_RESULT':
+      return { ...state, loading: false, demoHasRun: true };
+    case 'UPDATE_LIVE_COUNTER':
+      return { ...state, stats: { ...state.stats, liveCounter: state.stats.liveCounter + Math.floor(Math.random() * 3) + 1 } };
+    case 'TOGGLE_AUTH_MODAL':
+      return { ...state, showAuthModal: !state.showAuthModal };
+    case 'CLOSE_MODALS':
+      return { ...state, showAuthModal: false };
+    case 'SET_EMAIL':
+      return { ...state, email: action.payload };
+    case 'ADD_NOTIFICATION':
+      return { ...state, notifications: [action.payload, ...state.notifications] };
+    case 'REMOVE_NOTIFICATION':
+      return { ...state, notifications: state.notifications.filter(n => n.id !== action.payload) };
+    default:
+      return state;
+  }
+}
+
+const AppProvider = ({ children }) => {
+  const [state, dispatch] = useReducer(appReducer, initialState);
+
+  const handleRemoveNotification = useCallback((id) => {
+    dispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
+  }, []);
+
+  const value = { state, dispatch, handleRemoveNotification };
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+};
+
+const useAppContext = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useAppContext must be used within an AppProvider');
+  }
+  return context;
+};
+
+
+// ===================================================================================
+// --- /components/ui/... ---
+// These are the small, reusable building blocks of the UI.
+// ===================================================================================
+const AnimatedText = React.memo(({ children, delay = 0 }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => setIsVisible(true), delay);
+        if (ref.current) observer.unobserve(ref.current);
+      }
+    }, { threshold: 0.1 });
+
+    if (ref.current) observer.observe(ref.current);
+    return () => { if (ref.current) observer.unobserve(ref.current) };
+  }, [delay]);
+
+  return <div ref={ref} className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>{children}</div>;
+});
+
+const ParticleField = React.memo(() => {
+    const canvasRef = useRef(null);
+
+    useEffect(() => {
+        let animationFrameId;
+        const startParticles = () => {
+            const canvas = canvasRef.current;
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = Array.from({ length: 50 }, () => ({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                size: Math.random() * 2 + 0.5,
+                speedX: (Math.random() - 0.5) * 0.5,
+                speedY: (Math.random() - 0.5) * 0.5,
+                opacity: Math.random() * 0.5 + 0.3
+            }));
+
+            const animate = () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => {
+                    p.x += p.speedX; p.y += p.speedY;
+                    if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+                    if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(34, 211, 238, ${p.opacity})`;
+                    ctx.fill();
+                });
+                animationFrameId = requestAnimationFrame(animate);
+            };
+            animate();
+        };
+
+        const handleResize = () => {
+            if (canvasRef.current) {
+                canvasRef.current.width = window.innerWidth;
+                canvasRef.current.height = window.innerHeight;
+            }
+        };
+
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(startParticles);
+        } else {
+            setTimeout(startParticles, 200);
+        }
+
+        window.addEventListener('resize', handleResize);
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        };
+    }, []);
+
+    return <canvas ref={canvasRef} className="fixed inset-0 -z-20 opacity-50" />;
+});
+
+const LiveNotification = React.memo(({ notification, onRemove }) => {
+  useEffect(() => {
+    const timer = setTimeout(() => onRemove(notification.id), 5000);
+    return () => clearTimeout(timer);
+  }, [notification.id, onRemove]);
+
   return (
-    <div className="bg-background text-foreground font-sans antialiased">
-      {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-sm border-b border-border z-50" data-testid="navigation">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Shield className="text-primary text-2xl mr-2" />
-              <span className="text-xl font-bold">Foldera</span>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-              <a href="#security" className="text-muted-foreground hover:text-foreground transition-colors">Security</a>
-              <Link href="/subscribe?plan=pro">
-                <Button className="bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors" data-testid="button-start-trial">
-                  Start Trial
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden" data-testid="hero-section">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent"></div>
-        <div className="max-w-7xl mx-auto relative">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight" data-testid="hero-headline">
-              The AI That Never{' '}
-              <span className="text-primary glow-text">Ghosts</span> You
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed" data-testid="hero-subheadline">
-              When other AIs vanish at crunch time, Foldera stands guard.{' '}
-              <br className="hidden md:block" />
-              Preventing disasters. Protecting careers. <span className="text-destructive font-semibold">Before it's too late.</span>
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link href="/subscribe?plan=pro">
-                <Button className="bg-primary text-primary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-all ghost-hover" data-testid="button-start-trial-hero">
-                  <Rocket className="mr-2 h-5 w-5" />
-                  Start Trial
-                </Button>
-              </Link>
-              <Button variant="outline" className="border-border text-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-secondary transition-all" data-testid="button-book-demo">
-                <Calendar className="mr-2 h-5 w-5" />
-                Book Enterprise Demo
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Trust Bar */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 border-t border-border" data-testid="trust-bar">
-        <div className="max-w-7xl mx-auto">
-          <p className="text-center text-muted-foreground mb-8 text-sm uppercase tracking-wide">
-            Built for teams inside companies like
-          </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 items-center opacity-60">
-            <div className="text-center" data-testid="trust-microsoft">
-              <div className="text-3xl mb-2">🏢</div>
-              <p className="font-semibold">Microsoft</p>
-            </div>
-            <div className="text-center" data-testid="trust-mckesson">
-              <div className="text-3xl mb-2">🏥</div>
-              <p className="font-semibold">McKesson</p>
-            </div>
-            <div className="text-center" data-testid="trust-glean">
-              <div className="text-3xl mb-2">🔍</div>
-              <p className="font-semibold">Glean</p>
-            </div>
-            <div className="text-center" data-testid="trust-notion">
-              <div className="text-3xl mb-2">📝</div>
-              <p className="font-semibold">Notion</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Pain Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card" data-testid="pain-section">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-6" data-testid="pain-headline">
-              Your Career Just Went <span className="text-destructive">Code Red</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              One wrong document. One missed conflict. One compliance failure.{' '}
-              <br className="hidden md:block" />
-              And suddenly you're explaining to the board why everything went sideways.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="bg-background border-destructive/20 text-center" data-testid="pain-boardroom">
-              <CardContent className="pt-8">
-                <Gavel className="mx-auto text-destructive text-4xl mb-4" />
-                <h3 className="text-xl font-bold mb-4">The Boardroom Blindside</h3>
-                <p className="text-muted-foreground">"Why didn't our AI catch this conflict before we sent it to the client?"</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-background border-destructive/20 text-center" data-testid="pain-cfo">
-              <CardContent className="pt-8">
-                <DollarSign className="mx-auto text-destructive text-4xl mb-4" />
-                <h3 className="text-xl font-bold mb-4">The CFO Meltdown</h3>
-                <p className="text-muted-foreground">"This compliance failure just cost us the contract. And probably next quarter."</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="bg-background border-destructive/20 text-center" data-testid="pain-badge">
-              <CardContent className="pt-8">
-                <IdCard className="mx-auto text-destructive text-4xl mb-4" />
-                <h3 className="text-xl font-bold mb-4">The Badge Disabled</h3>
-                <p className="text-muted-foreground">"Your access has been revoked pending investigation into the data breach."</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Relief Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8" id="features" data-testid="relief-section">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-6" data-testid="relief-headline">
-              <span className="text-primary">Foldera Intercepts</span> Problems
-              <br />
-              Before They Explode
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              While other AIs ghost you when stakes get high, Foldera stays vigilant.{' '}
-              <br className="hidden md:block" />
-              Scanning, protecting, and preventing career-ending mistakes 24/7.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="text-center ghost-hover" data-testid="feature-scanning">
-              <CardContent className="pt-8">
-                <Eye className="mx-auto text-primary text-4xl mb-4" />
-                <h3 className="text-xl font-bold mb-4">Real-Time Scanning</h3>
-                <p className="text-muted-foreground">Every document, every edit, every risk assessed in real-time before problems surface.</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center ghost-hover" data-testid="feature-detection">
-              <CardContent className="pt-8">
-                <TriangleAlert className="mx-auto text-yellow-500 text-4xl mb-4" />
-                <h3 className="text-xl font-bold mb-4">Conflict Detection</h3>
-                <p className="text-muted-foreground">Instantly flags contradictions, compliance issues, and potential legal landmines.</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center ghost-hover" data-testid="feature-remediation">
-              <CardContent className="pt-8">
-                <Settings className="mx-auto text-green-500 text-4xl mb-4" />
-                <h3 className="text-xl font-bold mb-4">Auto-Remediation</h3>
-                <p className="text-muted-foreground">Suggests fixes, applies corrections, and ensures compliance without human intervention.</p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Audit Log Visualization */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card" data-testid="audit-log-section">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">
-              Watch Foldera <span className="text-primary">Work</span>
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              See how Foldera scans, detects, and protects in real-time
-            </p>
-          </div>
-          
-          <AuditLogVisualization />
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8" id="pricing" data-testid="pricing-section">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">
-              Choose Your <span className="text-primary">Guardian Level</span>
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              From small teams to enterprise fortresses. Foldera scales with your needs.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Individual */}
-            <Card data-testid="pricing-individual">
-              <CardContent className="p-8">
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-2">Individual</h3>
-                  <p className="text-muted-foreground mb-4">Perfect for solo professionals</p>
-                  <div className="text-4xl font-black mb-2">$49<span className="text-lg text-muted-foreground">/mo</span></div>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Up to 5 users</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Basic discrepancy detection</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Email support</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Standard integrations</li>
-                </ul>
-                <Link href="/subscribe?plan=individual">
-                  <Button variant="secondary" className="w-full py-3" data-testid="button-individual">
-                    Start Trial
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-            
-            {/* Pro */}
-            <Card className="border-2 border-primary relative" data-testid="pricing-pro">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary text-primary-foreground px-4 py-1 rounded-full text-sm font-semibold">
-                Most Popular
-              </div>
-              <CardContent className="p-8">
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-2">Pro</h3>
-                  <p className="text-muted-foreground mb-4">For growing teams</p>
-                  <div className="text-4xl font-black mb-2">$99<span className="text-lg text-muted-foreground">/mo</span></div>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Up to 25 users</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Advanced AI protection</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Priority support</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Custom workflows</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Audit reporting</li>
-                </ul>
-                <Link href="/subscribe?plan=pro">
-                  <Button className="w-full py-3" data-testid="button-pro">
-                    Start Trial
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-            
-            {/* Team */}
-            <Card data-testid="pricing-team">
-              <CardContent className="p-8">
-                <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold mb-2">Team</h3>
-                  <p className="text-muted-foreground mb-4">For large organizations</p>
-                  <div className="text-4xl font-black mb-2">$399<span className="text-lg text-muted-foreground">/mo</span></div>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Up to 100 users</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Enterprise AI features</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Dedicated support</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />Advanced integrations</li>
-                  <li className="flex items-center"><CheckCircle className="text-green-500 mr-3 h-4 w-4" />SOC 2 compliance</li>
-                </ul>
-                <Link href="/subscribe?plan=team">
-                  <Button variant="outline" className="w-full py-3" data-testid="button-team">
-                    Start Trial
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Demo Form Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-card" data-testid="demo-section">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">
-              See Foldera <span className="text-primary">Protect</span> Your Team
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Book a demo and watch Foldera prevent real disasters in real-time
-            </p>
-          </div>
-          
-          <DemoForm />
-        </div>
-      </section>
-
-      {/* Security Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8" id="security" data-testid="security-section">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black mb-6">
-              <span className="text-primary">Enterprise-Grade</span> Security
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Built to meet the highest security and compliance standards
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <Card className="text-center ghost-hover" data-testid="security-soc2">
-              <CardContent className="p-6">
-                <Shield className="mx-auto text-green-500 text-3xl mb-4" />
-                <h3 className="font-bold mb-2">SOC 2 Type II</h3>
-                <p className="text-sm text-muted-foreground">Certified & audited</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center ghost-hover" data-testid="security-hipaa">
-              <CardContent className="p-6">
-                <div className="mx-auto text-blue-500 text-3xl mb-4">🏥</div>
-                <h3 className="font-bold mb-2">HIPAA</h3>
-                <p className="text-sm text-muted-foreground">Healthcare ready</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center ghost-hover" data-testid="security-gdpr">
-              <CardContent className="p-6">
-                <div className="mx-auto text-purple-500 text-3xl mb-4">⚖️</div>
-                <h3 className="font-bold mb-2">GDPR</h3>
-                <p className="text-sm text-muted-foreground">Privacy compliant</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="text-center ghost-hover" data-testid="security-audit">
-              <CardContent className="p-6">
-                <CheckCircle className="mx-auto text-yellow-500 text-3xl mb-4" />
-                <h3 className="font-bold mb-2">Audit Ready</h3>
-                <p className="text-sm text-muted-foreground">Complete trails</p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          <Card className="mt-16" data-testid="security-features">
-            <CardContent className="p-8">
-              <div className="grid md:grid-cols-3 gap-8 text-center">
-                <div>
-                  <Lock className="mx-auto text-primary text-2xl mb-3" />
-                  <h4 className="font-semibold mb-2">End-to-End Encryption</h4>
-                  <p className="text-sm text-muted-foreground">AES-256 encryption at rest and in transit</p>
-                </div>
-                <div>
-                  <Key className="mx-auto text-primary text-2xl mb-3" />
-                  <h4 className="font-semibold mb-2">Zero-Trust Architecture</h4>
-                  <p className="text-sm text-muted-foreground">Every request verified and authenticated</p>
-                </div>
-                <div>
-                  <History className="mx-auto text-primary text-2xl mb-3" />
-                  <h4 className="font-semibold mb-2">Complete Audit Logs</h4>
-                  <p className="text-sm text-muted-foreground">Every action tracked and immutable</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary/10 to-accent/10" data-testid="final-cta">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-black mb-6">
-            Stop Waiting for Disaster
-          </h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            Start your trial today and let Foldera guard your career while you sleep
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/subscribe?plan=pro">
-              <Button className="bg-primary text-primary-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-primary/90 transition-all ghost-hover" data-testid="button-start-trial-final">
-                <Rocket className="mr-2 h-5 w-5" />
-                Start Trial Now
-              </Button>
-            </Link>
-            <Button variant="outline" className="border-border text-foreground px-8 py-4 rounded-lg font-semibold text-lg hover:bg-secondary transition-all" data-testid="button-view-pricing">
-              <Eye className="mr-2 h-5 w-5" />
-              View Pricing
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-card border-t border-border py-16 px-4 sm:px-6 lg:px-8" data-testid="footer">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center mb-4">
-                <Shield className="text-primary text-2xl mr-2" />
-                <span className="text-xl font-bold">Foldera</span>
-              </div>
-              <p className="text-muted-foreground text-sm">
-                The AI career guardian that never ghosts you when it matters most.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a></li>
-                <li><a href="#security" className="hover:text-foreground transition-colors">Security</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Integrations</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors" data-testid="link-about">About</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors" data-testid="link-terms">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors" data-testid="link-privacy">Privacy Policy</a></li>
-                <li><a href="#security" className="hover:text-foreground transition-colors" data-testid="link-security">Security</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Data Processing</a></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-border mt-12 pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 Foldera. All rights reserved. Built to protect, engineered to never ghost.</p>
-          </div>
-        </div>
-      </footer>
+    <div className="animate-slide-in-right bg-slate-900/90 backdrop-blur-lg border border-cyan-500/30 rounded-lg p-4 flex items-start gap-3 shadow-2xl">
+      <div className="flex-shrink-0"><CheckCircle className="w-5 h-5 text-green-400" /></div>
+      <div className="flex-1">
+        <p className="text-sm font-medium text-white">{notification.title}</p>
+        <p className="text-xs text-slate-400 mt-1">{notification.message}</p>
+      </div>
+      <button onClick={() => onRemove(notification.id)} className="text-slate-500 hover:text-white"><X className="w-4 h-4" /></button>
     </div>
   );
+});
+
+const AuthModal = ({ onAuth, onClose }) => {
+  const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const handleSubmit = async () => {
+    if (email && email.includes('@')) {
+      setIsSubmitting(true);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      onAuth(email);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-xl z-50 flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-slate-900/90 backdrop-blur-xl border border-cyan-500/30 rounded-3xl p-8 w-full max-w-md text-center transform animate-scale-in shadow-2xl shadow-cyan-500/20">
+        <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl mx-auto mb-6 animate-pulse" />
+        <h3 className="text-3xl font-light text-white mb-2">Save Your Briefing</h3>
+        <p className="text-slate-400 mb-8">Enter your email to get a copy of this report.<br/>We'll also start your free trial.</p>
+        <div>
+          <input type="email" required className="w-full px-4 py-3 bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl text-white mb-4 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all" placeholder="your.work@email.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSubmit()} disabled={isSubmitting} />
+          <button onClick={handleSubmit} className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white py-3 rounded-xl font-medium hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed" disabled={isSubmitting || !email.includes('@')}>
+            {isSubmitting ? (<span className="flex items-center justify-center gap-2"><CircleDashed className="w-5 h-5 animate-spin" />Processing...</span>) : ('Save & Start Trial →')}
+          </button>
+        </div>
+        <button onClick={onClose} className="w-full mt-4 text-slate-500 text-sm hover:text-white transition-colors">Maybe later</button>
+      </div>
+    </div>
+  );
+};
+
+const PricingCard = React.memo(({ title, price, features, highlighted, onCtaClick }) => (
+    <div className={`relative rounded-3xl p-8 transition-all h-full flex flex-col transform hover:scale-105 ${highlighted ? "bg-gradient-to-b from-cyan-900/30 to-purple-900/30 border-2 border-cyan-400/70 shadow-2xl shadow-cyan-500/20" : "bg-slate-900/50 backdrop-blur border border-slate-800 hover:border-slate-700"}`}>
+        {highlighted && (<div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full"><span className="text-sm font-semibold text-white uppercase tracking-wider flex items-center gap-1"><Sparkles className="w-4 h-4" />Most Popular</span></div>)}
+        <div className={highlighted ? "pt-8" : ""}><h3 className="text-2xl font-light mb-4 text-white">{title}</h3><div className="mb-8"><span className="text-5xl font-thin text-white">{price}</span>{!price.includes("Custom") && <span className="text-slate-400 ml-2">/month</span>}</div></div>
+        <ul className="space-y-4 mb-10 flex-grow">{features.map((f, i) => (<li key={i} className="flex items-start gap-3 text-slate-300"><CheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" /><span className="text-sm">{f}</span></li>))}</ul>
+        <button onClick={onCtaClick} className={`w-full py-4 rounded-2xl font-medium transition-all transform hover:scale-105 ${highlighted ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white hover:shadow-lg hover:shadow-cyan-500/30" : "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"}`}>{highlighted ? 'Start Free Trial →' : 'Get Started'}</button>
+    </div>
+));
+
+
+// ===================================================================================
+// --- /components/landing/... ---
+// These components represent the major sections of the landing page.
+// ===================================================================================
+const Header = ({ onCtaClick }) => (
+    <header className="relative z-10 text-center py-24 md:py-32 px-6">
+        <AnimatedText><div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 text-sm mb-8"><Bell className="w-4 h-4" /><span>Warning: Your AI has context amnesia</span></div></AnimatedText>
+        <AnimatedText delay={200}><h1 className="text-5xl md:text-7xl font-thin text-white mb-6 leading-tight">Your AI is a <span style={{ animation: 'unstable-text 4s ease-in-out infinite' }} className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-500">Goldfish.</span></h1></AnimatedText>
+        <AnimatedText delay={400}><p className="text-xl md:text-2xl text-slate-400 max-w-3xl mx-auto mb-10">Every context window, a new amnesia. Foldera remembers, detects, and fixes costly mistakes <span className="text-white font-medium"> while you sleep.</span></p></AnimatedText>
+        <AnimatedText delay={600}><button onClick={onCtaClick} className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-2xl font-medium hover:shadow-xl hover:shadow-cyan-500/30 transform hover:scale-105 transition-all inline-flex items-center gap-2 group">Run Free Scan <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></button></AnimatedText>
+        <AnimatedText delay={800}><div className="mt-8 flex items-center justify-center gap-8 text-sm"><div className="flex items-center gap-2"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" /><span>Join <span className="text-white font-semibold">1,000+</span> professionals who have run a free scan</span></div></div></AnimatedText>
+    </header>
+);
+
+const GeneratedReport = ({ onCtaClick }) => (
+    <div className="bg-slate-900/30 backdrop-blur-xl border border-slate-800/50 rounded-3xl p-4 md:p-8 shadow-2xl animate-fade-in">
+      <AnimatedText>
+        <img 
+          src="https://storage.googleapis.com/gemini-prod-us-central1-cbf209c8-uploads/file-YJhSCGZe9QDHWtc7j9Zkbw-b2664355-2479-40af-91f3-c6bc0e9c8cc6.jpg" 
+          alt="Foldera Executive Briefing Example"
+          className="rounded-xl shadow-2xl shadow-cyan-500/10 w-full"
+        />
+      </AnimatedText>
+      <AnimatedText delay={200}>
+        <div className="mt-8 p-6 bg-gradient-to-r from-cyan-500/10 to-purple-500/10 rounded-2xl border border-cyan-500/20">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <p className="text-white font-medium">Want a copy of this briefing?</p>
+              <p className="text-sm text-slate-400">Save it to your email and start your free trial.</p>
+            </div>
+            <button 
+              onClick={onCtaClick}
+              className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105 transition-all flex items-center gap-2"
+            >
+              Save My Briefing
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </AnimatedText>
+    </div>
+);
+
+const DemoSection = ({ loading, demoHasRun, onAuthAction }) => (
+    <section className="relative z-10 max-w-7xl mx-auto px-6 py-24">
+        <div className="text-center mb-16">
+            <AnimatedText><div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full text-green-400 text-sm mb-6"><Activity className="w-4 h-4 animate-pulse" /><span>Live Dashboard Demo</span></div></AnimatedText>
+            <AnimatedText delay={200}><h2 className="text-4xl md:text-5xl font-light text-white mb-6">This is Your New Executive Briefing.<span className="block text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">Generated in Seconds.</span></h2><p className="text-xl text-slate-400 max-w-2xl mx-auto">This is a high-fidelity example of the report Foldera generates for you daily.</p></AnimatedText>
+        </div>
+
+        {loading ? (
+            <div className="flex flex-col items-center justify-center min-h-[50vh]"><div className="relative"><CircleDashed className="w-16 h-16 text-cyan-500 animate-spin" /><div className="absolute inset-0 w-16 h-16 bg-cyan-500/20 rounded-full blur-xl animate-pulse" /></div><p className="mt-6 text-white text-xl font-light">Analyzing documents...</p><p className="mt-2 text-slate-400 text-sm">This is a demo simulation</p></div>
+        ) : !demoHasRun ? (
+            <div className="text-center min-h-[50vh] flex flex-col items-center justify-center"><div className="w-24 h-24 bg-slate-800/50 rounded-3xl flex items-center justify-center mb-6 border border-slate-700"><Target className="w-12 h-12 text-cyan-400" /></div><p className="text-2xl text-white font-light mb-4">Your dashboard is ready.</p><p className="text-slate-400 mb-8">Click "Run Free Scan" above to start the live demo.</p></div>
+        ) : (
+            <GeneratedReport onCtaClick={onAuthAction} />
+        )}
+    </section>
+);
+
+const PricingSection = ({ onCtaClick }) => (
+    <section className="py-24 px-6 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-950">
+        <div className="max-w-6xl mx-auto">
+            <AnimatedText><div className="text-center mb-16"><h2 className="text-4xl md:text-5xl font-light text-white mb-4">Simple, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">High-Value</span> Pricing</h2><p className="text-xl text-slate-400">Start for free. Upgrade when you see the value.</p></div></AnimatedText>
+            <div className="grid md:grid-cols-3 gap-8 items-stretch">
+                {PRICING_PLANS.map((plan, i) => (
+                    <AnimatedText delay={i * 200} key={plan.title}>
+                        <PricingCard {...plan} onCtaClick={onCtaClick} />
+                    </AnimatedText>
+                ))}
+            </div>
+        </div>
+    </section>
+);
+
+const FinalCTA = ({ onCtaClick, liveCounter }) => (
+    <section className="py-24 px-6 text-center">
+        <AnimatedText>
+            <h2 className="text-4xl md:text-5xl font-light text-white mb-6">Stop Babysitting Your AI.</h2>
+            <p className="text-xl text-slate-400 max-w-2xl mx-auto mb-10">Join {liveCounter.toLocaleString()} professionals who've upgraded to AI that actually works.</p>
+            <button onClick={onCtaClick} className="px-10 py-5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white text-lg rounded-2xl font-medium hover:shadow-2xl hover:shadow-cyan-500/30 transform hover:scale-105 transition-all inline-flex items-center gap-3 group">Start Your Free Trial <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" /></button>
+            <p className="mt-6 text-sm text-slate-500">No credit card required • 14-day free trial • Cancel anytime</p>
+        </AnimatedText>
+    </section>
+);
+
+const Footer = () => (
+    <footer className="border-t border-slate-800/50 py-12 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div className="flex items-center gap-3"><div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-lg" /><span className="text-lg font-light text-white">Foldera</span></div>
+            <p className="text-sm text-slate-500">© 2025 Foldera AI. Making AI actually useful.</p>
+        </div>
+    </footer>
+);
+
+
+// ===================================================================================
+// --- /app/page.js (Main App Component) ---
+// This is now a clean, high-level component that assembles the page.
+// ===================================================================================
+function HomePage() {
+  const { state, dispatch, handleRemoveNotification } = useAppContext();
+  const mainRef = useRef(null);
+  const isDesktop = typeof window !== 'undefined' && window.matchMedia?.('(min-width: 768px)').matches;
+
+  useInterval(() => {
+    dispatch({ type: 'UPDATE_LIVE_COUNTER' });
+  }, 2000);
+
+  const handleRunScan = useCallback(() => {
+    dispatch({ type: 'START_DEMO' });
+    mainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      dispatch({ type: 'SHOW_DEMO_RESULT' });
+      dispatch({ type: 'ADD_NOTIFICATION', payload: { id: Date.now(), title: 'Briefing Ready', message: 'Your live demo report has been generated.' } });
+    }, 2500);
+  }, [dispatch]);
+
+  const handleAuthAction = useCallback(() => {
+    dispatch({ type: 'TOGGLE_AUTH_MODAL' });
+  }, [dispatch]);
+
+  const handleAuthSuccess = useCallback((email) => {
+    dispatch({ type: 'SET_EMAIL', payload: email });
+    dispatch({ type: 'CLOSE_MODALS' });
+    dispatch({ type: 'ADD_NOTIFICATION', payload: { id: Date.now(), title: 'Welcome to Foldera!', message: `Confirmation sent to ${email}` } });
+  }, [dispatch]);
+  
+  const handleCloseModals = useCallback(() => {
+      dispatch({ type: 'CLOSE_MODALS' });
+  }, [dispatch]);
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-300 font-sans overflow-x-hidden">
+        <style>{`
+            @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes unstable-text { 0%, 100% { transform: skewX(0) scale(1); text-shadow: 0 0 1px transparent; } 50% { transform: skewX(-2deg) scale(1.02); text-shadow: 0 0 10px rgba(255, 0, 0, 0.3), 0 0 20px rgba(255, 100, 100, 0.2); } }
+            @keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+            @keyframes slide-in-right { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+            @keyframes scale-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+            .animate-fade-in { animation: fade-in 0.5s ease-out; }
+            .animate-slide-up { animation: slide-up 0.6s ease-out forwards; }
+            .animate-slide-in-right { animation: slide-in-right 0.5s ease-out; }
+            .animate-scale-in { animation: scale-in 0.3s ease-out; }
+            .bg-grid { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 50px 50px; }
+        `}</style>
+      
+        {isDesktop && <ParticleField />}
+        <div className="fixed inset-0 -z-10">
+            <div className="absolute inset-0 bg-grid opacity-20" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+        </div>
+
+        <div className="fixed top-24 right-6 z-50 space-y-3 max-w-sm w-full">
+            {state.notifications.map(notification => (<LiveNotification key={notification.id} notification={notification} onRemove={handleRemoveNotification} />))}
+        </div>
+
+        {state.showAuthModal && <AuthModal onAuth={handleAuthSuccess} onClose={handleCloseModals} />}
+      
+        <nav className="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/30 border-b border-white/5">
+            <div className="max-w-7xl mx-auto px-6 py-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 group cursor-pointer">
+                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl group-hover:shadow-lg group-hover:shadow-cyan-500/30 transition-all" />
+                        <span className="text-2xl font-light text-white">Foldera</span>
+                        <span className="text-xs text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded-full">AI 2.0</span>
+                    </div>
+                    <button onClick={handleRunScan} className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105 transition-all">Run Free Scan</button>
+                </div>
+            </div>
+        </nav>
+
+        <Header onCtaClick={handleRunScan} />
+      
+        <main ref={mainRef}>
+            <DemoSection loading={state.loading} demoHasRun={state.demoHasRun} onAuthAction={handleAuthAction} />
+        </main>
+        
+        <section className="py-12 border-y border-slate-800/50">
+            <div className="max-w-6xl mx-auto px-6 text-center">
+                <p className="text-sm text-slate-400"><span className="font-semibold text-white">Built for high-stakes operators</span> in consulting, finance, and legal teams.</p>
+            </div>
+      </section>
+
+        <PricingSection onCtaClick={handleAuthAction} />
+        <FinalCTA onCtaClick={handleAuthAction} liveCounter={state.stats.liveCounter} />
+        <Footer />
+    </div>
+  );
+}
+
+// Final wrapper to make it a drop-in replacement for your previewer
+export default function App() {
+    return (
+        <AppProvider>
+            <HomePage />
+        </AppProvider>
+    )
 }
