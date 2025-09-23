@@ -1,10 +1,10 @@
 'use client';
+
 import React, { useState, useEffect, useReducer, useRef, useCallback, createContext, useContext } from 'react';
 import { ChevronRight, AlertTriangle, TrendingUp, Clock, FileText, DollarSign, Shield, Zap, CircleDashed, ArrowRight, Brain, Sparkles, AlertCircle, CheckCircle, X, Activity, Bell, BarChart3, Target } from 'lucide-react';
 
 // ===================================================================================
-// --- /lib/constants.js ---
-// Separating data from your UI makes updates and testing much easier.
+// --- CONSTANTS ---
 // ===================================================================================
 const PRICING_PLANS = [
   {
@@ -45,8 +45,7 @@ const PRICING_PLANS = [
 ];
 
 // ===================================================================================
-// --- /hooks/useInterval.js ---
-// A declarative custom hook for managing setInterval.
+// --- HOOKS ---
 // ===================================================================================
 function useInterval(callback, delay) {
   const savedCallback = useRef();
@@ -67,8 +66,7 @@ function useInterval(callback, delay) {
 }
 
 // ===================================================================================
-// --- /context/AppContext.jsx ---
-// This context provides global state and actions to the entire application.
+// --- CONTEXT ---
 // ===================================================================================
 const AppContext = createContext(null);
 
@@ -124,10 +122,8 @@ const useAppContext = () => {
   return context;
 };
 
-
 // ===================================================================================
-// --- /components/ui/... ---
-// These are the small, reusable building blocks of the UI.
+// --- UI COMPONENTS ---
 // ===================================================================================
 const AnimatedText = React.memo(({ children, delay = 0 }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -273,10 +269,8 @@ const PricingCard = React.memo(({ title, price, features, highlighted, onCtaClic
     </div>
 ));
 
-
 // ===================================================================================
-// --- /components/landing/... ---
-// These components represent the major sections of the landing page.
+// --- SECTIONS ---
 // ===================================================================================
 const Header = ({ onCtaClick }) => (
     <header className="relative z-10 text-center py-24 md:py-32 px-6">
@@ -369,107 +363,15 @@ const Footer = () => (
     </footer>
 );
 
-
 // ===================================================================================
-// --- /app/page.js (Main App Component) ---
-// This is now a clean, high-level component that assembles the page.
+// --- MAIN APP ---
 // ===================================================================================
-function HomePage() {
+const LandingPageContent = () => {
   const { state, dispatch, handleRemoveNotification } = useAppContext();
-  const mainRef = useRef(null);
-  const isDesktop = typeof window !== 'undefined' && window.matchMedia?.('(min-width: 768px)').matches;
 
   useInterval(() => {
     dispatch({ type: 'UPDATE_LIVE_COUNTER' });
-  }, 2000);
+  }, 5000);
 
-  const handleRunScan = useCallback(() => {
+  const handleStartDemo = useCallback(() => {
     dispatch({ type: 'START_DEMO' });
-    mainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(() => {
-      dispatch({ type: 'SHOW_DEMO_RESULT' });
-      dispatch({ type: 'ADD_NOTIFICATION', payload: { id: Date.now(), title: 'Briefing Ready', message: 'Your live demo report has been generated.' } });
-    }, 2500);
-  }, [dispatch]);
-
-  const handleAuthAction = useCallback(() => {
-    dispatch({ type: 'TOGGLE_AUTH_MODAL' });
-  }, [dispatch]);
-
-  const handleAuthSuccess = useCallback((email) => {
-    dispatch({ type: 'SET_EMAIL', payload: email });
-    dispatch({ type: 'CLOSE_MODALS' });
-    dispatch({ type: 'ADD_NOTIFICATION', payload: { id: Date.now(), title: 'Welcome to Foldera!', message: `Confirmation sent to ${email}` } });
-  }, [dispatch]);
-  
-  const handleCloseModals = useCallback(() => {
-      dispatch({ type: 'CLOSE_MODALS' });
-  }, [dispatch]);
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-300 font-sans overflow-x-hidden">
-        <style>{`
-            @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
-            @keyframes unstable-text { 0%, 100% { transform: skewX(0) scale(1); text-shadow: 0 0 1px transparent; } 50% { transform: skewX(-2deg) scale(1.02); text-shadow: 0 0 10px rgba(255, 0, 0, 0.3), 0 0 20px rgba(255, 100, 100, 0.2); } }
-            @keyframes slide-up { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-            @keyframes slide-in-right { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
-            @keyframes scale-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-            .animate-fade-in { animation: fade-in 0.5s ease-out; }
-            .animate-slide-up { animation: slide-up 0.6s ease-out forwards; }
-            .animate-slide-in-right { animation: slide-in-right 0.5s ease-out; }
-            .animate-scale-in { animation: scale-in 0.3s ease-out; }
-            .bg-grid { background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px); background-size: 50px 50px; }
-        `}</style>
-      
-        {isDesktop && <ParticleField />}
-        <div className="fixed inset-0 -z-10">
-            <div className="absolute inset-0 bg-grid opacity-20" />
-            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
-        </div>
-
-        <div className="fixed top-24 right-6 z-50 space-y-3 max-w-sm w-full">
-            {state.notifications.map(notification => (<LiveNotification key={notification.id} notification={notification} onRemove={handleRemoveNotification} />))}
-        </div>
-
-        {state.showAuthModal && <AuthModal onAuth={handleAuthSuccess} onClose={handleCloseModals} />}
-      
-        <nav className="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/30 border-b border-white/5">
-            <div className="max-w-7xl mx-auto px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3 group cursor-pointer">
-                        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl group-hover:shadow-lg group-hover:shadow-cyan-500/30 transition-all" />
-                        <span className="text-2xl font-light text-white">Foldera</span>
-                        <span className="text-xs text-cyan-400 bg-cyan-400/10 px-2 py-1 rounded-full">AI 2.0</span>
-                    </div>
-                    <button onClick={handleRunScan} className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105 transition-all">Run Free Scan</button>
-                </div>
-            </div>
-        </nav>
-
-        <Header onCtaClick={handleRunScan} />
-      
-        <main ref={mainRef}>
-            <DemoSection loading={state.loading} demoHasRun={state.demoHasRun} onAuthAction={handleAuthAction} />
-        </main>
-        
-        <section className="py-12 border-y border-slate-800/50">
-            <div className="max-w-6xl mx-auto px-6 text-center">
-                <p className="text-sm text-slate-400"><span className="font-semibold text-white">Built for high-stakes operators</span> in consulting, finance, and legal teams.</p>
-            </div>
-      </section>
-
-        <PricingSection onCtaClick={handleAuthAction} />
-        <FinalCTA onCtaClick={handleAuthAction} liveCounter={state.stats.liveCounter} />
-        <Footer />
-    </div>
-  );
-}
-
-// Final wrapper to make it a drop-in replacement for your previewer
-export default function App() {
-    return (
-        <AppProvider>
-            <HomePage />
-        </AppProvider>
-    )
-}
