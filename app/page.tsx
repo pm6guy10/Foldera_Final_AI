@@ -368,10 +368,102 @@ const Footer = () => (
 // ===================================================================================
 const LandingPageContent = () => {
   const { state, dispatch, handleRemoveNotification } = useAppContext();
+  const mainRef = useRef(null);
 
   useInterval(() => {
     dispatch({ type: 'UPDATE_LIVE_COUNTER' });
-  }, 5000);
-
+  }, 2000);
+          
   const handleStartDemo = useCallback(() => {
     dispatch({ type: 'START_DEMO' });
+    mainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => {
+      dispatch({ type: 'SHOW_DEMO_RESULT' });
+      dispatch({ 
+        type: 'ADD_NOTIFICATION', 
+        payload: { id: Date.now(), title: 'Analysis Complete', message: 'Your executive briefing demo is ready.' } 
+      });
+    }, 2000);
+  }, [dispatch]);
+
+  const handleAuthAction = useCallback(() => {
+    dispatch({ type: 'TOGGLE_AUTH_MODAL' });
+  }, [dispatch]);
+
+  const handleAuthSuccess = useCallback((email) => {
+    dispatch({ type: 'CLOSE_MODALS' });
+    dispatch({ type: 'SET_EMAIL', payload: email });
+    dispatch({ 
+      type: 'ADD_NOTIFICATION', 
+      payload: { id: Date.now(), title: 'Success!', message: `Your briefing has been sent to ${email}.` } 
+    });
+  }, [dispatch]);
+  
+  const handleCloseModals = useCallback(() => {
+    dispatch({ type: 'CLOSE_MODALS' });
+  }, [dispatch]);
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-300 font-sans overflow-x-hidden">
+        <style jsx global>{`
+            @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes unstable-text { 
+                0%, 100% { transform: skewX(0) scale(1); text-shadow: 0 0 1px transparent; } 
+                50% { transform: skewX(-2deg) scale(1.02); text-shadow: 0 0 10px rgba(255, 0, 0, 0.3), 0 0 20px rgba(255, 100, 100, 0.2); } 
+            }
+            @keyframes slide-in-right { from { opacity: 0; transform: translateX(100px); } to { opacity: 1; transform: translateX(0); } }
+            @keyframes scale-in { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+            .animate-fade-in { animation: fade-in 0.5s ease-out; }
+            .animate-slide-in-right { animation: slide-in-right 0.5s ease-out; }
+            .animate-scale-in { animation: scale-in 0.3s ease-out; }
+            .bg-grid { 
+                background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+                background-size: 50px 50px;
+            }
+        `}</style>
+
+        <ParticleField />
+        
+        <div className="fixed inset-0 -z-10">
+            <div className="absolute inset-0 bg-grid opacity-20" />
+            <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
+        </div>
+        
+        <div className="fixed top-24 right-6 z-50 space-y-3 max-w-sm w-full">
+            {state.notifications.map(n => (
+                <LiveNotification key={n.id} notification={n} onRemove={handleRemoveNotification} />
+            ))}
+        </div>
+        
+        {state.showAuthModal && <AuthModal onAuth={handleAuthSuccess} onClose={handleCloseModals} />}
+        
+        <nav className="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/30 border-b border-white/5">
+            <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center space-x-3 group cursor-pointer">
+                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-xl group-hover:shadow-lg group-hover:shadow-cyan-500/30 transition-all" />
+                    <span className="text-2xl font-light text-white">Foldera</span>
+                </div>
+                <button onClick={handleStartDemo} className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-cyan-500 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-cyan-500/30 transform hover:scale-105 transition-all">Run Free Scan</button>
+            </div>
+        </nav>
+
+        <Header onCtaClick={handleStartDemo} />
+        
+        <main ref={mainRef}>
+            <DemoSection loading={state.loading} demoHasRun={state.demoHasRun} onAuthAction={handleAuthAction} />
+        </main>
+        
+        <PricingSection onCtaClick={handleAuthAction} />
+        <FinalCTA onCtaClick={handleAuthAction} liveCounter={state.stats.liveCounter} />
+        <Footer />
+    </div>
+  );
+};
+
+export default function Page() {
+  return (
+    <AppProvider>
+      <LandingPageContent />
+    </AppProvider>
+  );
+}
