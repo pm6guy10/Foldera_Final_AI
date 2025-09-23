@@ -8,22 +8,34 @@
     "start": "next start"
   },
   "dependencies": {
+    "@radix-ui/react-checkbox": "^1.0.4",
+    "@radix-ui/react-label": "^2.0.2",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@stripe/stripe-js": "^2.2.0",
+    "@supabase/auth-helpers-nextjs": "^0.8.7",
+    "@supabase/ssr": "^0.0.10",
+    "@tailwindcss/typography": "^0.5.10",
+    "autoprefixer": "^10.4.16",
+    "class-variance-authority": "^0.7.0",
+    "drizzle-orm": "^0.28.5",
+    "jszip": "^3.10.1",
+    "lucide-react": "^0.292.0",
+    "mammoth": "^1.6.0",
     "next": "14.2.3",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "tailwindcss": "^3.4.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0",
-    "lucide-react": "^0.453.0",
-    "@stripe/react-stripe-js": "^4.0.2",
-    "@stripe/stripe-js": "^7.9.0",
-    "tailwindcss-animate": "^1.0.7",
-    "@tailwindcss/typography": "^0.5.15"
+    "pdf-parse": "^1.1.1",
+    "postcss": "^8.4.31",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "stripe": "^14.5.0",
+    "tailwind-merge": "^2.0.0",
+    "tailwindcss": "^3.3.5",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "typescript": "^5.0.0"
+    "@types/node": "^20.9.0",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "typescript": "^5.2.2"
   }
 }
