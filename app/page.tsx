@@ -372,6 +372,8 @@ const LandingPageContent = () => {
   useInterval(() => {
     dispatch({ type: 'UPDATE_LIVE_COUNTER' });
   }, 5000);
-
+          
   const handleStartDemo = useCallback(() => {
     dispatch({ type: 'START_DEMO' });
+  });
+};
