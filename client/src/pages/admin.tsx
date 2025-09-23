@@ -66,7 +66,7 @@ export default function AdminPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen">
       <div className="container mx-auto py-8 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
@@ -777,7 +777,7 @@ function LeadDetailView({ lead, onUpdate }: {
   return (
     <div className="space-y-6">
       {/* Quick Info Header */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-card/30 rounded-lg">
         <div>
           <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Current Score</div>
           <div className="text-2xl font-bold text-primary">{lead.score || 0}</div>

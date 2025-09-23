@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { Link } from 'wouter';
 
 interface Document {
   id: string;
@@ -21,8 +22,9 @@ interface Document {
   processedAt?: string;
 }
 
-interface UploadedFile extends File {
+interface UploadedFile {
   id: string;
+  file: File;
   uploadProgress: number;
   status: 'pending' | 'uploading' | 'uploaded' | 'error';
   error?: string;
@@ -31,14 +33,14 @@ interface UploadedFile extends File {
 const getFileIcon = (fileType: string) => {
   switch (fileType.toLowerCase()) {
     case 'pdf':
-      return '📄';
+      return 'PDF';
     case 'docx':
     case 'doc':
-      return '📝';
+      return 'DOC';
     case 'txt':
-      return '📋';
+      return 'TXT';
     default:
-      return '📄';
+      return 'FILE';
   }
 };
 
@@ -81,10 +83,27 @@ export default function DocumentUpload() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch user's documents
+  // Fetch user's documents with polling
   const { data: documents, isLoading: documentsLoading } = useQuery({
-    queryKey: ['/api/documents'],
-    queryParams: { userId: 'demo-user' } // TODO: Replace with actual user auth
+    queryKey: ['/api/documents', 'demo-user'], // Include userId in cache key
+    queryFn: () => {
+      // Add timestamp to prevent caching
+      const timestamp = Date.now();
+      return fetch(`/api/documents?userId=demo-user&ts=${timestamp}`).then(res => res.json());
+    },
+    // Poll every 2 seconds for documents that are processing
+    refetchInterval: (data) => {
+      // Check if any documents are still processing
+      const hasProcessingDocs = Array.isArray(data) && data.some((doc: Document) => 
+        doc.processingStatus === 'extracting' || 
+        doc.processingStatus === 'analyzing' ||
+        doc.textExtractionStatus === 'processing'
+      );
+      // If documents are processing, poll every 2 seconds, otherwise stop polling
+      return hasProcessingDocs ? 2000 : false;
+    },
+    // Also refetch on window focus for better UX
+    refetchOnWindowFocus: true
   });
 
   // Upload mutation
@@ -116,7 +135,7 @@ export default function DocumentUpload() {
         description: data.message,
       });
       setSelectedFiles([]);
-      queryClient.invalidateQueries({ queryKey: ['/api/documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/documents', 'demo-user'] });
     },
     onError: (error: any) => {
       toast({
@@ -166,8 +185,8 @@ export default function DocumentUpload() {
       }
 
       const uploadFile: UploadedFile = {
-        ...file,
         id: `${Date.now()}-${Math.random()}`,
+        file: file,
         uploadProgress: 0,
         status: 'pending'
       };
@@ -199,12 +218,14 @@ export default function DocumentUpload() {
   const handleUpload = async () => {
     if (selectedFiles.length === 0) return;
 
+    console.log('Starting upload for files:', selectedFiles.map(f => ({ name: f.file.name, size: f.file.size, type: f.file.type })));
     setIsUploading(true);
     try {
-      // Convert UploadedFiles back to regular Files for upload
-      const filesToUpload = selectedFiles.map(f => new File([f], f.name, { type: f.type }));
-      await uploadMutation.mutateAsync(filesToUpload);
+      // Extract real File objects from selectedFiles 
+      const realFiles = selectedFiles.map(f => f.file);
+      await uploadMutation.mutateAsync(realFiles);
     } catch (error) {
+      console.error('Upload error:', error);
       // Error handled in mutation
     } finally {
       setIsUploading(false);
@@ -281,10 +302,10 @@ export default function DocumentUpload() {
                     data-testid={`selected-file-${file.id}`}
                   >
                     <div className="flex items-center flex-1">
-                      <span className="text-2xl mr-3">{getFileIcon(file.name?.split('.')?.pop() || 'unknown')}</span>
+                      <span className="text-2xl mr-3">{getFileIcon(file.file.name?.split('.')?.pop() || 'unknown')}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">{file.name || 'Unknown file'}</p>
-                        <p className="text-sm text-muted-foreground">{formatFileSize(file.size || 0)}</p>
+                        <p className="font-medium truncate">{file.file.name || 'Unknown file'}</p>
+                        <p className="text-sm text-muted-foreground">{formatFileSize(file.file.size || 0)}</p>
                       </div>
                     </div>
                     <Button
@@ -366,20 +387,15 @@ export default function DocumentUpload() {
                   
                   <div className="flex items-center gap-3">
                     {getStatusBadge(document.processingStatus)}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        // TODO: Implement document view
-                        toast({
-                          title: "Document View",
-                          description: "Document viewing will be implemented next",
-                        });
-                      }}
-                      data-testid={`view-document-${document.id}`}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
+                    <Link href={`/document/${document.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        data-testid={`view-document-${document.id}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               ))}

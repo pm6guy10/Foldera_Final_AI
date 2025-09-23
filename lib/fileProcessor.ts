@@ -55,23 +55,67 @@ async function processTextFile(file: File): Promise<ProcessedFile> {
 export async function processFile(file: File): Promise<ProcessedFile> {
   const validation = validateFile(file);
   if (!validation.valid) throw new Error(validation.error);
-  switch (file.type) {
+  
+  // Determine actual file type - use MIME type first, fallback to extension
+  let fileType = file.type;
+  const GENERIC_TYPES = ['application/octet-stream', ''];
+  
+  if (GENERIC_TYPES.includes(fileType)) {
+    fileType = getFileTypeFromExtension(file.name) || fileType;
+  }
+  
+  switch (fileType) {
     case 'application/pdf': return processPdfFile(file);
     case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
     case 'application/msword': return processDocxFile(file);
     case 'text/plain': return processTextFile(file);
     default:
       if (file.name.match(/\.(txt|csv|json|xml|html|md)$/i)) return processTextFile(file);
-      throw new Error(`Unsupported file type: ${file.type}`);
+      throw new Error(`Unsupported file type: ${fileType} (original: ${file.type})`);
   }
+}
+
+function getFileTypeFromExtension(fileName: string): string | null {
+  const match = fileName.toLowerCase().match(/\.([^.]+)$/);
+  if (!match || !match[1]) return null;
+  
+  const ext = match[1];
+  const typeMap: Record<string, string> = {
+    'pdf': 'application/pdf',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'doc': 'application/msword',
+    'txt': 'text/plain',
+    'csv': 'text/plain',
+    'json': 'text/plain',
+    'xml': 'text/plain',
+    'html': 'text/plain',
+    'md': 'text/plain'
+  };
+  return typeMap[ext] || null;
 }
 
 export function validateFile(file: File): { valid: boolean; error?: string } {
   const MAX_SIZE = 10 * 1024 * 1024;
   const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+  const GENERIC_TYPES = ['application/octet-stream', '']; // Common generic types from drag-drop
+  
   if (!file) return { valid: false, error: 'No file provided' };
   if (file.size > MAX_SIZE) return { valid: false, error: 'File too large' };
-  if (!ALLOWED_TYPES.includes(file.type) && !file.name.match(/\.(txt|csv|json|xml|html|md|pdf|docx|doc)$/i)) return { valid: false, error: 'Invalid file type' };
   if (file.name.includes('../') || file.name.includes('..\\')) return { valid: false, error: 'Invalid file name' };
+  
+  // Check if MIME type is valid OR if it's generic but extension is valid
+  const hasValidMimeType = ALLOWED_TYPES.includes(file.type);
+  const hasGenericMimeType = GENERIC_TYPES.includes(file.type);
+  const hasValidExtension = file.name.match(/\.(txt|csv|json|xml|html|md|pdf|docx|doc)$/i);
+  
+  // For generic MIME types, require valid extension. For specific MIME types, accept them directly.
+  if (hasGenericMimeType) {
+    if (!hasValidExtension) {
+      return { valid: false, error: 'Invalid file type' };
+    }
+  } else if (!hasValidMimeType) {
+    return { valid: false, error: 'Invalid file type' };
+  }
+  
   return { valid: true };
 }

@@ -979,6 +979,7 @@ export class DrizzleStorage implements IStorage {
     contradictionType?: string;
     limit?: number;
     offset?: number;
+    isSimulation?: boolean; // Added flag for simulation mode
   }): Promise<ContradictionFinding[]> {
     let query = db
       .select()
@@ -1006,7 +1007,84 @@ export class DrizzleStorage implements IStorage {
     }
 
     const result = await query;
-    return result.map((r: any) => r.contradiction_findings);
+    let findings = result.map((r: any) => r.contradiction_findings);
+
+    // ONLY fabricate for /simulation endpoint, not for real document analysis
+    if (filters?.isSimulation && findings.length < 2) {
+      const now = new Date().toISOString();
+      const timestamp = new Date().toISOString().replace('T', ' ').replace('Z', '');
+      const millis = Date.now() % 1000;
+      console.log(`[${timestamp}.${millis.toString().padStart(3, '0')}] SIMULATION_MODE >> GENERATING_DEMO_CONTRADICTIONS`);
+      
+      const demoDocId = findings[0]?.documentId || 'sim-doc-' + Math.random().toString(36).substr(2, 9);
+      const demoAnalysisId = findings[0]?.analysisId || 'sim-analysis-' + Math.random().toString(36).substr(2, 9);
+      
+      const simulationContradictions: ContradictionFinding[] = [
+        {
+          id: 'sim-critical-' + Date.now(),
+          documentId: demoDocId,
+          analysisId: demoAnalysisId,
+          contradictionType: 'budget',
+          severity: 'critical',
+          title: '⚠ $2.3M Budget Overrun → $1.2M Penalty Exposure',
+          description: 'Q4 projections show $8.2M spend vs $5.9M approved budget',
+          textSnippet: 'Total Q4 expenditure: $8,237,450... Approved budget: $5,900,000',
+          potentialImpact: 'Contract penalties of $450K, board approval required',
+          recommendation: 'Freeze non-essential spending immediately',
+          suggestedFix: '📧 CFO Email Draft:\n\nURGENT: Q4 Budget Variance $2.34M\n\n• Projected: $8.24M\n• Approved: $5.90M\n• Action: Emergency finance review required\n\nAttached: Line-item variance analysis',
+          financialImpact: '$2.34M variance',
+          preventedLoss: '$450K penalties avoided',
+          status: 'detected',
+          createdAt: new Date()
+        },
+        {
+          id: 'sim-high-' + Date.now() + 1,
+          documentId: demoDocId,
+          analysisId: demoAnalysisId,
+          contradictionType: 'deadline',
+          severity: 'high',
+          title: '⚠ FDA Filing Conflict → $3.2M Revenue Delay',
+          description: 'March 31 submission conflicts with Q1 audit schedule',
+          textSnippet: 'FDA 510(k) deadline: March 31... Q1 audit: March 28-April 5',
+          potentialImpact: 'Product launch delayed Q2→Q3, $3.2M revenue impact',
+          recommendation: 'File FDA extension by March 1',
+          suggestedFix: '📅 Revised Deck Slide:\n\nTIMELINE ADJUSTMENT\n• March 1: FDA extension request\n• April 15: Submission (extended)\n• Q3: Product launch\n\nRevenue impact: -$3.2M (Q2)',
+          financialImpact: '$3.2M delay',
+          preventedLoss: '$1.8M avoided errors',
+          status: 'detected',
+          createdAt: new Date()
+        },
+        {
+          id: 'sim-high-' + Date.now() + 2,
+          documentId: demoDocId,
+          analysisId: demoAnalysisId,
+          contradictionType: 'compliance',
+          severity: 'high',
+          title: '⚠ SOC 2 Missing - Accenture → $125K Fine Risk',
+          description: 'Critical vendor attestation expired 47 days ago',
+          textSnippet: 'Vendor: Accenture... SOC 2 expires: Nov 15, 2023',
+          potentialImpact: '$125K regulatory fine risk',
+          recommendation: 'Request updated SOC 2 immediately',
+          suggestedFix: '📋 Vendor Request:\n\nTo: Accenture Compliance\nRe: SOC 2 Type II Required\n\nCertification expired Nov 15\nRequired by: March 15\nContract: Section 12.3',
+          financialImpact: '$125K fine risk',
+          preventedLoss: '$500K contract saved',
+          status: 'detected',
+          createdAt: new Date()
+        }
+      ];
+
+      // Add simulation contradictions
+      const toAdd = simulationContradictions.slice(0, Math.max(0, 3 - findings.length));
+      findings = [...findings, ...toAdd].slice(0, 3);
+      console.log(`[${timestamp}.${millis.toString().padStart(3, '0')}] SIMULATION: ${findings.length} demo contradictions generated`);
+    } else if (!filters?.isSimulation && findings.length > 0) {
+      // For real documents, log actual detections with millisecond precision
+      const timestamp = new Date().toISOString().replace('T', ' ').replace('Z', '');
+      const millis = Date.now() % 1000;
+      console.log(`[${timestamp}.${millis.toString().padStart(3, '0')}] CRITICAL: ${findings.length} real contradictions detected → Drafts generated`);
+    }
+
+    return findings;
   }
 
   async updateContradictionFinding(id: string, updates: Partial<InsertContradictionFinding>): Promise<ContradictionFinding> {

@@ -1,0 +1,679 @@
+// ============================================
+// 1. ENHANCED FILE PROCESSOR WITH ALL FORMATS
+// fileProcessor.ts
+// ============================================
+
+import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
+import { createHash } from 'crypto';
+
+interface ProcessedFile {
+  text: string;
+  metadata: {
+    fileName: string;
+    fileType: string;
+    size: number;
+    hash: string;
+    processedAt: Date;
+    extractionMethod: 'primary' | 'fallback';
+  };
+}
+
+// PDF Processing with error recovery
+async function processPdfFile(file: File): Promise<ProcessedFile> {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const hash = createHash('sha256').update(buffer).digest('hex');
+  
+  try {
+    const data = await pdfParse(buffer, {
+      max: 0, // Parse all pages
+      version: 'v2.0.550'
+    });
+    
+    return {
+      text: data.text || '',
+      metadata: {
+        fileName: file.name,
+        fileType: 'application/pdf',
+        size: file.size,
+        hash,
+        processedAt: new Date(),
+        extractionMethod: 'primary'
+      }
+    };
+  } catch (error) {
+    console.error("PDF parsing failed, attempting fallback:", error);
+    
+    // Fallback: Try to extract any readable text
+    try {
+      const textDecoder = new TextDecoder('utf-8', { fatal: false });
+      const partialText = textDecoder.decode(buffer);
+      const cleanedText = partialText.replace(/[^\x20-\x7E\n\r]/g, '').trim();
+      
+      return {
+        text: cleanedText || `[PDF extraction failed for ${file.name}]`,
+        metadata: {
+          fileName: file.name,
+          fileType: 'application/pdf',
+          size: file.size,
+          hash,
+          processedAt: new Date(),
+          extractionMethod: 'fallback'
+        }
+      };
+    } catch (fallbackError) {
+      throw new Error(`Complete PDF extraction failure: ${fallbackError}`);
+    }
+  }
+}
+
+// DOCX Processing with robust fallback
+async function processDocxFile(file: File): Promise<ProcessedFile> {
+  const arrayBuffer = await file.arrayBuffer();
+  const hash = createHash('sha256').update(Buffer.from(arrayBuffer)).digest('hex');
+  
+  try {
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    
+    if (result.value && result.value.trim().length > 0) {
+      return {
+        text: result.value,
+        metadata: {
+          fileName: file.name,
+          fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          size: file.size,
+          hash,
+          processedAt: new Date(),
+          extractionMethod: 'primary'
+        }
+      };
+    }
+    
+    // If mammoth returns empty, try fallback
+    throw new Error("Empty mammoth extraction");
+    
+  } catch (error) {
+    console.error("DOCX mammoth extraction failed, using fallback:", error);
+    
+    // Fallback: Extract XML content and parse readable text
+    try {
+      const JSZip = (await import('jszip')).default;
+      const zip = await JSZip.loadAsync(arrayBuffer);
+      
+      let extractedText = '';
+      
+      // Try to get document.xml content
+      const documentXml = await zip.file('word/document.xml')?.async('string');
+      if (documentXml) {
+        // Remove XML tags and extract text
+        extractedText = documentXml
+          .replace(/<[^>]*>/g, ' ')
+          .replace(/&[^;]+;/g, ' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+      
+      return {
+        text: extractedText || `[DOCX fallback extraction for ${file.name}]`,
+        metadata: {
+          fileName: file.name,
+          fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          size: file.size,
+          hash,
+          processedAt: new Date(),
+          extractionMethod: 'fallback'
+        }
+      };
+      
+    } catch (fallbackError) {
+      // Last resort: treat as plain text
+      const text = await file.text();
+      return {
+        text: text || `[Failed to extract content from ${file.name}]`,
+        metadata: {
+          fileName: file.name,
+          fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          size: file.size,
+          hash,
+          processedAt: new Date(),
+          extractionMethod: 'fallback'
+        }
+      };
+    }
+  }
+}
+
+// Plain text processing
+async function processTextFile(file: File): Promise<ProcessedFile> {
+  const text = await file.text();
+  const hash = createHash('sha256').update(text).digest('hex');
+  
+  return {
+    text,
+    metadata: {
+      fileName: file.name,
+      fileType: 'text/plain',
+      size: file.size,
+      hash,
+      processedAt: new Date(),
+      extractionMethod: 'primary'
+    }
+  };
+}
+
+// Main file processor with validation
+export async function processFile(file: File): Promise<ProcessedFile> {
+  // Validate file
+  const validation = validateFile(file);
+  if (!validation.valid) {
+    throw new Error(validation.error);
+  }
+  
+  // Process based on type
+  switch (file.type) {
+    case 'application/pdf':
+      return processPdfFile(file);
+    
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    case 'application/msword':
+      return processDocxFile(file);
+    
+    case 'text/plain':
+      return processTextFile(file);
+    
+    default:
+      // Try to process as text if extension suggests it
+      if (file.name.match(/\.(txt|csv|json|xml|html|md)$/i)) {
+        return processTextFile(file);
+      }
+      throw new Error(`Unsupported file type: ${file.type}`);
+  }
+}
+
+// File validation helper
+export function validateFile(file: File): { valid: boolean; error?: string } {
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_TYPES = [
+    'application/pdf',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/msword',
+    'text/plain'
+  ];
+  
+  if (!file) {
+    return { valid: false, error: 'No file provided' };
+  }
+  
+  if (file.size > MAX_SIZE) {
+    return { valid: false, error: `File too large. Maximum size is ${MAX_SIZE / 1024 / 1024}MB` };
+  }
+  
+  if (!ALLOWED_TYPES.includes(file.type) && !file.name.match(/\.(txt|csv|json|xml|html|md|pdf|docx|doc)$/i)) {
+    return { valid: false, error: 'Invalid file type. Supported: PDF, DOCX, TXT' };
+  }
+  
+  // Check for malicious file names
+  if (file.name.includes('../') || file.name.includes('..\\')) {
+    return { valid: false, error: 'Invalid file name' };
+  }
+  
+  return { valid: true };
+}
+
+// ============================================
+// 2. SECURE API ROUTE WITH AUTH & VALIDATION
+// app/api/upload/route.ts
+// ============================================
+
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { processFile, validateFile } from '@/lib/fileProcessor';
+
+// Rate limiting map (in production, use Redis)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const limit = rateLimitMap.get(ip);
+  
+  if (!limit || limit.resetTime < now) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + 60000 }); // 1 minute window
+    return true;
+  }
+  
+  if (limit.count >= 10) { // 10 requests per minute
+    return false;
+  }
+  
+  limit.count++;
+  return true;
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    // 1. Rate limiting
+    const ip = req.headers.get('x-forwarded-for') || 'unknown';
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429 }
+      );
+    }
+    
+    // 2. Authentication check
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+    
+    const token = authHeader.substring(7);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Invalid authentication token' },
+        { status: 401 }
+      );
+    }
+    
+    // 3. File extraction and validation
+    const formData = await req.formData();
+    const files = formData.getAll('files') as File[];
+    
+    if (!files || files.length === 0) {
+      return NextResponse.json(
+        { error: 'No files uploaded' },
+        { status: 400 }
+      );
+    }
+    
+    if (files.length > 5) { // Max 5 files per upload
+      return NextResponse.json(
+        { error: 'Maximum 5 files allowed per upload' },
+        { status: 400 }
+      );
+    }
+    
+    // 4. Process each file
+    const processedFiles = [];
+    const errors = [];
+    
+    for (const file of files) {
+      try {
+        // Validate file
+        const validation = validateFile(file);
+        if (!validation.valid) {
+          errors.push({ fileName: file.name, error: validation.error });
+          continue;
+        }
+        
+        // Process file
+        const processed = await processFile(file);
+        
+        // Store in Supabase
+        const { data, error: uploadError } = await supabase
+          .storage
+          .from('documents')
+          .upload(`${user.id}/${Date.now()}-${file.name}`, file);
+        
+        if (uploadError) {
+          throw uploadError;
+        }
+        
+        // Save metadata to database
+        const { error: dbError } = await supabase
+          .from('processed_documents')
+          .insert({
+            user_id: user.id,
+            file_name: processed.metadata.fileName,
+            file_path: data.path,
+            file_type: processed.metadata.fileType,
+            file_size: processed.metadata.size,
+            file_hash: processed.metadata.hash,
+            extracted_text: processed.text,
+            extraction_method: processed.metadata.extractionMethod,
+            processed_at: processed.metadata.processedAt
+          });
+        
+        if (dbError) {
+          throw dbError;
+        }
+        
+        processedFiles.push({
+          fileName: file.name,
+          success: true,
+          textLength: processed.text.length,
+          extractionMethod: processed.metadata.extractionMethod
+        });
+        
+      } catch (fileError) {
+        console.error(`Error processing ${file.name}:`, fileError);
+        errors.push({
+          fileName: file.name,
+          error: fileError instanceof Error ? fileError.message : 'Processing failed'
+        });
+      }
+    }
+    
+    // 5. Return response
+    return NextResponse.json({
+      success: true,
+      processed: processedFiles,
+      errors: errors.length > 0 ? errors : undefined,
+      summary: {
+        total: files.length,
+        successful: processedFiles.length,
+        failed: errors.length
+      }
+    });
+    
+  } catch (error) {
+    console.error('Upload endpoint error:', error);
+    
+    // Don't expose internal errors
+    return NextResponse.json(
+      { error: 'Upload failed. Please try again.' },
+      { status: 500 }
+    );
+  }
+}
+
+// ============================================
+// 3. FIXED DASHBOARD WITH COUNTER & LINKS
+// components/AuditVisualization.tsx
+// ============================================
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
+
+interface Discrepancy {
+  id: string;
+  type: 'missing_value' | 'different_value' | 'format_mismatch';
+  severity: 'low' | 'medium' | 'high';
+  fileA: string;
+  fileB: string;
+  fieldName: string;
+  valueA: string;
+  valueB: string;
+  createdAt: Date;
+}
+
+export function AuditVisualization() {
+  const [discrepancies, setDiscrepancies] = useState<Discrepancy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
+  
+  useEffect(() => {
+    loadDiscrepancies();
+  }, []);
+  
+  async function loadDiscrepancies() {
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    
+    try {
+      const { data, error } = await supabase
+        .from('discrepancies')
+        .select('*')
+        .order('severity', { ascending: false })
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      setDiscrepancies(data || []);
+    } catch (error) {
+      console.error('Error loading discrepancies:', error);
+    } finally {
+      setLoading(false);
+    }
+  }
+  
+  const filteredDiscrepancies = filter === 'all' 
+    ? discrepancies 
+    : discrepancies.filter(d => d.severity === filter);
+  
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high': return 'text-red-600 bg-red-50';
+      case 'medium': return 'text-yellow-600 bg-yellow-50';
+      case 'low': return 'text-blue-600 bg-blue-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+  
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'missing_value': return 'Missing Value';
+      case 'different_value': return 'Different Value';
+      case 'format_mismatch': return 'Format Mismatch';
+      default: return type;
+    }
+  };
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="audit-visualization p-6 bg-white rounded-lg shadow-lg">
+      {/* Header with Counter */}
+      <div className="header mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">Audit Results</h2>
+        <div className="flex items-center justify-between mt-4">
+          <span className="count text-lg font-semibold text-gray-700">
+            {filteredDiscrepancies.length} discrepanc{filteredDiscrepancies.length === 1 ? 'y' : 'ies'} found
+          </span>
+          
+          {/* Filter Buttons */}
+          <div className="flex gap-2">
+            {(['all', 'high', 'medium', 'low'] as const).map(level => (
+              <button
+                key={level}
+                onClick={() => setFilter(level)}
+                className={`px-4 py-2 rounded-md transition-colors ${
+                  filter === level 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {level.charAt(0).toUpperCase() + level.slice(1)}
+                {level !== 'all' && (
+                  <span className="ml-1 text-sm">
+                    ({discrepancies.filter(d => d.severity === level).length})
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* Summary Stats */}
+      <div className="grid grid-cols-3 gap-4 mb-6">
+        <div className="stat-card bg-red-50 p-4 rounded-lg">
+          <div className="text-red-600 text-3xl font-bold">
+            {discrepancies.filter(d => d.severity === 'high').length}
+          </div>
+          <div className="text-red-800 text-sm">High Priority</div>
+        </div>
+        <div className="stat-card bg-yellow-50 p-4 rounded-lg">
+          <div className="text-yellow-600 text-3xl font-bold">
+            {discrepancies.filter(d => d.severity === 'medium').length}
+          </div>
+          <div className="text-yellow-800 text-sm">Medium Priority</div>
+        </div>
+        <div className="stat-card bg-blue-50 p-4 rounded-lg">
+          <div className="text-blue-600 text-3xl font-bold">
+            {discrepancies.filter(d => d.severity === 'low').length}
+          </div>
+          <div className="text-blue-800 text-sm">Low Priority</div>
+        </div>
+      </div>
+      
+      {/* Discrepancies Table */}
+      {filteredDiscrepancies.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          No discrepancies found. Your documents match perfectly!
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Severity
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Field
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  File A
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Value A
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  File B
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Value B
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Action
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredDiscrepancies.map((discrepancy) => (
+                <tr key={discrepancy.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getSeverityColor(discrepancy.severity)}`}>
+                      {discrepancy.severity}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {getTypeLabel(discrepancy.type)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {discrepancy.fieldName}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title={discrepancy.fileA}>
+                    {discrepancy.fileA}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title={discrepancy.valueA}>
+                    {discrepancy.valueA || <span className="text-gray-400">empty</span>}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title={discrepancy.fileB}>
+                    {discrepancy.fileB}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-900 max-w-xs truncate" title={discrepancy.valueB}>
+                    {discrepancy.valueB || <span className="text-gray-400">empty</span>}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <Link
+                      href={`/discrepancy/${discrepancy.id}`}
+                      className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                    >
+                      View Details →
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      
+      {/* Export Button */}
+      <div className="mt-6 flex justify-end">
+        <button
+          onClick={() => exportDiscrepancies(filteredDiscrepancies)}
+          className="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+        >
+          Export to CSV
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Export function
+function exportDiscrepancies(discrepancies: Discrepancy[]) {
+  const csv = [
+    ['Severity', 'Type', 'Field', 'File A', 'Value A', 'File B', 'Value B', 'Created At'],
+    ...discrepancies.map(d => [
+      d.severity,
+      d.type,
+      d.fieldName,
+      d.fileA,
+      d.valueA || '',
+      d.fileB,
+      d.valueB || '',
+      new Date(d.createdAt).toISOString()
+    ])
+  ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `audit-discrepancies-${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ============================================
+// 4. ENVIRONMENT VARIABLES CHECK
+// .env.local
+// ============================================
+
+/*
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+*/
+
+// ============================================
+// 5. PACKAGE.JSON DEPENDENCIES
+// ============================================
+
+/*
+{
+  "dependencies": {
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0",
+    "jszip": "^3.10.1",
+    "@supabase/supabase-js": "^2.39.0",
+    "stripe": "^14.0.0",
+    "next": "^14.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/pdf-parse": "^1.1.1",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}
+*/

@@ -7,6 +7,11 @@ import Home from "./pages/home";
 import Subscribe from "./pages/subscribe";
 import Admin from "./pages/admin";
 import Documents from "./pages/documents";
+import DocumentViewer from "./pages/document-viewer";
+import CheckoutSuccess from "./pages/checkout-success";
+import CheckoutCancel from "./pages/checkout-cancel";
+import Simulation from "./pages/simulation";
+import Demo from "./pages/demo";
 import NotFound from "./pages/not-found";
 
 function Router() {
@@ -14,7 +19,12 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/documents" component={Documents} />
+      <Route path="/document/:id" component={DocumentViewer} />
+      <Route path="/simulation" component={Simulation} />
+      <Route path="/demo" component={Demo} />
       <Route path="/subscribe" component={Subscribe} />
+      <Route path="/checkout/success" component={CheckoutSuccess} />
+      <Route path="/checkout/cancel" component={CheckoutCancel} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
