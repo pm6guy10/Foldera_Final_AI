@@ -375,3 +375,81 @@ const LandingPageContent = () => {
 
   const handleStartDemo = useCallback(() => {
     dispatch({ type: 'START_DEMO' });
+    
+    // Simulate demo loading
+    setTimeout(() => {
+      dispatch({ type: 'SHOW_DEMO_RESULT' });
+      
+      // Add success notification
+      const notification = {
+        id: Date.now(),
+        title: 'Analysis Complete!',
+        message: 'Found 3 critical conflicts in your documents'
+      };
+      dispatch({ type: 'ADD_NOTIFICATION', payload: notification });
+    }, 3000);
+  }, [dispatch]);
+
+  const handleAuthAction = useCallback(() => {
+    dispatch({ type: 'TOGGLE_AUTH_MODAL' });
+  }, [dispatch]);
+
+  const handleAuth = useCallback((email) => {
+    dispatch({ type: 'SET_EMAIL', payload: email });
+    dispatch({ type: 'CLOSE_MODALS' });
+    
+    // Add success notification
+    const notification = {
+      id: Date.now(),
+      title: 'Welcome to Foldera!',
+      message: 'Your free trial has started. Check your email for next steps.'
+    };
+    dispatch({ type: 'ADD_NOTIFICATION', payload: notification });
+  }, [dispatch]);
+
+  const handleCloseModal = useCallback(() => {
+    dispatch({ type: 'CLOSE_MODALS' });
+  }, [dispatch]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
+      <ParticleField />
+      
+      {/* Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-4 max-w-sm">
+        {state.notifications.map((notification) => (
+          <LiveNotification 
+            key={notification.id} 
+            notification={notification} 
+            onRemove={handleRemoveNotification} 
+          />
+        ))}
+      </div>
+
+      {/* Main Content */}
+      <Header onCtaClick={handleStartDemo} />
+      <DemoSection 
+        loading={state.loading} 
+        demoHasRun={state.demoHasRun} 
+        onAuthAction={handleAuthAction} 
+      />
+      <PricingSection onCtaClick={handleAuthAction} />
+      <FinalCTA onCtaClick={handleAuthAction} liveCounter={state.stats.liveCounter} />
+      <Footer />
+
+      {/* Auth Modal */}
+      {state.showAuthModal && (
+        <AuthModal onAuth={handleAuth} onClose={handleCloseModal} />
+      )}
+    </div>
+  );
+};
+
+// Main export
+export default function HomePage() {
+  return (
+    <AppProvider>
+      <LandingPageContent />
+    </AppProvider>
+  );
+}
