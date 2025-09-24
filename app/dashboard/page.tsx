@@ -11,6 +11,7 @@ import {
   Activity,
   ArrowRight
 } from 'lucide-react';
+import { AuditVisualization } from '@/components/AuditVisualization';
 
 export default function DashboardPage() {
   return (
@@ -70,6 +71,11 @@ export default function DashboardPage() {
               </div>
               <p className="text-sm text-slate-400">Time Saved Today</p>
             </div>
+          </div>
+
+          {/* Audit Visualization */}
+          <div className="mb-8">
+            <AuditVisualization />
           </div>
 
           {/* Recent Activity */}
