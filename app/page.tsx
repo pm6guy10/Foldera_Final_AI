@@ -47,8 +47,8 @@ const PRICING_PLANS = [
 // ===================================================================================
 // --- HOOKS ---
 // ===================================================================================
-function useInterval(callback, delay) {
-  const savedCallback = useRef();
+function useInterval(callback: () => void, delay: number | null) {
+  const savedCallback = useRef<() => void>();
 
   useEffect(() => {
     savedCallback.current = callback;
@@ -56,7 +56,7 @@ function useInterval(callback, delay) {
 
   useEffect(() => {
     function tick() {
-      savedCallback.current();
+      savedCallback.current?.();
     }
     if (delay !== null) {
       let id = setInterval(tick, delay);
@@ -68,7 +68,7 @@ function useInterval(callback, delay) {
 // ===================================================================================
 // --- CONTEXT ---
 // ===================================================================================
-const AppContext = createContext(null);
+const AppContext = createContext<any>(null);
 
 const initialState = {
   stats: { liveCounter: 1287 },
@@ -79,7 +79,7 @@ const initialState = {
   notifications: [],
 };
 
-function appReducer(state, action) {
+function appReducer(state: any, action: any) {
   switch (action.type) {
     case 'START_DEMO':
       return { ...state, loading: true, demoHasRun: false };
@@ -96,16 +96,16 @@ function appReducer(state, action) {
     case 'ADD_NOTIFICATION':
       return { ...state, notifications: [action.payload, ...state.notifications] };
     case 'REMOVE_NOTIFICATION':
-      return { ...state, notifications: state.notifications.filter(n => n.id !== action.payload) };
+      return { ...state, notifications: state.notifications.filter((n: any) => n.id !== action.payload) };
     default:
       return state;
   }
 }
 
-const AppProvider = ({ children }) => {
+const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
 
-  const handleRemoveNotification = useCallback((id) => {
+  const handleRemoveNotification = useCallback((id: number) => {
     dispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
   }, []);
 
@@ -125,9 +125,9 @@ const useAppContext = () => {
 // ===================================================================================
 // --- UI COMPONENTS ---
 // ===================================================================================
-const AnimatedText = React.memo(({ children, delay = 0 }) => {
+const AnimatedText = React.memo(({ children, delay = 0 }: any) => {
   const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
@@ -145,14 +145,15 @@ const AnimatedText = React.memo(({ children, delay = 0 }) => {
 });
 
 const ParticleField = React.memo(() => {
-    const canvasRef = useRef(null);
+    const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
-        let animationFrameId;
+        let animationFrameId: number;
         const startParticles = () => {
             const canvas = canvasRef.current;
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
+            if (!ctx) return;
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
 
@@ -189,7 +190,7 @@ const ParticleField = React.memo(() => {
         };
 
         if ('requestIdleCallback' in window) {
-            requestIdleCallback(startParticles);
+            (window as any).requestIdleCallback(startParticles);
         } else {
             setTimeout(startParticles, 200);
         }
@@ -204,7 +205,7 @@ const ParticleField = React.memo(() => {
     return <canvas ref={canvasRef} className="fixed inset-0 -z-20 opacity-50" />;
 });
 
-const LiveNotification = React.memo(({ notification, onRemove }) => {
+const LiveNotification = React.memo(({ notification, onRemove }: any) => {
   useEffect(() => {
     const timer = setTimeout(() => onRemove(notification.id), 5000);
     return () => clearTimeout(timer);
@@ -222,12 +223,12 @@ const LiveNotification = React.memo(({ notification, onRemove }) => {
   );
 });
 
-const AuthModal = ({ onAuth, onClose }) => {
+const AuthModal = ({ onAuth, onClose }: any) => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -260,11 +261,11 @@ const AuthModal = ({ onAuth, onClose }) => {
   );
 };
 
-const PricingCard = React.memo(({ title, price, features, highlighted, onCtaClick }) => (
+const PricingCard = React.memo(({ title, price, features, highlighted, onCtaClick }: any) => (
     <div className={`relative rounded-3xl p-8 transition-all h-full flex flex-col transform hover:scale-105 ${highlighted ? "bg-gradient-to-b from-cyan-900/30 to-purple-900/30 border-2 border-cyan-400/70 shadow-2xl shadow-cyan-500/20" : "bg-slate-900/50 backdrop-blur border border-slate-800 hover:border-slate-700"}`}>
         {highlighted && (<div className="absolute -top-4 left-1/2 -translate-x-1/2 px-6 py-2 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-full"><span className="text-sm font-semibold text-white uppercase tracking-wider flex items-center gap-1"><Sparkles className="w-4 h-4" />Most Popular</span></div>)}
         <div className={highlighted ? "pt-8" : ""}><h3 className="text-2xl font-light mb-4 text-white">{title}</h3><div className="mb-8"><span className="text-5xl font-thin text-white">{price}</span>{!price.includes("Custom") && <span className="text-slate-400 ml-2">/month</span>}</div></div>
-        <ul className="space-y-4 mb-10 flex-grow">{features.map((f, i) => (<li key={i} className="flex items-start gap-3 text-slate-300"><CheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" /><span className="text-sm">{f}</span></li>))}</ul>
+        <ul className="space-y-4 mb-10 flex-grow">{features.map((f: string, i: number) => (<li key={i} className="flex items-start gap-3 text-slate-300"><CheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" /><span className="text-sm">{f}</span></li>))}</ul>
         <button onClick={onCtaClick} className={`w-full py-4 rounded-2xl font-medium transition-all transform hover:scale-105 ${highlighted ? "bg-gradient-to-r from-cyan-500 to-purple-600 text-white hover:shadow-lg hover:shadow-cyan-500/30" : "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"}`}>{highlighted ? 'Start Free Trial →' : 'Get Started'}</button>
     </div>
 ));
@@ -272,7 +273,7 @@ const PricingCard = React.memo(({ title, price, features, highlighted, onCtaClic
 // ===================================================================================
 // --- SECTIONS ---
 // ===================================================================================
-const Header = ({ onCtaClick }) => (
+const Header = ({ onCtaClick }: any) => (
     <header className="relative z-10 text-center py-24 md:py-32 px-6">
         <AnimatedText><div className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 text-sm mb-8"><Bell className="w-4 h-4" /><span>Warning: Your AI has context amnesia</span></div></AnimatedText>
         <AnimatedText delay={200}><h1 className="text-5xl md:text-7xl font-thin text-white mb-6 leading-tight">Your AI is a <span style={{ animation: 'unstable-text 4s ease-in-out infinite' }} className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-orange-500">Goldfish.</span></h1></AnimatedText>
@@ -282,7 +283,7 @@ const Header = ({ onCtaClick }) => (
     </header>
 );
 
-const GeneratedReport = ({ onCtaClick }) => (
+const GeneratedReport = ({ onCtaClick }: any) => (
     <div className="bg-slate-900/30 backdrop-blur-xl border border-slate-800/50 rounded-3xl p-4 md:p-8 shadow-2xl animate-fade-in">
       <AnimatedText>
         <img 
@@ -311,7 +312,7 @@ const GeneratedReport = ({ onCtaClick }) => (
     </div>
 );
 
-const DemoSection = ({ loading, demoHasRun, onAuthAction }) => (
+const DemoSection = ({ loading, demoHasRun, onAuthAction }: any) => (
     <section className="relative z-10 max-w-7xl mx-auto px-6 py-24">
         <div className="text-center mb-16">
             <AnimatedText><div className="inline-flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/30 rounded-full text-green-400 text-sm mb-6"><Activity className="w-4 h-4 animate-pulse" /><span>Live Dashboard Demo</span></div></AnimatedText>
@@ -328,7 +329,7 @@ const DemoSection = ({ loading, demoHasRun, onAuthAction }) => (
     </section>
 );
 
-const PricingSection = ({ onCtaClick }) => (
+const PricingSection = ({ onCtaClick }: any) => (
     <section className="py-24 px-6 bg-gradient-to-b from-transparent via-slate-900/50 to-slate-950">
         <div className="max-w-6xl mx-auto">
             <AnimatedText><div className="text-center mb-16"><h2 className="text-4xl md:text-5xl font-light text-white mb-4">Simple, <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500">High-Value</span> Pricing</h2><p className="text-xl text-slate-400">Start for free. Upgrade when you see the value.</p></div></AnimatedText>
@@ -343,7 +344,7 @@ const PricingSection = ({ onCtaClick }) => (
     </section>
 );
 
-const FinalCTA = ({ onCtaClick, liveCounter }) => (
+const FinalCTA = ({ onCtaClick, liveCounter }: any) => (
     <section className="py-24 px-6 text-center">
         <AnimatedText>
             <h2 className="text-4xl md:text-5xl font-light text-white mb-6">Stop Babysitting Your AI.</h2>
@@ -394,7 +395,7 @@ const LandingPageContent = () => {
     dispatch({ type: 'TOGGLE_AUTH_MODAL' });
   }, [dispatch]);
 
-  const handleAuth = useCallback((email) => {
+  const handleAuth = useCallback((email: string) => {
     dispatch({ type: 'SET_EMAIL', payload: email });
     dispatch({ type: 'CLOSE_MODALS' });
     
@@ -417,7 +418,7 @@ const LandingPageContent = () => {
       
       {/* Notifications */}
       <div className="fixed top-4 right-4 z-50 space-y-4 max-w-sm">
-        {state.notifications.map((notification) => (
+        {state.notifications.map((notification: any) => (
           <LiveNotification 
             key={notification.id} 
             notification={notification} 
