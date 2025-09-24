@@ -17,8 +17,15 @@
     "lucide-react": "^0.453.0",
     "@stripe/react-stripe-js": "^4.0.2",
     "@stripe/stripe-js": "^7.9.0",
+    "@supabase/auth-helpers-nextjs": "^0.8.7",
+    "@supabase/supabase-js": "^2.57.4",
     "tailwindcss-animate": "^1.0.7",
-    "@tailwindcss/typography": "^0.5.15"
+    "@tailwindcss/typography": "^0.5.15",
+    "@radix-ui/react-slot": "^1.0.2",
+    "@radix-ui/react-checkbox": "^1.0.4",
+    "@radix-ui/react-label": "^2.0.2",
+    "class-variance-authority": "^0.7.0",
+    "clsx": "^2.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
