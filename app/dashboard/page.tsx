@@ -11,7 +11,12 @@ import {
   Activity,
   ArrowRight
 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import FileUpload from '@/components/FileUpload';
 import { AuditVisualization } from '@/components/AuditVisualization';
+import { useQuery } from '@tanstack/react-query';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
   return (
