@@ -34,12 +34,15 @@
     "stripe": "^18.5.0",
     "pdf-parse": "^1.1.1",
     "mammoth": "^1.8.0",
-    "jszip": "^3.10.1"
+    "jszip": "^3.10.1",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
+    "@types/uuid": "^10.0.0",
+    "@types/pdf-parse": "^1.1.5",
     "typescript": "^5.0.0"
   }
 }
