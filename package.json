@@ -30,7 +30,10 @@
     "postgres": "^3.4.4",
     "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.57.4",
-    "stripe": "^18.5.0"
+    "stripe": "^18.5.0",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.8.0",
+    "jszip": "^3.10.1"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
