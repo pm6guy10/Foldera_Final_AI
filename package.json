@@ -1,0 +1,44 @@
+{
+  "name": "bulldog-autopilot",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=18.18 <21"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "ci": "npm run lint && npm run typecheck && npm run build"
+  },
+  "dependencies": {
+    "@radix-ui/react-toast": "^1.2.15",
+    "@supabase/ssr": "0.5.1",
+    "@supabase/supabase-js": "2.57.0",
+    "@types/react-beautiful-dnd": "^13.1.8",
+    "docxtemplater": "3.47.2",
+    "lucide-react": "0.400.0",
+    "next": "^14.2.32",
+    "pizzip": "3.1.7",
+    "react": "^18.3.1",
+    "react-beautiful-dnd": "^13.1.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "14.3.8",
+    "wouter": "^3.7.1",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.12",
+    "@types/react": "18.3.3",
+    "autoprefixer": "10.4.21",
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.32",
+    "postcss": "8.5.6",
+    "prettier": "3.6.2",
+    "prettier-plugin-tailwindcss": "0.6.14",
+    "tailwindcss": "3.4.17",
+    "typescript": "5.6.2"
+  }
+}
