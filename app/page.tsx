@@ -372,6 +372,51 @@ const LandingPageContent = () => {
   useInterval(() => {
     dispatch({ type: 'UPDATE_LIVE_COUNTER' });
   }, 5000);
+setTimeout(() => {
+      dispatch({ type: 'SHOW_DEMO_RESULT' });
+    }, 3000);
+  }, [dispatch]);
 
+  const handleAuthAction = useCallback(() => {
+    dispatch({ type: 'TOGGLE_AUTH_MODAL' });
+  }, [dispatch]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
+      <ParticleField />
+      <Header onCtaClick={handleStartDemo} />
+      <DemoSection 
+        loading={state.loading} 
+        demoHasRun={state.demoHasRun} 
+        onAuthAction={handleAuthAction}
+      />
+      <PricingSection onCtaClick={handleAuthAction} />
+      <FinalCTA onCtaClick={handleAuthAction} liveCounter={state.stats.liveCounter} />
+      <Footer />
+      
+      {state.showAuthModal && (
+        <AuthModal onAuth={handleAuthAction} onClose={() => dispatch({ type: 'CLOSE_MODALS' })} />
+      )}
+      
+      <div className="fixed top-4 right-4 space-y-3 z-50">
+        {state.notifications.map((notification) => (
+          <LiveNotification
+            key={notification.id}
+            notification={notification}
+            onRemove={handleRemoveNotification}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default function Page() {
+  return (
+    <AppProvider>
+      <LandingPageContent />
+    </AppProvider>
+  );
+}
   const handleStartDemo = useCallback(() => {
     dispatch({ type: 'START_DEMO' });
