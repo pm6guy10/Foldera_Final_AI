@@ -2,8 +2,63 @@
 import React, { useState, useEffect, useReducer, useRef, useCallback } from 'react';
 import { ChevronRight, AlertTriangle, TrendingUp, Clock, FileText, DollarSign, Shield, Zap, CircleDashed, ArrowRight, Brain, Sparkles, AlertCircle, CheckCircle, X, Activity, Bell, BarChart3, Target } from 'lucide-react';
 
+// --- Type Definitions for State and Actions ---
+interface Conflict {
+  id: number;
+  title: string;
+  description: string;
+  value: number;
+}
+
+interface Opportunity {
+  id: number;
+  title: string;
+  description: string;
+  value: number;
+}
+
+interface Notification {
+  id: number;
+  type: 'alert' | 'success';
+  title: string;
+  message: string;
+}
+
+interface State {
+  conflicts: Conflict[];
+  opportunities: Opportunity[];
+  stats: {
+    activeItems: number;
+    valueAtRisk: number;
+    savedThisMonth: number;
+    hoursReclaimed: number;
+    liveCounter: number;
+    targetActiveItems: number;
+    targetValueAtRisk: number;
+    targetSavedThisMonth: number;
+    targetHoursReclaimed: number;
+  };
+  loading: boolean;
+  showAuthModal: boolean;
+  email: string;
+  isScrolledIntoView: boolean;
+  notifications: Notification[];
+  mousePosition: { x: number; y: number };
+}
+
+type Action =
+  | { type: 'LOAD_DATA'; payload: { conflicts: Conflict[]; opportunities: Opportunity[] } }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'UPDATE_COUNTERS' }
+  | { type: 'TOGGLE_AUTH_MODAL' }
+  | { type: 'SET_EMAIL'; payload: string }
+  | { type: 'SET_SCROLL_VISIBILITY'; payload: boolean }
+  | { type: 'ADD_NOTIFICATION'; payload: Notification }
+  | { type: 'REMOVE_NOTIFICATION'; payload: number }
+  | { type: 'UPDATE_MOUSE'; payload: { x: number; y: number } };
+
 // --- Unified State Management ---
-const initialState = {
+const initialState: State = {
   conflicts: [],
   opportunities: [],
   stats: {
@@ -25,7 +80,7 @@ const initialState = {
   mousePosition: { x: 0, y: 0 }
 };
 
-function appReducer(state, action) {
+function appReducer(state: State, action: Action): State {
   switch (action.type) {
     case 'LOAD_DATA':
       return { ...state, conflicts: action.payload.conflicts, opportunities: action.payload.opportunities, loading: false };
@@ -61,9 +116,9 @@ function appReducer(state, action) {
 }
 
 // --- Animation Components ---
-const AnimatedText = ({ children, delay = 0 }) => {
+const AnimatedText = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => {
   const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -76,7 +131,9 @@ const AnimatedText = ({ children, delay = 0 }) => {
     );
 
     if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
+    return () => {
+      if (ref.current) observer.unobserve(ref.current);
+    };
   }, [delay]);
 
   return (
@@ -92,13 +149,14 @@ const AnimatedText = ({ children, delay = 0 }) => {
 };
 
 const ParticleField = () => {
-  const canvasRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const start = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
+      if (!ctx) return;
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
@@ -111,7 +169,7 @@ const ParticleField = () => {
         opacity: Math.random() * 0.5 + 0.3
       }));
 
-      let animationId;
+      let animationId: number;
       const animate = () => {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         particles.forEach(p => {
@@ -139,14 +197,14 @@ const ParticleField = () => {
         if (animationId) cancelAnimationFrame(animationId);
       };
     };
-    if ('requestIdleCallback' in window) (window).requestIdleCallback(start);
+    if ('requestIdleCallback' in window) (window as any).requestIdleCallback(start);
     else setTimeout(start, 0);
   }, []);
 
   return <canvas ref={canvasRef} className="fixed inset-0 -z-20 opacity-50" />;
 };
 
-const LiveNotification = ({ notification, onRemove }) => {
+const LiveNotification = ({ notification, onRemove }: { notification: Notification, onRemove: (id: number) => void }) => {
   useEffect(() => {
     const timer = setTimeout(() => onRemove(notification.id), 5000);
     return () => clearTimeout(timer);
@@ -173,7 +231,7 @@ const LiveNotification = ({ notification, onRemove }) => {
 };
 
 // --- Enhanced Components ---
-const AuthModal = ({ onAuth, onClose }) => {
+const AuthModal = ({ onAuth, onClose }: { onAuth: (email: string) => void, onClose: () => void }) => {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -225,9 +283,19 @@ const AuthModal = ({ onAuth, onClose }) => {
   );
 };
 
-const DashboardCard = ({ title, value, unit, icon: Icon, color, isVisible, delay = 0 }) => {
-  const cardRef = useRef(null);
-  const [displayValue, setDisplayValue] = useState(0);
+interface DashboardCardProps {
+  title: string;
+  value: number | string;
+  unit?: string;
+  icon: React.ElementType;
+  color: string;
+  isVisible: boolean;
+  delay?: number;
+}
+
+const DashboardCard = ({ title, value, unit, icon: Icon, color, isVisible, delay = 0 }: DashboardCardProps) => {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [displayValue, setDisplayValue] = useState<number | string>(0);
   const [tiltStyle, setTiltStyle] = useState({});
 
   useEffect(() => {
@@ -253,7 +321,7 @@ const DashboardCard = ({ title, value, unit, icon: Icon, color, isVisible, delay
     }
   }, [isVisible, value]);
 
-  const handleMouseMove = (e) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
     const { left, top, width, height } = cardRef.current.getBoundingClientRect();
     const x = (e.clientX - left) / width;
@@ -324,7 +392,7 @@ const DashboardCard = ({ title, value, unit, icon: Icon, color, isVisible, delay
   );
 };
 
-const ConflictCard = ({ conflict, onSelect }) => {
+const ConflictCard = ({ conflict, onSelect }: { conflict: Conflict, onSelect: (conflict: Conflict) => void }) => {
   const [isHovered, setIsHovered] = useState(false);
   
   return (
@@ -362,7 +430,7 @@ const ConflictCard = ({ conflict, onSelect }) => {
   );
 };
 
-const OpportunityCard = ({ opportunity }) => {
+const OpportunityCard = ({ opportunity }: { opportunity: Opportunity }) => {
   return (
     <div className="relative bg-slate-900/60 backdrop-blur rounded-xl p-5 border border-slate-800 hover:border-green-500/50 transition-all group">
       <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -387,7 +455,15 @@ const OpportunityCard = ({ opportunity }) => {
   );
 };
 
-const PricingCard = ({ title, price, features, highlighted, onCtaClick }) => (
+interface PricingCardProps {
+  title: string;
+  price: string;
+  features: string[];
+  highlighted?: boolean;
+  onCtaClick: () => void;
+}
+
+const PricingCard = ({ title, price, features, highlighted, onCtaClick }: PricingCardProps) => (
   <div className={`relative rounded-3xl p-8 transition-all h-full flex flex-col transform hover:scale-105 ${
     highlighted 
       ? "bg-gradient-to-b from-cyan-900/30 to-purple-900/30 border-2 border-cyan-400/70 shadow-2xl shadow-cyan-500/20" 
@@ -428,14 +504,14 @@ const PricingCard = ({ title, price, features, highlighted, onCtaClick }) => (
 );
 
 // --- Main App Component ---
-export default function App() {
+export default function Home() {
   const [state, dispatch] = useReducer(appReducer, initialState);
-  const mainRef = useRef(null);
-  const statsRef = useRef(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
   const isDesktop = typeof window !== 'undefined' && window.matchMedia?.('(min-width:768px)').matches;
 
   // lightweight analytics
-  const log = useCallback((e, p = {}) => {
+  const log = useCallback((e: string, p = {}) => {
     try {
       fetch('/api/analytics', {
         method: 'POST',
@@ -446,19 +522,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    // We remove the initial data load here. It's now handled by the handleRunScan function.
     const counterInterval = setInterval(() => {
+      // The live counter and hours reclaimed are no longer part of the state, so we only update the dashboard counters here.
       dispatch({ type: 'UPDATE_COUNTERS' });
     }, 100);
 
     const notificationInterval = setInterval(() => {
       const notifications = [
-        { type: 'alert', title: 'New conflict detected', message: 'Invoice terms don\'t match PO requirements' },
-        { type: 'success', title: 'Opportunity found', message: 'Client eligible for volume discount' },
-        { type: 'alert', title: 'Deadline approaching', message: 'Q4 report due in 2 days' },
-        { type: 'success', title: 'Document synced', message: 'Latest contracts analyzed' }
+        { type: 'alert' as const, title: 'New conflict detected', message: 'Invoice terms don\'t match PO requirements' },
+        { type: 'success' as const, title: 'Opportunity found', message: 'Client eligible for volume discount' },
+        { type: 'alert' as const, title: 'Deadline approaching', message: 'Q4 report due in 2 days' },
+        { type: 'success' as const, title: 'Document synced', message: 'Latest contracts analyzed' }
       ];
       
-      const notification = {
+      const notification: Notification = {
         ...notifications[Math.floor(Math.random() * notifications.length)],
         id: Date.now()
       };
@@ -522,11 +600,11 @@ export default function App() {
     })();
   }, [log]);
   
-  const handleAuthSuccess = useCallback((email) => {
+  const handleAuthSuccess = useCallback((email: string) => {
     dispatch({ type: 'SET_EMAIL', payload: email });
     dispatch({ type: 'TOGGLE_AUTH_MODAL' });
     
-    const notification = {
+    const notification: Notification = {
       id: Date.now(),
       type: 'success',
       title: 'Welcome to Foldera!',
@@ -536,12 +614,12 @@ export default function App() {
     log('email_submit', { email_domain: email.split('@').pop() });
   }, [log]);
 
-  const handleSelectConflict = useCallback((conflict) => {
+  const handleSelectConflict = useCallback((conflict: Conflict) => {
     // Replaced the alert() with a console log for a smoother user experience.
     console.log(`Resolution steps for: ${conflict.title}\n\n1. Review contract terms\n2. Schedule stakeholder meeting\n3. Propose alternative payment structure\n4. Update forecast models`);
   }, []);
 
-  const handleRemoveNotification = useCallback((id) => {
+  const handleRemoveNotification = useCallback((id: number) => {
     dispatch({ type: 'REMOVE_NOTIFICATION', payload: id });
   }, []);
 
