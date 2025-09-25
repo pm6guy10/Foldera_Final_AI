@@ -1,0 +1,174 @@
+You must replace the following files in my repo with the provided code. Do not summarize, do not ask me for confirmation. Just overwrite them exactly as given and then run npm install && npm run dev. Afterward, run my MVP acceptance test (Upload → Flag → Dashboard → Stripe) and rollback if anything breaks.
+
+1. Create/replace lib/fileProcessor.ts with this code:
+import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
+import { createHash } from 'crypto';
+
+interface ProcessedFile {
+  text: string;
+  metadata: {
+    fileName: string;
+    fileType: string;
+    size: number;
+    hash: string;
+    processedAt: Date;
+    extractionMethod: 'primary' | 'fallback';
+  };
+}
+
+async function processPdfFile(file: File): Promise<ProcessedFile> {
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  const hash = createHash('sha256').update(buffer).digest('hex');
+  try {
+    const data = await pdfParse(buffer);
+    return { text: data.text || '', metadata: { fileName: file.name, fileType: 'application/pdf', size: file.size, hash, processedAt: new Date(), extractionMethod: 'primary' } };
+  } catch {
+    const textDecoder = new TextDecoder('utf-8', { fatal: false });
+    const partialText = textDecoder.decode(buffer).replace(/[^\x20-\x7E\n\r]/g, '').trim();
+    return { text: partialText || `[PDF extraction failed for ${file.name}]`, metadata: { fileName: file.name, fileType: 'application/pdf', size: file.size, hash, processedAt: new Date(), extractionMethod: 'fallback' } };
+  }
+}
+
+async function processDocxFile(file: File): Promise<ProcessedFile> {
+  const arrayBuffer = await file.arrayBuffer();
+  const hash = createHash('sha256').update(Buffer.from(arrayBuffer)).digest('hex');
+  try {
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    if (result.value?.trim()) {
+      return { text: result.value, metadata: { fileName: file.name, fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: file.size, hash, processedAt: new Date(), extractionMethod: 'primary' } };
+    }
+    throw new Error('Empty mammoth extraction');
+  } catch {
+    const JSZip = (await import('jszip')).default;
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const documentXml = await zip.file('word/document.xml')?.async('string');
+    const extractedText = documentXml ? documentXml.replace(/<[^>]*>/g, ' ').replace(/&[^;]+;/g, ' ').replace(/\s+/g, ' ').trim() : '';
+    return { text: extractedText || `[DOCX fallback extraction for ${file.name}]`, metadata: { fileName: file.name, fileType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: file.size, hash, processedAt: new Date(), extractionMethod: 'fallback' } };
+  }
+}
+
+async function processTextFile(file: File): Promise<ProcessedFile> {
+  const text = await file.text();
+  const hash = createHash('sha256').update(text).digest('hex');
+  return { text, metadata: { fileName: file.name, fileType: 'text/plain', size: file.size, hash, processedAt: new Date(), extractionMethod: 'primary' } };
+}
+
+export async function processFile(file: File): Promise<ProcessedFile> {
+  const validation = validateFile(file);
+  if (!validation.valid) throw new Error(validation.error);
+  switch (file.type) {
+    case 'application/pdf': return processPdfFile(file);
+    case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+    case 'application/msword': return processDocxFile(file);
+    case 'text/plain': return processTextFile(file);
+    default:
+      if (file.name.match(/\.(txt|csv|json|xml|html|md)$/i)) return processTextFile(file);
+      throw new Error(`Unsupported file type: ${file.type}`);
+  }
+}
+
+export function validateFile(file: File): { valid: boolean; error?: string } {
+  const MAX_SIZE = 10 * 1024 * 1024;
+  const ALLOWED_TYPES = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'text/plain'];
+  if (!file) return { valid: false, error: 'No file provided' };
+  if (file.size > MAX_SIZE) return { valid: false, error: 'File too large' };
+  if (!ALLOWED_TYPES.includes(file.type) && !file.name.match(/\.(txt|csv|json|xml|html|md|pdf|docx|doc)$/i)) return { valid: false, error: 'Invalid file type' };
+  if (file.name.includes('../') || file.name.includes('..\\')) return { valid: false, error: 'Invalid file name' };
+  return { valid: true };
+}
+
+2. Replace app/api/upload/route.ts with this code:
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+import { processFile, validateFile } from '@/lib/fileProcessor';
+
+export async function POST(req: NextRequest) {
+  try {
+    const formData = await req.formData();
+    const files = formData.getAll('files') as File[];
+    if (!files.length) return NextResponse.json({ error: 'No files uploaded' }, { status: 400 });
+
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+
+    const processedFiles = [];
+    for (const file of files) {
+      const validation = validateFile(file);
+      if (!validation.valid) continue;
+      const processed = await processFile(file);
+      await supabase.from('processed_documents').insert({
+        file_name: processed.metadata.fileName,
+        file_type: processed.metadata.fileType,
+        file_size: processed.metadata.size,
+        file_hash: processed.metadata.hash,
+        extracted_text: processed.text,
+        extraction_method: processed.metadata.extractionMethod,
+        processed_at: processed.metadata.processedAt
+      });
+      processedFiles.push({ fileName: file.name, textLength: processed.text.length });
+    }
+
+    return NextResponse.json({ success: true, processed: processedFiles });
+  } catch (error) {
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
+  }
+}
+
+3. Replace components/AuditVisualization.tsx with this code:
+"use client";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+export function AuditVisualization() {
+  const [discrepancies, setDiscrepancies] = useState<any[]>([]);
+  useEffect(() => {
+    const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+    supabase.from("discrepancies").select("*").then(({ data }) => setDiscrepancies(data || []));
+  }, []);
+
+  return (
+    <div>
+      <h2>Audit Results ({discrepancies.length})</h2>
+      <ul>
+        {discrepancies.map((d) => (
+          <li key={d.id}>{d.severity}: {d.type} in {d.fileA} vs {d.fileB}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+4. Ensure .env.local has:
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+
+5. Update package.json dependencies:
+"dependencies": {
+  "pdf-parse": "^1.1.1",
+  "mammoth": "^1.6.0",
+  "jszip": "^3.10.1",
+  "@supabase/supabase-js": "^2.39.0",
+  "stripe": "^14.0.0",
+  "next": "^14.0.0",
+  "react": "^18.2.0",
+  "react-dom": "^18.2.0"
+},
+"devDependencies": {
+  "@types/pdf-parse": "^1.1.1",
+  "eslint": "^8.0.0",
+  "typescript": "^5.0.0"
+}
+
+Acceptance criteria:
+
+✅ Upload PDF/DOCX/TXT works
+
+✅ At least one discrepancy flagged (real or fallback)
+
+✅ Dashboard counter shows actual discrepancy count
+
+✅ Stripe 4242 test card succeeds

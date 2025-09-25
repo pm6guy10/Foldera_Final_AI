@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animated Noise Background</title>
+    <style>
+        /* This CSS ensures the canvas covers the entire viewport */
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+        }
+
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- The canvas element where the animation will be drawn -->
+    <canvas id="background-canvas"></canvas>
+
+    <!-- The JavaScript code for the noise animation -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Find the canvas element in your HTML
+            const canvas = document.getElementById('background-canvas');
+            if (!canvas) {
+                console.error("Canvas element with ID 'background-canvas' not found.");
+                return;
+            }
+            const ctx = canvas.getContext('2d');
+            let time = 0;
+
+            // This function generates a simple pseudo-random noise value
+            function noise(x, y, z) {
+                let n = x * 57 + y * 239 + z * 113;
+                n = (n << 13) ^ n;
+                return (1.0 - ((n * (n * n * 15731 + 789221) + 1376312589) & 0x7fffffff) / 1073741824.0);
+            }
+
+            // This is the main drawing function that runs on every frame
+            function drawBackground() {
+                // Set canvas to fill the screen
+                const width = canvas.width = window.innerWidth;
+                const height = canvas.height = window.innerHeight;
+
+                if (width > 0 && height > 0) {
+                    const imageData = ctx.createImageData(width, height);
+                    const data = imageData.data;
+                    time += 0.002; // Controls the speed of the animation
+
+                    // Loop through every pixel
+                    for (let x = 0; x < width; x++) {
+                        for (let y = 0; y < height; y++) {
+                            const i = (x + y * width) * 4; // Get the pixel index
+
+                            // Calculate the noise value for the pixel's position and the current time
+                            const value = Math.abs(noise(x / 400, y / 400, time)) * 30;
+                            const blue = value * 1.5; // Make the blue channel slightly stronger
+
+                            // Set the pixel's color (R, G, B, A)
+                            data[i] = 0; 	 // Red
+                            data[i + 1] = value; // Green
+                            data[i + 2] = blue;  // Blue
+                            data[i + 3] = 255;   // Alpha (fully opaque)
+                        }
+                    }
+                    ctx.putImageData(imageData, 0, 0); // Draw the generated image to the canvas
+                }
+
+                requestAnimationFrame(drawBackground); // Loop the animation
+            }
+
+            // Resize the canvas when the window is resized
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+
+            // Start the animation
+            drawBackground();
+        });
+    </script>
+</body>
+</html>

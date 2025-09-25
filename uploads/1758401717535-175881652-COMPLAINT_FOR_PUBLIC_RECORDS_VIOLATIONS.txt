@@ -1,0 +1,73 @@
+
+
+
+
+
+
+
+
+
+UNITED STATES DISTRICT COURTEASTERN DISTRICT OF WASHINGTON
+Brandon Kapp,Plaintiff,v.Jennifer McDaniel, Public Records Program Manager,Washington State Department of Veterans Affairs,Defendant.
+
+Case No. 1:25-cv-03109-SAB
+COMPLAINT FOR RECORDS SUPPRESSION, METADATA OBSTRUCTION, AND CONSTITUTIONAL VIOLATIONS(42 U.S.C. § 1983, Declaratory Relief)
+
+I. INTRODUCTION
+This is a civil rights action brought under 42 U.S.C. § 1983 arising from deliberate obstruction and concealment of digital public records by a Washington State agency during and after active federal litigation.
+The Washington State Department of Veterans Affairs (WDVA), through its Public Records Program Manager Jennifer McDaniel, failed to produce responsive metadata, destroyed or withheld search audit trails, and refused to certify the completeness of its search for records tied to Plaintiff’s ADA retaliation claims.
+The ongoing suppression of these records has materially harmed Plaintiff’s ability to prove his case, defend against agency misrepresentations, and obtain justice through discovery. The suppression violates Plaintiff’s rights under the First and Fourteenth Amendments.
+
+II. JURISDICTION AND VENUE
+This Court has jurisdiction under 28 U.S.C. §§ 1331 and 1343 because Plaintiff brings claims under the Constitution and federal civil rights laws.
+Venue is proper under 28 U.S.C. § 1391(b) because the events giving rise to the claims occurred within the Eastern District of Washington, where Defendant resides and performs official duties.
+
+III. PARTIES
+Plaintiff Brandon Kapp is a resident of Kittitas County, Washington and a former employee of WDVA. He is proceeding pro se.
+Defendant Jennifer McDaniel is the Public Records Program Manager for WDVA. She is sued in her individual and official capacities.
+Defendant acted under color of state law and within the scope of her official duties at all times relevant to this Complaint.
+
+IV. FACTUAL ALLEGATIONS
+On multiple occasions between April and July 2025, Plaintiff submitted detailed public records requests to WDVA under RCW 42.56, seeking internal emails, logs, and communications relating to his employment, ADA accommodation, and internal agency conflicts.
+Defendant McDaniel responded with partial records while failing to provide critical metadata, email headers, and audit logs showing who ran the records searches, when they were performed, and what tools or filters were used.
+Defendant failed and refused to certify the completeness of the agency’s search, despite multiple direct requests and obvious gaps in the production.
+Several responses were mailed on USB drives that lacked timestamps, file origins, chain-of-custody, or digital signatures. No preservation policy was ever produced.
+In response to Plaintiff’s objections, Defendant admitted in writing that WDVA lacks a metadata policy and could not produce audit logs reflecting search parameters or user activity.
+These omissions occurred during and after active litigation in federal court (Kapp v. WDVA, 1:25-cv-03058-SAB), where responsive documents were critical to Plaintiff’s claims and defense.
+Defendant’s obstruction was not inadvertent. It followed a pattern of delay, fragmentation, and omission designed to frustrate oversight and limit institutional accountability.
+Multiple exhibits submitted in support of this Complaint show internal inconsistencies, lack of headers, redacted email chains, and files purged of metadata despite Plaintiff’s specific requests to preserve and produce native files.
+Upon learning that records were incomplete and improperly handled, Plaintiff repeatedly requested that Defendant confirm whether any digital preservation measures were in place. No such confirmation was ever provided. Instead, responses arrived as unsourced USB drives, stripped of metadata and system provenance.
+In a June 6, 2025 email, Plaintiff wrote:“There are no communications reflecting ADA compliance, metadata retention, or internal deliberation... No metadata fields or technical records are included to validate authenticity or search integrity.”
+Defendant’s own response, included in Exhibit A, confirmed that WDVA has no policy addressing native files or metadata retention. The failure to preserve and certify digital evidence occurred despite explicit notice of live litigation and directly interfered with Plaintiff’s ability to secure relief in court.
+This conduct implicates not only procedural irregularities, but potential spoliation of evidence and intentional obstruction of the judicial process. The harm is ongoing and cannot be cured by incomplete or unverifiable records.
+
+V. NO ALTERNATIVE REMEDY EXISTS
+Plaintiff cannot obtain this evidence through traditional discovery due to the agency’s exclusive control over the digital records and Defendant’s willful suppression of search logs, certification, and metadata.
+Absent relief from this Court, the evidence Plaintiff seeks will remain unavailable, materially prejudicing his legal claims, discovery rights, and ability to hold the agency accountable.
+Attached hereto as Exhibit A is a series of email communications between Plaintiff and Defendant Jennifer McDaniel concerning public records requests submitted under RCW 42.56. These emails illustrate a sustained pattern of deflection, delay, and metadata evasion. They document Defendant’s repeated failure to certify record completeness, her admitted lack of metadata policy, and her refusal to produce audit logs or native search artifacts. These materials are incorporated by reference and provide direct evidence of the ongoing digital obstruction alleged herein.
+
+VI. CLAIMS FOR RELIEF
+Count I — Deprivation of Constitutional Rights (42 U.S.C. § 1983)
+Defendant, acting under color of law, deprived Plaintiff of rights secured by the First and Fourteenth Amendments, including the right to petition the government for redress, the right to due process, and the right to access public information necessary for legal redress.
+Defendant’s conduct was intentional, retaliatory, and executed with reckless disregard for Plaintiff’s rights and the agency’s constitutional obligations.
+Count II — Declaratory Judgment (28 U.S.C. §§ 2201–2202)
+A real and immediate controversy exists as to whether WDVA’s metadata suppression practices and failure to certify searches comply with constitutional requirements.
+Plaintiff seeks a declaration that Defendant’s conduct constitutes a violation of the Constitution and federal law.
+
+VII. JUDICIAL NOTICE ON DISMISSAL AND LEGAL MISFRAMING
+Plaintiff anticipates that Defendant may move to dismiss by mischaracterizing this action as duplicative of prior litigation, arguing that metadata is not independently protected, asserting that responsive records were already provided, or invoking immunity doctrines. Each of these anticipated defenses is unsupported by law and refuted by the factual record presented herein.
+First, this case raises distinct constitutional claims under 42 U.S.C. § 1983 and the Fourteenth Amendment. It is not based on employment retaliation but on the obstruction of due process and evidentiary access during active federal litigation. The Defendant named here, Jennifer McDaniel, is sued in her capacity as the public records manager responsible for digital transparency and records integrity, not as an employment decision-maker. The factual basis, legal theory, and requested remedies are materially different from Plaintiff’s prior ADA-related action.
+Second, it is immaterial that partial records were produced if those records were incomplete, stripped of metadata, or presented without audit logs necessary to validate their authenticity. The failure to preserve and disclose metadata constitutes suppression of digital evidence and undermines the core protections of procedural due process. Courts have recognized that metadata and search audit trails are often the only means by which tampering, omission, or misrepresentation can be discovered. Defendant’s refusal to produce native files, headers, or search logs, while admitting that no metadata policy exists, demonstrates a knowing and systemic evasion of legal obligations.
+Third, dismissal of this complaint without factual inquiry would establish a dangerous precedent: that public records officers may destroy or conceal litigation-critical metadata and search evidence with impunity, so long as some partial files are released and no explicit statute is cited. That outcome would erode the public’s trust in government accountability, nullify digital preservation duties during litigation, and conflict with binding federal precedents governing access to courts and evidentiary integrity.
+Finally, Defendant is not entitled to immunity where the conduct alleged falls outside the bounds of clearly established legal obligations. No reasonable officer in 2025 could believe that failing to preserve metadata, suppressing audit trails, and refusing to certify the completeness of a litigation-relevant search was lawful under existing constitutional and procedural standards.
+Plaintiff respectfully requests that the Court deny any motion to dismiss and permit these claims to proceed to discovery. Should the Court decline to do so, Plaintiff preserves all rights to seek appellate review of any premature or improper dismissal.
+
+VIII. PRAYER FOR RELIEF
+Plaintiff respectfully requests the following:
+A declaration that Defendant violated Plaintiff’s constitutional rights
+An injunction requiring WDVA to produce responsive metadata, search logs, and a sworn certification of completeness
+Compensatory and nominal damages in an amount to be proven at trial
+Punitive damages against Defendant McDaniel for reckless disregard of Plaintiff’s rights
+Costs of suit and any additional relief the Court deems just and proper
+DATED this 7th day of July, 2025.
+Respectfully submitted,Brandon Kapp3112 Wrangler Dr.Ellensburg, WA 98926b-kapp@outlook.com619-517-6069

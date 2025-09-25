@@ -1,0 +1,50 @@
+Upgrade Foldera's brain to deliver guaranteed "holy crap" moments through cross-document intelligence.
+
+CORE MISSION: Make every upload surface at least ONE high-stakes finding that would genuinely terrify a professional if missed.
+
+1. CROSS-DOCUMENT DETECTION ENGINE
+   - Compare EVERY numeric value across ALL docs (amounts, percentages, dates)
+   - Pattern: "Doc A says $2M, Doc B says $2.75M" → flag with exact locations
+   - Pattern: "Contract states March 31, Amendment says April 15" → critical conflict
+   - Pattern: "Vendor named 'Accenture' in SOW, 'Accenture Corp' in invoice" → entity mismatch
+   - ALWAYS compare: budgets, deadlines, entity names, percentages, deliverables
+
+2. CONSEQUENCE CALCULATOR (make it terrifying)
+   Each finding MUST include:
+   - Dollar impact: "⚠ $750k discrepancy → $1.2M penalty under Section 5.2"
+   - Time impact: "📅 3-week delay → Breach of contract, liquidated damages"
+   - Compliance impact: "🔒 Missing attestation → SOC2 violation, client loss risk"
+   Formula: [Issue] → [Specific penalty/risk] with section reference
+
+3. INSTANT FIX GENERATOR
+   Each issue gets ONE actionable fix:
+   - Financial: "Subject: Budget Discrepancy - Urgent Correction\n\nDear [CFO],\n\nWe've identified a $750k variance between the master agreement ($2M) and Amendment 2 ($2.75M). Please confirm which figure is correct. See attached reconciliation.\n\nBest,\n[Your name]"
+   - Timeline: "Revised Milestone: [specific dates and deliverables]"
+   - Compliance: "Vendor Attestation Request: [pre-filled template]"
+   Make fixes so good users can copy/paste immediately
+
+4. BLOOMBERG-STYLE AUDIT LOG
+   Stream these in real-time as analysis happens:
+   [2025-09-21 16:45:22.123] SCAN_INITIATED: 3 documents, 47 pages
+   [2025-09-21 16:45:22.789] CRITICAL: Budget mismatch $2M vs $2.75M (Doc1:p4 vs Doc2:p7)
+   [2025-09-21 16:45:23.234] FIX_GENERATED: CFO notification email drafted
+   [2025-09-21 16:45:23.567] HIGH: Timeline conflict detected March 31 vs April 15
+   [2025-09-21 16:45:24.012] FIX_GENERATED: Milestone revision prepared
+
+IMPLEMENTATION:
+- File: documentProcessingService.ts
+- Add crossDocumentAnalysis() that compares ALL docs in batch
+- Add consequenceCalculator() that estimates real penalties
+- Add fixGenerator() that creates ready-to-send fixes
+- Add auditLogger() with millisecond timestamps
+- Ensure findings are REAL (from actual document content)
+- NO fabrication except in /simulation mode
+
+ACCEPTANCE:
+- Upload 2+ docs → ALWAYS finds at least 1 cross-doc discrepancy
+- Every issue shows: severity + dollar/time consequence + fix
+- Audit log streams live with Bloomberg styling
+- Fixes are professional and ready to copy/paste
+
+Budget: $15
+Lines: ≤120 changes
